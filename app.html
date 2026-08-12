@@ -1430,7 +1430,7 @@ const AIRPORTS = [
 // read-only, free "Data API" token (cached prices), different from the
 // real-time search API. Get it from your Travelpayouts account under
 // Profile > API token.
-const TRAVELPAYOUTS_TOKEN = "PASTE_YOUR_TOKEN_HERE";
+const TRAVELPAYOUTS_TOKEN = "385677af499835a0788601f206b3d96c";
 
 function extractIATA(originText) {
   // origin looks like "London Heathrow (LHR)" from the autocomplete
@@ -1439,7 +1439,7 @@ function extractIATA(originText) {
 }
 
 async function fetchLitAirports(originIATA, onDebug) {
-  if (!originIATA || TRAVELPAYOUTS_TOKEN === "PASTE_YOUR_TOKEN_HERE") {
+  if (!originIATA || TRAVELPAYOUTS_TOKEN === "385677af499835a0788601f206b3d96c") {
     if (onDebug) onDebug({ step: "No token set — using estimated airports." });
     return null;
   }
