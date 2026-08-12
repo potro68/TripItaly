@@ -1425,13 +1425,12 @@ const AIRPORTS = [
   { code: "CTA", cityCode: "CTA", city: "Catania", tags: ["Sea", "Mountains (Etna)"], mapX: 63, mapY: 83 },
 ];
 
-// ---- Travelpayouts Data API integration ----
-// IMPORTANT: paste your own token between the quotes below before deploying.
-// This is a read-only, free "Data API" token (cached prices), different
-// from the real-time search API. Get it from your Travelpayouts account
-// under Profile > API token. This is the ONLY line you need to edit —
-// nothing else in this file needs to change.
-const TRAVELPAYOUTS_TOKEN = "385677af499835a0788601f206b3d96c";
+// ---- Travelpayouts Data API integration, via a Cloudflare Worker proxy ----
+// The token itself lives ONLY inside the Cloudflare Worker (server-side),
+// never in this public file. Paste your Worker's URL below — it looks like
+// https://your-worker-name.your-subdomain.workers.dev
+// This is the ONLY line you need to edit — nothing else in this file needs to change.
+const PROXY_URL = "https://tripitaly-proxy.potrocag.workers.dev";
 
 function extractIATA(originText) {
   // origin looks like "London Heathrow (LHR)" from the autocomplete
@@ -1440,14 +1439,14 @@ function extractIATA(originText) {
 }
 
 async function fetchLitAirports(originIATA, onDebug) {
-  if (!originIATA || !TRAVELPAYOUTS_TOKEN) {
-    if (onDebug) onDebug({ step: "No token set — using estimated airports." });
+  if (!originIATA || !PROXY_URL) {
+    if (onDebug) onDebug({ step: "No proxy URL set — using estimated airports." });
     return null;
   }
   const uniqueCityCodes = [...new Set(AIRPORTS.map(a => a.cityCode))];
   try {
     const results = await Promise.all(uniqueCityCodes.map(async cc => {
-      const url = `https://api.travelpayouts.com/v1/prices/cheap?origin=${originIATA}&destination=${cc}&token=${TRAVELPAYOUTS_TOKEN}`;
+      const url = `${PROXY_URL}?origin=${originIATA}&destination=${cc}`;
       const res = await fetch(url);
       const json = await res.json();
       const hasData = json.success && json.data && Object.keys(json.data).length > 0;
@@ -1459,7 +1458,7 @@ async function fetchLitAirports(originIATA, onDebug) {
     return lit.length > 0 ? lit : null;
   } catch (e) {
     if (onDebug) onDebug({ step: "Error", error: String(e) });
-    return null; // network/CORS error — caller falls back to mock
+    return null; // network error — caller falls back to mock
   }
 }
 
