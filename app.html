@@ -2379,11 +2379,6 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
             {usingRealData ? " · live data" : ""}
           </p>
         )}
-        {debugInfo && (
-          <div className="debug-panel">
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          </div>
-        )}
       </div>
 
       {data.airport && (
