@@ -1430,11 +1430,13 @@ async function fetchLitAirports(originIATA) {
       const url = `https://api.travelpayouts.com/v1/prices/cheap?origin=${originIATA}&destination=${cc}&token=${TRAVELPAYOUTS_TOKEN}`;
       const res = await fetch(url);
       const json = await res.json();
+      console.log(`[TripItaly debug] ${originIATA} -> ${cc}:`, json);
       const hasData = json.success && json.data && Object.keys(json.data).length > 0;
       return { cityCode: cc, hasData };
     }));
     const litCityCodes = results.filter(r => r.hasData).map(r => r.cityCode);
     const lit = AIRPORTS.filter(a => litCityCodes.includes(a.cityCode));
+    console.log("[TripItaly debug] lit city codes:", litCityCodes);
     return lit.length > 0 ? lit : null;
   } catch (e) {
     console.error("Travelpayouts Data API call failed (falling back to estimated airports):", e);
