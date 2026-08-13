@@ -1418,11 +1418,13 @@ const TRAVELER_TYPES = [
 ];
 
 const AIRPORTS = [
-  { code: "FCO", cityCode: "ROM", city: "Rome (Fiumicino)", tags: ["History & Art", "Hills"], mapX: 48, mapY: 43 },
-  { code: "MXP", cityCode: "MIL", city: "Milan (Malpensa)", tags: ["Lakes", "Mountains", "City"], mapX: 32, mapY: 22 },
-  { code: "VCE", cityCode: "VCE", city: "Venice (Marco Polo)", tags: ["History & Art", "Mountains"], mapX: 53, mapY: 17 },
-  { code: "NAP", cityCode: "NAP", city: "Naples (Capodichino)", tags: ["Sea", "History & Art"], mapX: 62, mapY: 54 },
-  { code: "CTA", cityCode: "CTA", city: "Catania", tags: ["Sea", "Mountains (Etna)"], mapX: 63, mapY: 83 },
+  { code: "FCO", city: "Rome (Fiumicino)", tags: ["History & Art", "Hills"], mapX: 48, mapY: 43 },
+  { code: "MXP", city: "Milan (Malpensa)", tags: ["Lakes", "Mountains", "City"], mapX: 31, mapY: 22 },
+  { code: "LIN", city: "Milan (Linate)", tags: ["City", "Business", "Lakes"], mapX: 34, mapY: 22 },
+  { code: "BGY", city: "Milan / Bergamo (Orio al Serio)", tags: ["City", "Lakes", "Low-cost"], mapX: 37, mapY: 21 },
+  { code: "VCE", city: "Venice (Marco Polo)", tags: ["History & Art", "Mountains"], mapX: 53, mapY: 17 },
+  { code: "NAP", city: "Naples (Capodichino)", tags: ["Sea", "History & Art"], mapX: 62, mapY: 54 },
+  { code: "CTA", city: "Catania", tags: ["Sea", "Mountains (Etna)"], mapX: 63, mapY: 83 },
 ];
 
 // ---- Travelpayouts Data API integration, via a Cloudflare Worker proxy ----
@@ -1440,25 +1442,26 @@ function extractIATA(originText) {
 
 async function fetchLitAirports(originIATA, onDebug) {
   if (!originIATA || !PROXY_URL) {
-    if (onDebug) onDebug({ step: "No proxy URL set — using estimated airports." });
+    if (onDebug) onDebug({ step: "No proxy URL set." });
     return null;
   }
-  const uniqueCityCodes = [...new Set(AIRPORTS.map(a => a.cityCode))];
   try {
-    const results = await Promise.all(uniqueCityCodes.map(async cc => {
-      const url = `${PROXY_URL}?origin=${originIATA}&destination=${cc}&direct=true`;
+    const results = await Promise.all(AIRPORTS.map(async airport => {
+      const url = `${PROXY_URL}?origin=${originIATA}&destination=${airport.code}&direct=true`;
       const res = await fetch(url);
       const json = await res.json();
       const hasData = json.success && json.data && Object.keys(json.data).length > 0;
-      return { cityCode: cc, hasData, raw: json };
+      return { airportCode: airport.code, hasData, raw: json };
     }));
-    const litCityCodes = results.filter(r => r.hasData).map(r => r.cityCode);
-    const lit = AIRPORTS.filter(a => litCityCodes.includes(a.cityCode));
-    if (onDebug) onDebug({ step: "Done", results, litCityCodes });
-    return lit; // empty array = checked successfully, but no direct routes were found
+
+    const litCodes = results.filter(r => r.hasData).map(r => r.airportCode);
+    const lit = AIRPORTS.filter(a => litCodes.includes(a.code));
+
+    if (onDebug) onDebug({ step: "Done", results, litCodes });
+    return lit;
   } catch (e) {
     if (onDebug) onDebug({ step: "Error", error: String(e) });
-    return null; // network error — caller falls back to mock
+    return null;
   }
 }
 
@@ -2442,22 +2445,22 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
   React.useEffect(() => {
     const iata = extractIATA(data.origin);
     if (!iata) {
-      setLitAirports([]);
+      setLitAirports(suggestAirports(data.origin));
       setUsingRealData(false);
-      setDebugInfo({ step: "Choose an airport from the suggestions so a valid IATA code can be checked for direct flights." });
+      setDebugInfo({ step: "No IATA code detected in: " + JSON.stringify(data.origin) });
       return;
     }
     let cancelled = false;
     setChecking(true);
-    setDebugInfo({ step: "Checking Travelpayouts direct flights from " + iata + "…" });
+    setDebugInfo({ step: "Calling Travelpayouts for origin " + iata + "…" });
     fetchLitAirports(iata, setDebugInfo).then(real => {
       if (cancelled) return;
       setChecking(false);
-      if (real !== null) {
+      if (real) {
         setLitAirports(real);
         setUsingRealData(true);
       } else {
-        setLitAirports([]);
+        setLitAirports(suggestAirports(data.origin));
         setUsingRealData(false);
       }
     });
