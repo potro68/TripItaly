@@ -188,6 +188,15 @@
     border-radius:5px;
   }
   .ac-name{ font-size:14px; font-weight:500; }
+  .ac-sub{ font-size:11.5px; color:rgba(19,42,58,0.5); margin-top:1px; }
+  .autocomplete-wrap{ position:relative; }
+  .autocomplete-loading{
+    position:absolute;
+    top:100%; left:0;
+    font-size:11.5px;
+    color:rgba(19,42,58,0.5);
+    padding:4px 2px;
+  }
 
   .row-2{ display:flex; gap:12px; }
   .row-2 .field{ flex:1; }
@@ -1572,7 +1581,7 @@ const TRANSPORT_OPTIONS = [
 // (Kiwi, Tiqets, DiscoverCars, Stay22/Booking) is a separate next step.
 const AFFILIATE_LINKS = {
   hotel: "https://booking.stay22.com/tripitaly/Kk-Cf-ZiP9",       // Booking.com via Stay22
-  car: "https://www.discovercars.com/?a_aid=TripItaly",           // DiscoverCars
+  car: "https://qeeq.tpo.li/Xxogf6uI",                            // QEEQ (ready-made link, no custom params supported)
   flights: "https://kiwi.tpo.li/N8pkWQIH",                        // Kiwi.com (static fallback link)
   attractions: "https://tiqets.tpo.li/wCsfymvJ",                  // Tiqets
 };
@@ -1602,12 +1611,72 @@ function buildAviasalesLink(data) {
   return `https://www.aviasales.com/search/${params}?marker=${AVIASALES_MARKER}`;
 }
 
+// Booking.com affiliate ID, found by unshortening the Stay22 Allez link.
+const BOOKING_AID = "1607597";
+const BOOKING_LABEL = "tripitaly";
+
+// Best guess for where to search accommodation, based on the arrival
+// airport or the first stop of a custom multi-city route. This is only
+// a starting point — the user can always type a different city (e.g.
+// arriving at Bergamo/Orio al Serio but wanting to stay in Milan, Como,
+// or Lecco instead of Bergamo itself).
+function guessedStayCity(data) {
+  if (data.routeBlocks && data.routeBlocks[0] && data.routeBlocks[0].city) {
+    return data.routeBlocks[0].city;
+  }
+  return AIRPORTS.find(a => a.code === data.airport)?.city.split(" (")[0] || "";
+}
+
 function buildBookingLink(data) {
-  return AFFILIATE_LINKS.hotel;
+  const city = (data.stayCity || guessedStayCity(data)).trim();
+
+  if (!city || !data.startDate || !data.endDate) {
+    return AFFILIATE_LINKS.hotel; // fall back to the static link if we don't have enough info yet
+  }
+
+  const params = new URLSearchParams({
+    aid: BOOKING_AID,
+    label: BOOKING_LABEL,
+    ss: `${city}, Italy`,
+    checkin: data.startDate,
+    checkout: data.endDate,
+    group_adults: String(Math.max(1, data.people || 1)),
+    no_rooms: "1",
+  });
+  return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
 function buildCarRentalLink(data) {
-  return AFFILIATE_LINKS.car;
+  const airport = AIRPORTS.find(a => a.code === data.airport);
+  if (!airport || !data.startDate || !data.endDate) {
+    return AFFILIATE_LINKS.car; // fall back to the static QEEQ link if we don't have enough info yet
+  }
+
+  const pickup = new Date(data.startDate + "T10:00:00");
+  const dropoff = new Date(data.endDate + "T10:00:00");
+  const locationName = airport.city.replace(" (", " ").replace(")", "") + " Airport";
+
+  const params = new URLSearchParams({
+    aid: BOOKING_AID,
+    label: BOOKING_LABEL,
+    locationIata: airport.code,
+    locationName: locationName,
+    dropLocationIata: airport.code,
+    puDay: String(pickup.getDate()),
+    puMonth: String(pickup.getMonth() + 1),
+    puYear: String(pickup.getFullYear()),
+    puHour: "10",
+    puMinute: "0",
+    doDay: String(dropoff.getDate()),
+    doMonth: String(dropoff.getMonth() + 1),
+    doYear: String(dropoff.getFullYear()),
+    doHour: "10",
+    doMinute: "0",
+    driversAge: "30",
+    prefcurrency: "EUR",
+    preflang: "en",
+  });
+  return `https://cars.booking.com/search-results?${params.toString()}`;
 }
 
 function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
@@ -1773,6 +1842,84 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
   );
 }
 
+function CityAutocomplete({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    const term = (value || "").trim();
+    if (term.length < 2) {
+      setMatches([]);
+      setOpen(false);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(term)}&countrycodes=it&format=json&limit=6&addressdetails=1`;
+        const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+        const json = await res.json();
+        if (!cancelled && Array.isArray(json)) {
+          const places = json
+            .filter(p => ["city", "town", "village", "municipality", "administrative"].includes(p.type) || p.class === "place")
+            .map(p => ({
+              name: p.address?.city || p.address?.town || p.address?.village || p.name || p.display_name.split(",")[0],
+              region: p.address?.state || "",
+              display: p.display_name,
+            }));
+          // De-dupe by name
+          const seen = new Set();
+          const unique = places.filter(p => {
+            if (seen.has(p.name)) return false;
+            seen.add(p.name);
+            return true;
+          });
+          setMatches(unique);
+          setOpen(unique.length > 0);
+        }
+      } catch (e) {
+        // silent fail — user can still type freely
+      }
+      if (!cancelled) setLoading(false);
+    }, 350);
+
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [value]);
+
+  return (
+    <div className="autocomplete-wrap">
+      <input
+        type="text"
+        className="route-city-input"
+        placeholder="e.g. Milan, Como, Lecco..."
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => matches.length > 0 && setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+      />
+      {loading && <div className="autocomplete-loading">Searching…</div>}
+      {open && matches.length > 0 && (
+        <div className="autocomplete-list">
+          {matches.map((m, i) => (
+            <div
+              key={i}
+              className="autocomplete-item"
+              onMouseDown={() => { onChange(m.name); setOpen(false); }}
+            >
+              <div className="ac-name">{m.name}</div>
+              {m.region && <div className="ac-sub">{m.region}, Italy</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ScreenBookings({ data, setData, onNext, onBack }) {
   const tripDays = tripLengthDays(data);
   const arrivalCity = AIRPORTS.find(a => a.code === data.airport)?.city.split(" (")[0] || "Arrival city";
@@ -1838,8 +1985,13 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
       <p className="subtitle">Stay, car and — if you're moving around — transport between cities.</p>
 
       <div className="field">
-        <label>Accommodation</label>
-        <a href={buildBookingLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
+        <label>Where do you want to stay?</label>
+        <p className="park-hint">We've guessed based on your arrival airport — change it if you'd rather stay somewhere else nearby.</p>
+        <CityAutocomplete
+          value={data.stayCity || guessedStayCity(data)}
+          onChange={v => setData({...data, stayCity: v})}
+        />
+        <a href={buildBookingLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:10}}>
           <span className="blb-icon">🏨</span>
           <span className="blb-text">
             <span className="blb-h">Search hotels on Booking.com</span>
@@ -1878,8 +2030,8 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           <a href={buildCarRentalLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
             <span className="blb-icon">🚗</span>
             <span className="blb-text">
-              <span className="blb-h">Search rental cars</span>
-              <span className="blb-d">Pickup at your arrival airport ↗</span>
+              <span className="blb-h">Search rental cars on Booking.com</span>
+              <span className="blb-d">Your dates & airport already filled in ↗</span>
             </span>
           </a>
           <div className="price-entry-row">
@@ -3494,6 +3646,13 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc }) {
             <div className="d">€{carTotal.toLocaleString()} total · {tripLengthDays(data)} days</div>
           </div>
         </div>
+        <a href={buildCarRentalLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:10}}>
+          <span className="blb-icon">🚗</span>
+          <span className="blb-text">
+            <span className="blb-h">Search rental cars on Booking.com</span>
+            <span className="blb-d">Your dates & airport already filled in ↗</span>
+          </span>
+        </a>
       </div>
 
       <DocumentUpload section="car" docs={docs} onAdd={onAddDoc} />
