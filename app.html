@@ -1494,15 +1494,14 @@ async function fetchLitAirports(originIATA, mode = "direct", onDebug) {
     }));
     const litCodes = results.filter(r => r.hasData).map(r => r.airportCode);
     const lit = AIRPORTS.filter(a => litCodes.includes(a.code));
-    // Build a map of the cheapest real fare found per airport, for display later.
-    const fareByCode = {};
+    // Count how many real flights were found per airport — an honest,
+    // non-misleading signal (unlike a single cached price for a random date).
+    const countByCode = {};
     results.forEach(r => {
-      if (!r.hasData) return;
-      const cheapest = r.raw.data.reduce((min, f) => (f.price < min.price ? f : min), r.raw.data[0]);
-      fareByCode[r.airportCode] = { price: cheapest.price, date: cheapest.departure_at || null };
+      countByCode[r.airportCode] = r.hasData ? r.raw.data.length : 0;
     });
     if (onDebug) onDebug({ step: "Done", mode, results, litCodes });
-    return { lit, fareByCode };
+    return { lit, countByCode };
   } catch (e) {
     if (onDebug) onDebug({ step: "Error", mode, error: String(e) });
     return null;
@@ -2608,7 +2607,7 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
   const [usingRealData, setUsingRealData] = useState(false);
   const [routeMode, setRouteMode] = useState("direct");
   const [debugInfo, setDebugInfo] = useState(null);
-  const [fareByCode, setFareByCode] = useState({});
+  const [countByCode, setCountByCode] = useState({});
   const litCodes = litAirports.map(a => a.code);
   const selected = (data.airport && litCodes.includes(data.airport)) ? data.airport : (litCodes[0] || null);
   const [error, setError] = useState("");
@@ -2632,12 +2631,12 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
 
     if (real !== null) {
       setLitAirports(real.lit);
-      setFareByCode(real.fareByCode);
+      setCountByCode(real.countByCode);
       setUsingRealData(true);
       setData({...data, airport: real.lit[0]?.code || ""});
     } else {
       setLitAirports([]);
-      setFareByCode({});
+      setCountByCode({});
       setUsingRealData(false);
       setData({...data, airport: ""});
       setError("We couldn't check flight availability right now. Please try again.");
@@ -2659,7 +2658,7 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
     if (!data.origin) { setError("Tell us your departure airport."); return; }
     if (!selected) { setError("Choose an Italian gateway first."); return; }
     setError("");
-    setData({...data, airport: selected, arrivalRouteMode: routeMode, foundFare: fareByCode[selected] || null});
+    setData({...data, airport: selected, arrivalRouteMode: routeMode, foundFlightCount: countByCode[selected] || 0});
     onNext(selected);
   };
 
@@ -2789,28 +2788,26 @@ const MOCK_FLIGHTS = {
 
 function ScreenFlights({ data, setData, onNext, onBack }) {
   const airport = AIRPORTS.find(a => a.code === data.airport) || AIRPORTS[0];
-  const fare = data.foundFare;
+  const count = data.foundFlightCount || 0;
 
   return (
     <div className="screen">
       <h1 className="title">Flights to {airport.city}</h1>
-      <p className="subtitle">
-        {fare ? "A real fare we found for this route, then search below for live prices." : "Search below for real prices and dates."}
-      </p>
+      <p className="subtitle">Search below for real prices and dates.</p>
 
-      {fare ? (
+      {count > 0 ? (
         <div className="suggestion-banner">
           <div className="plane">✈️</div>
-          <div className="eyebrow">Recently found fare, per person</div>
-          <div className="airport-name">from €{Math.round(fare.price)}</div>
+          <div className="eyebrow">Good news</div>
+          <div className="airport-name">{count} flight{count>1?"s":""} found</div>
           <div className="flight-info">
-            {fare.date ? `Found for a flight around ${formatDateEN(fare.date.slice(0,10))}` : "Real fare from Aviasales' cache"} · search below for live dates & prices
+            We found {count} real {data.arrivalRouteMode === "one_stop" ? "one-stop" : "direct"} flight{count>1?"s":""} on this route recently — search below for live prices on your exact dates.
           </div>
         </div>
       ) : (
         <div className="suggestion-banner">
           <div className="plane">✈️</div>
-          <div className="eyebrow">No cached fare found for this route yet</div>
+          <div className="eyebrow">No cached flights found for this route yet</div>
           <div className="flight-info">
             Search below to see real, live prices and dates
           </div>
@@ -4044,7 +4041,7 @@ function ScreenDashboard({ data, setData }) {
     setDocuments(prev => ({...prev, [sectionId]: [...prev[sectionId], doc]}));
   };
   const nights = tripLengthDays(data) - 1;
-  const flightTotal = data.mode === "onsite" ? 0 : (data.flightPrice || ((data.foundFare?.price || 450) * data.people));
+  const flightTotal = data.mode === "onsite" ? 0 : (data.flightPrice || (450 * data.people));
   const hotelTotal = data.mode === "onsite" ? (data.prepaidTotal || 0) : (data.hotelPrice || 0); // onsite: lump prepaid into this bucket
   const carTotal = data.mode === "onsite" ? 0 : (data.wantsCar ? (data.carPrice || 0) : 0);
   const lockedTotal = flightTotal + hotelTotal + carTotal;
