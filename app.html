@@ -1573,9 +1573,34 @@ const TRANSPORT_OPTIONS = [
 const AFFILIATE_LINKS = {
   hotel: "https://booking.stay22.com/tripitaly/Kk-Cf-ZiP9",       // Booking.com via Stay22
   car: "https://www.discovercars.com/?a_aid=TripItaly",           // DiscoverCars
-  flights: "https://kiwi.tpo.li/N8pkWQIH",                        // Kiwi.com
+  flights: "https://kiwi.tpo.li/N8pkWQIH",                        // Kiwi.com (static fallback link)
   attractions: "https://tiqets.tpo.li/wCsfymvJ",                  // Tiqets
 };
+
+// Aviasales partner ID (marker), found via Tools > Create a link > unshorten.
+const AVIASALES_MARKER = "763269";
+
+// Builds a real Aviasales search link with origin/destination/dates/passengers
+// already filled in. Format documented by Travelpayouts:
+// https://www.aviasales.com/search/{origin}{DDMM}{destination}{DDMM}{adults}?marker=...
+function ddmm(isoDate) {
+  if (!isoDate) return "";
+  const d = new Date(isoDate + "T00:00:00");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return dd + mm;
+}
+
+function buildAviasalesLink(data) {
+  const originIATA = extractIATA(data.origin || "");
+  const destIATA = data.airport;
+  if (!originIATA || !destIATA || !data.startDate || !data.endDate) {
+    return AFFILIATE_LINKS.flights; // fall back to the static link if we don't have enough info yet
+  }
+  const adults = Math.min(9, Math.max(1, data.people || 1));
+  const params = `${originIATA}${ddmm(data.startDate)}${destIATA}${ddmm(data.endDate)}${adults}`;
+  return `https://www.aviasales.com/search/${params}?marker=${AVIASALES_MARKER}`;
+}
 
 function buildBookingLink(data) {
   return AFFILIATE_LINKS.hotel;
@@ -2772,11 +2797,11 @@ function ScreenFlights({ data, setData, onNext, onBack }) {
 
       <div className="field">
         <label>Search real flights</label>
-        <a href={AFFILIATE_LINKS.flights} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
+        <a href={buildAviasalesLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
           <span className="blb-icon">✈️</span>
           <span className="blb-text">
-            <span className="blb-h">Search flights on Kiwi.com</span>
-            <span className="blb-d">{data.people} traveler{data.people>1?"s":""} to {airport.city} ↗</span>
+            <span className="blb-h">Search flights on Aviasales</span>
+            <span className="blb-d">{data.people} traveler{data.people>1?"s":""} to {airport.city}, dates pre-filled ↗</span>
           </span>
         </a>
         <div className="price-entry-row">
@@ -3338,6 +3363,13 @@ function DashTickets({ data, setData, flightTotal, docs, onAddDoc }) {
             <div className="d">€{flightTotal.toLocaleString()} total · {data.people} traveler{data.people>1?"s":""} · {data.flexDates !== false ? "flexible ±3 days" : "fixed dates"}</div>
           </div>
         </div>
+        <a href={buildAviasalesLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:10}}>
+          <span className="blb-icon">✈️</span>
+          <span className="blb-text">
+            <span className="blb-h">Search flights on Aviasales</span>
+            <span className="blb-d">Your dates & travelers already filled in ↗</span>
+          </span>
+        </a>
       </div>
       <DocumentUpload section="tickets" docs={docs} onAdd={onAddDoc} />
 
