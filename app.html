@@ -1446,7 +1446,7 @@ async function fetchLitAirports(originIATA, onDebug) {
   const uniqueCityCodes = [...new Set(AIRPORTS.map(a => a.cityCode))];
   try {
     const results = await Promise.all(uniqueCityCodes.map(async cc => {
-      const url = `${PROXY_URL}?origin=${originIATA}&destination=${cc}`;
+      const url = `${PROXY_URL}?origin=${originIATA}&destination=${cc}&direct=true`;
       const res = await fetch(url);
       const json = await res.json();
       const hasData = json.success && json.data && Object.keys(json.data).length > 0;
@@ -1455,7 +1455,7 @@ async function fetchLitAirports(originIATA, onDebug) {
     const litCityCodes = results.filter(r => r.hasData).map(r => r.cityCode);
     const lit = AIRPORTS.filter(a => litCityCodes.includes(a.cityCode));
     if (onDebug) onDebug({ step: "Done", results, litCityCodes });
-    return lit.length > 0 ? lit : null;
+    return lit; // empty array = checked successfully, but no direct routes were found
   } catch (e) {
     if (onDebug) onDebug({ step: "Error", error: String(e) });
     return null; // network error — caller falls back to mock
@@ -2270,6 +2270,12 @@ const ORIGIN_AIRPORTS = [
   { code: "LIS", name: "Lisbon" },
   { code: "OPO", name: "Porto" },
   { code: "LUX", name: "Luxembourg" },
+  { code: "TLL", name: "Tallinn" },
+  { code: "RIX", name: "Riga" },
+  { code: "VNO", name: "Vilnius" },
+  { code: "MLA", name: "Malta" },
+  { code: "BTS", name: "Bratislava" },
+  { code: "LCA", name: "Larnaca (Cyprus)" },
   // Northern Europe
   { code: "CPH", name: "Copenhagen" },
   { code: "ARN", name: "Stockholm Arlanda" },
@@ -2436,22 +2442,22 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
   React.useEffect(() => {
     const iata = extractIATA(data.origin);
     if (!iata) {
-      setLitAirports(suggestAirports(data.origin));
+      setLitAirports([]);
       setUsingRealData(false);
-      setDebugInfo({ step: "No IATA code detected in: " + JSON.stringify(data.origin) });
+      setDebugInfo({ step: "Choose an airport from the suggestions so a valid IATA code can be checked for direct flights." });
       return;
     }
     let cancelled = false;
     setChecking(true);
-    setDebugInfo({ step: "Calling Travelpayouts for origin " + iata + "…" });
+    setDebugInfo({ step: "Checking Travelpayouts direct flights from " + iata + "…" });
     fetchLitAirports(iata, setDebugInfo).then(real => {
       if (cancelled) return;
       setChecking(false);
-      if (real) {
+      if (real !== null) {
         setLitAirports(real);
         setUsingRealData(true);
       } else {
-        setLitAirports(suggestAirports(data.origin));
+        setLitAirports([]);
         setUsingRealData(false);
       }
     });
@@ -2469,7 +2475,7 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
   return (
     <div className="screen">
       <h1 className="title">Where are you flying in from?</h1>
-      <p className="subtitle">We'll light up the Italian airports connected to your departure.</p>
+      <p className="subtitle">We'll highlight the Italian airports you can reach with a direct flight from your departure airport.</p>
 
       <div className="field">
         <label>Departure airport</label>
@@ -2493,12 +2499,12 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
         <label>Your gateway to Italy</label>
         <ItalyMap airports={AIRPORTS} litCodes={litCodes} selected={data.airport || litCodes[0]} onSelect={(code) => setData({...data, airport: code})} />
         {checking && (
-          <p className="park-hint" style={{textAlign:"center", marginTop:10}}>Checking real flight availability…</p>
+          <p className="park-hint" style={{textAlign:"center", marginTop:10}}>Checking direct-flight availability…</p>
         )}
         {!checking && litCodes.length > 0 && (
           <p className="park-hint" style={{textAlign:"center", marginTop:10}}>
-            {litCodes.length > 1 ? `${litCodes.length} airports connected from here — tap to choose` : "Tap the glowing airport, or pick another"}
-            {usingRealData ? " · live data" : ""}
+            {litCodes.length > 1 ? `${litCodes.length} direct-flight airports found — tap to choose` : "1 direct-flight airport found — tap to choose"}
+            {usingRealData ? " · live direct-flight data" : ""}
           </p>
         )}
       </div>
