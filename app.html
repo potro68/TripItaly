@@ -1397,6 +1397,42 @@
     margin:0;
     font-family:monospace;
   }
+
+  .direct-airports-box{
+    margin-top:12px;
+    padding:12px 14px;
+    background:rgba(28,90,122,0.06);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .direct-airports-title{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    color:var(--amalfi);
+    margin-bottom:8px;
+  }
+  .direct-airports-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .direct-airport-chip{
+    padding:8px 10px;
+    border-radius:9px;
+    background:var(--whitewash);
+    border:1.5px solid var(--line);
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .direct-airport-chip.selected{
+    border-color:var(--sun);
+    background:rgba(244,185,62,0.16);
+  }
+
 </style>
 </head>
 <body>
@@ -2509,6 +2545,22 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
             {litCodes.length > 1 ? `${litCodes.length} direct-flight airports found — tap to choose` : "1 direct-flight airport found — tap to choose"}
             {usingRealData ? " · live direct-flight data" : ""}
           </p>
+        )}
+        {!checking && litAirports.length > 0 && (
+          <div className="direct-airports-box">
+            <div className="direct-airports-title">Direct airports found</div>
+            <div className="direct-airports-list">
+              {litAirports.map(a => (
+                <div
+                  key={a.code}
+                  className={"direct-airport-chip" + ((data.airport || litCodes[0]) === a.code ? " selected" : "")}
+                  onClick={() => setData({...data, airport: a.code})}
+                >
+                  {a.city} ({a.code})
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
