@@ -2766,6 +2766,74 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
   );
 }
 
+
+const MOCK_FLIGHTS = {
+  FCO: { price: 480 },
+  MXP: { price: 410 },
+  LIN: { price: 430 },
+  BGY: { price: 390 },
+  VCE: { price: 495 },
+  NAP: { price: 460 },
+  CTA: { price: 430 },
+};
+
+function ScreenFlights({ data, setData, onNext, onBack }) {
+  const airport = AIRPORTS.find(a => a.code === data.airport) || AIRPORTS[0];
+  const estimate = MOCK_FLIGHTS[airport.code]?.price || 450;
+
+  return (
+    <div className="screen">
+      <h1 className="title">Flights to {airport.city}</h1>
+      <p className="subtitle">A rough estimate to help you budget, then search real fares.</p>
+
+      <div className="suggestion-banner">
+        <div className="plane">✈️</div>
+        <div className="eyebrow">Rough estimate, per person</div>
+        <div className="airport-name">around €{estimate}</div>
+        <div className="flight-info">
+          Not a live quote · search below for real prices and dates
+        </div>
+      </div>
+
+      <div className="field">
+        <label>Search real flights</label>
+        <a
+          href={AFFILIATE_LINKS.flights}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="booking-link-btn"
+        >
+          <span className="blb-icon">✈️</span>
+          <span className="blb-text">
+            <span className="blb-h">Search flights on Kiwi.com</span>
+            <span className="blb-d">
+              {data.people} traveler{data.people > 1 ? "s" : ""} to {airport.city} ↗
+            </span>
+          </span>
+        </a>
+
+        <div className="price-entry-row">
+          <span className="price-entry-label">Booked? Enter what you paid (total):</span>
+          <div className="price-entry-input">
+            <span className="pe-sym">€</span>
+            <input
+              type="number"
+              placeholder="0"
+              value={data.flightPrice || ""}
+              onChange={e => setData({...data, flightPrice: Number(e.target.value) || 0})}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="cta-bar">
+        <button className="btn-primary" onClick={onNext}>Continue</button>
+        <button className="btn-text" onClick={onBack}>← Back</button>
+      </div>
+    </div>
+  );
+}
+
 function tripDateForDay(data, dayNum) {
   if (!data.startDate) return null;
   const d = new Date(data.startDate + "T00:00:00");
