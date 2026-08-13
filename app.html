@@ -1494,14 +1494,8 @@ async function fetchLitAirports(originIATA, mode = "direct", onDebug) {
     }));
     const litCodes = results.filter(r => r.hasData).map(r => r.airportCode);
     const lit = AIRPORTS.filter(a => litCodes.includes(a.code));
-    // Count how many real flights were found per airport — an honest,
-    // non-misleading signal (unlike a single cached price for a random date).
-    const countByCode = {};
-    results.forEach(r => {
-      countByCode[r.airportCode] = r.hasData ? r.raw.data.length : 0;
-    });
     if (onDebug) onDebug({ step: "Done", mode, results, litCodes });
-    return { lit, countByCode };
+    return lit;
   } catch (e) {
     if (onDebug) onDebug({ step: "Error", mode, error: String(e) });
     return null;
@@ -2607,7 +2601,6 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
   const [usingRealData, setUsingRealData] = useState(false);
   const [routeMode, setRouteMode] = useState("direct");
   const [debugInfo, setDebugInfo] = useState(null);
-  const [countByCode, setCountByCode] = useState({});
   const litCodes = litAirports.map(a => a.code);
   const selected = (data.airport && litCodes.includes(data.airport)) ? data.airport : (litCodes[0] || null);
   const [error, setError] = useState("");
@@ -2630,13 +2623,11 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
     setChecking(false);
 
     if (real !== null) {
-      setLitAirports(real.lit);
-      setCountByCode(real.countByCode);
+      setLitAirports(real);
       setUsingRealData(true);
-      setData({...data, airport: real.lit[0]?.code || ""});
+      setData({...data, airport: real[0]?.code || ""});
     } else {
       setLitAirports([]);
-      setCountByCode({});
       setUsingRealData(false);
       setData({...data, airport: ""});
       setError("We couldn't check flight availability right now. Please try again.");
@@ -2658,7 +2649,7 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
     if (!data.origin) { setError("Tell us your departure airport."); return; }
     if (!selected) { setError("Choose an Italian gateway first."); return; }
     setError("");
-    setData({...data, airport: selected, arrivalRouteMode: routeMode, foundFlightCount: countByCode[selected] || 0});
+    setData({...data, airport: selected, arrivalRouteMode: routeMode});
     onNext(selected);
   };
 
@@ -2788,47 +2779,82 @@ const MOCK_FLIGHTS = {
 
 function ScreenFlights({ data, setData, onNext, onBack }) {
   const airport = AIRPORTS.find(a => a.code === data.airport) || AIRPORTS[0];
-  const count = data.foundFlightCount || 0;
+  const originIATA = extractIATA(data.origin) || "—";
+  const routeMode = data.arrivalRouteMode === "one_stop" ? "one_stop" : "direct";
+  const routeLabel = routeMode === "one_stop" ? "1 connection" : "Direct flight";
+  const routeIcon = routeMode === "one_stop" ? "🔁" : "✈️";
 
   return (
     <div className="screen">
-      <h1 className="title">Flights to {airport.city}</h1>
-      <p className="subtitle">Search below for real prices and dates.</p>
+      <h1 className="title">Your flight to Italy</h1>
+      <p className="subtitle">
+        Review your route, dates and travelers, then open a real flight search.
+      </p>
 
-      {count > 0 ? (
-        <div className="suggestion-banner">
-          <div className="plane">✈️</div>
-          <div className="eyebrow">Good news</div>
-          <div className="airport-name">{count} flight{count>1?"s":""} found</div>
-          <div className="flight-info">
-            We found {count} real {data.arrivalRouteMode === "one_stop" ? "one-stop" : "direct"} flight{count>1?"s":""} on this route recently — search below for live prices on your exact dates.
+      <div className="suggestion-banner">
+        <div className="plane">{routeIcon}</div>
+        <div className="eyebrow">{routeLabel}</div>
+        <div className="airport-name">{originIATA} → {airport.code}</div>
+        <div className="flight-info">
+          {data.origin.replace(/\s*\([A-Z]{3}\)\s*$/, "")} → {airport.city}
+        </div>
+      </div>
+
+      <div className="field">
+        <label>Trip details</label>
+
+        <div className="choice-card selected">
+          <div className="choice-icon">📅</div>
+          <div className="choice-text">
+            <div className="h">
+              {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)}
+            </div>
+            <div className="d">
+              {data.people} traveler{data.people > 1 ? "s" : ""}
+              {data.flexDates !== false ? " · flexible ±3 days" : " · fixed dates"}
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="suggestion-banner">
-          <div className="plane">✈️</div>
-          <div className="eyebrow">No cached flights found for this route yet</div>
-          <div className="flight-info">
-            Search below to see real, live prices and dates
+
+        <div className="choice-card selected">
+          <div className="choice-icon">{routeIcon}</div>
+          <div className="choice-text">
+            <div className="h">{routeLabel}</div>
+            <div className="d">
+              Arrival airport: {airport.city} ({airport.code})
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
       <div className="field">
         <label>Search real flights</label>
-        <a href={buildAviasalesLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
+        <a
+          href={buildAviasalesLink(data)}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="booking-link-btn"
+        >
           <span className="blb-icon">✈️</span>
           <span className="blb-text">
-            <span className="blb-h">Search flights on Aviasales</span>
-            <span className="blb-d">{data.people} traveler{data.people>1?"s":""} to {airport.city}, dates pre-filled ↗</span>
+            <span className="blb-h">Search real fares on Aviasales</span>
+            <span className="blb-d">
+              {originIATA} → {airport.code} · {data.people} traveler{data.people > 1 ? "s" : ""}, dates pre-filled ↗
+            </span>
           </span>
         </a>
+
+        <p className="park-hint" style={{marginTop:-2, marginBottom:12}}>
+          Prices and availability are shown on the partner's website. TripItaly does not display a live fare on this screen.
+        </p>
+
         <div className="price-entry-row">
-          <span className="price-entry-label">Booked? Enter what you paid (total):</span>
+          <span className="price-entry-label">Booked? Enter the total amount you paid:</span>
           <div className="price-entry-input">
             <span className="pe-sym">€</span>
             <input
               type="number"
+              min="0"
               placeholder="0"
               value={data.flightPrice || ""}
               onChange={e => setData({...data, flightPrice: Number(e.target.value) || 0})}
@@ -2838,13 +2864,12 @@ function ScreenFlights({ data, setData, onNext, onBack }) {
       </div>
 
       <div className="cta-bar">
-        <button className="btn-primary" onClick={onNext}>Continue</button>
+        <button className="btn-primary" onClick={onNext}>Continue to bookings</button>
         <button className="btn-text" onClick={onBack}>← Back</button>
       </div>
     </div>
   );
 }
-
 const MOCK_HOTELS = [
   { name: "Hotel Artemide", area: "Near Termini, Rome", price: 145, source: "Booking.com", rating: 8.9 },
   { name: "Trastevere Loft", area: "Trastevere, Rome", price: 98, source: "Airbnb", rating: 4.8 },
@@ -3382,7 +3407,7 @@ function DashTickets({ data, setData, flightTotal, docs, onAddDoc }) {
             <div className="d">€{flightTotal.toLocaleString()} total · {data.people} traveler{data.people>1?"s":""} · {data.flexDates !== false ? "flexible ±3 days" : "fixed dates"}</div>
           </div>
         </div>
-        <a href={buildAviasalesLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:10}}>
+        <a href={buildAviasalesLink(data)} target="_blank" rel="noopener noreferrer sponsored" className="booking-link-btn" style={{marginTop:10}}>
           <span className="blb-icon">✈️</span>
           <span className="blb-text">
             <span className="blb-h">Search flights on Aviasales</span>
@@ -4041,7 +4066,7 @@ function ScreenDashboard({ data, setData }) {
     setDocuments(prev => ({...prev, [sectionId]: [...prev[sectionId], doc]}));
   };
   const nights = tripLengthDays(data) - 1;
-  const flightTotal = data.mode === "onsite" ? 0 : (data.flightPrice || (450 * data.people));
+  const flightTotal = data.mode === "onsite" ? 0 : (data.flightPrice || 0);
   const hotelTotal = data.mode === "onsite" ? (data.prepaidTotal || 0) : (data.hotelPrice || 0); // onsite: lump prepaid into this bucket
   const carTotal = data.mode === "onsite" ? 0 : (data.wantsCar ? (data.carPrice || 0) : 0);
   const lockedTotal = flightTotal + hotelTotal + carTotal;
