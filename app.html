@@ -1049,6 +1049,21 @@
     background:rgba(28,90,122,0.08);
     color:var(--amalfi-deep);
   }
+  .leg-transport-link{
+    display:block;
+    margin:2px 0 10px 20px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--amalfi);
+  }
+  .leg-transport-fallback{
+    margin:2px 0 10px 20px;
+  }
+  .leg-transport-hint{
+    font-size:11px;
+    color:rgba(19,42,58,0.55);
+    margin-top:3px;
+  }
 
   /* ---- Booking link button & price entry ---- */
   .booking-link-btn{
@@ -1445,6 +1460,87 @@
     background:rgba(244,185,62,0.16);
   }
 
+  /* ---- Hotel results (Stay22 Direct Travel API) ---- */
+  .hotel-results-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:14px;
+  }
+  .hotel-card{
+    display:flex;
+    gap:10px;
+    border:1.5px solid var(--line);
+    border-radius:14px;
+    padding:10px;
+    background:var(--whitewash);
+  }
+  .hotel-card.selected{
+    border-color:var(--sun);
+    background:rgba(244,185,62,0.1);
+  }
+  .hotel-card-img{
+    width:84px;
+    height:84px;
+    border-radius:10px;
+    object-fit:cover;
+    flex-shrink:0;
+    background:var(--line);
+  }
+  .hotel-card-body{ flex:1; min-width:0; }
+  .hotel-card-name{
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1.3;
+    margin-bottom:3px;
+  }
+  .hotel-card-meta{
+    font-size:11.5px;
+    color:rgba(19,42,58,0.6);
+    margin-bottom:4px;
+  }
+  .hotel-supplier-badge{
+    font-weight:700;
+    color:var(--amalfi);
+  }
+  .hotel-card-price{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    font-weight:700;
+    color:var(--amalfi-deep);
+  }
+  .hotel-card-price-sub{
+    font-family:'Sora', sans-serif;
+    font-size:10.5px;
+    font-weight:500;
+    color:rgba(19,42,58,0.5);
+  }
+  .hotel-card-actions{
+    display:flex;
+    gap:8px;
+    margin-top:8px;
+    align-items:center;
+  }
+  .hotel-select-btn{
+    flex:1;
+    margin-top:0 !important;
+    padding:8px 10px !important;
+    font-size:12px !important;
+  }
+  .hotel-select-btn.selected{
+    background:var(--sun) !important;
+    border-color:var(--sun) !important;
+    color:var(--amalfi-deep) !important;
+  }
+  .hotel-book-link{
+    font-size:12px;
+    font-weight:700;
+    color:var(--amalfi);
+    white-space:nowrap;
+    padding:8px 4px;
+  }
+
 </style>
 </head>
 <body>
@@ -1575,6 +1671,115 @@ const TRANSPORT_OPTIONS = [
   { id: "drive", icon: "🚗", label: "Drive", note: "Included if you're renting a car" },
 ];
 
+// Italo station codes — ONLY verified ones go here (tested by opening
+// italotreno.com's real search and reading the resulting URL). Unverified
+// cities fall back to a generic Trenitalia link instead of guessing a
+// code that might be wrong.
+const ITALO_STATION_CODES = {
+  "Rome": "RM0",
+  "Florence": "FI0",
+  "Milan": "MC_",
+  "Naples": "NA0",
+  "Turin": "TOP",
+  "Venice": "VE0",
+  "Bologna": "BC_",
+  "Palermo": "PA_",
+  "Genoa": "G__",
+  "Bari": "BAC",
+  "Catania": "CTQ",
+  "Verona": "VPN",
+  "Padua": "PD_",
+  "Trieste": "TSC",
+  "Brescia": "BR4",
+  "Parma": "Y__",
+  "Reggio Calabria": "RCE",
+  "Pisa": "PSS",
+  "Bergamo": "BGM",
+};
+
+function ddmmyyyy(isoDate) {
+  if (!isoDate) return "";
+  const d = new Date(isoDate + "T00:00:00");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+// Returns a real, pre-filled Italo search link if we have verified station
+// codes for both cities, or null if we don't (caller should fall back to
+// a generic Trenitalia link in that case).
+function buildItaloLink(fromCity, toCity, date, adults) {
+  const osc = ITALO_STATION_CODES[fromCity];
+  const dsc = ITALO_STATION_CODES[toCity];
+  if (!osc || !dsc || !date) return null;
+  const params = new URLSearchParams({
+    osc, dsc,
+    jt: "single",
+    od: ddmmyyyy(date),
+    id: "",
+    adt: String(Math.max(1, adults || 1)),
+    yng: "0", chd: "0", snr: "0", inf: "0", pet: "0",
+    promo: "",
+    lang: "it",
+    startSearch: "true",
+  });
+  return `https://biglietti.italotreno.com/it/booking/ricerca-treni?${params.toString()}`;
+}
+
+// Trenitalia has no known stable, guessable deep-link format — always
+// send to their official search homepage, with the trip details shown
+// nearby in the app so the user can copy them in quickly.
+const TRENITALIA_URL = "https://www.lefrecce.it/Channels.Website.WEB/";
+
+// Internal flight between two Italian cities, reusing the same Aviasales
+// link builder as international flights — just with both airports inside Italy.
+// Italian domestic airports — for flights BETWEEN Italian cities during
+// the trip. Separate from the 5 "arrival gateway" airports (which are
+// only for international arrivals). These are standard, public IATA
+// codes, not something that needed testing.
+const INTERNAL_FLIGHT_AIRPORTS = {
+  "Rome": "FCO",
+  "Florence": "FLR",
+  "Milan": "MXP",
+  "Naples": "NAP",
+  "Turin": "TRN",
+  "Venice": "VCE",
+  "Bologna": "BLQ",
+  "Palermo": "PMO",
+  "Genoa": "GOA",
+  "Bari": "BRI",
+  "Catania": "CTA",
+  "Verona": "VRN",
+  "Trieste": "TRS",
+  "Brescia": "VBS",
+  "Parma": "PMF",
+  "Reggio Calabria": "REG",
+  "Pisa": "PSA",
+  "Bergamo": "BGY",
+};
+
+function buildInternalFlightLink(fromCity, toCity, date, adults) {
+  const fromCode = INTERNAL_FLIGHT_AIRPORTS[fromCity];
+  const toCode = INTERNAL_FLIGHT_AIRPORTS[toCity];
+  if (!fromCode || !toCode || !date) return null;
+
+  const params = new URLSearchParams({
+    origin_iata: fromCode,
+    destination_iata: toCode,
+    depart_date: date,
+    oneway: "1",
+    adults: String(Math.min(9, Math.max(1, adults || 1))),
+    children: "0",
+    infants: "0",
+    trip_class: "0",
+    currency: "EUR",
+    locale: "en",
+    marker: AVIASALES_MARKER,
+  });
+
+  return `https://search.aviasales.com/flights/?${params.toString()}`;
+}
+
 // Real, tracked affiliate links (Travelpayouts / Stay22).
 // These are currently static short links — they do not yet pre-fill
 // city/dates/travelers. Verifying per-partner deep-link parameter support
@@ -1620,11 +1825,21 @@ const BOOKING_LABEL = "tripitaly";
 // a starting point — the user can always type a different city (e.g.
 // arriving at Bergamo/Orio al Serio but wanting to stay in Milan, Como,
 // or Lecco instead of Bergamo itself).
+// Airport city labels can look like "Milan / Bergamo (Orio al Serio)" —
+// for anything that needs a single clean city name (route matching,
+// train/flight lookups), take the primary name only: before the "(" and,
+// if present, before the " / " too.
+function primaryCityName(cityLabel) {
+  if (!cityLabel) return "";
+  const beforeParens = cityLabel.split(" (")[0];
+  return beforeParens.split(" / ")[0].trim();
+}
+
 function guessedStayCity(data) {
   if (data.routeBlocks && data.routeBlocks[0] && data.routeBlocks[0].city) {
     return data.routeBlocks[0].city;
   }
-  return AIRPORTS.find(a => a.code === data.airport)?.city.split(" (")[0] || "";
+  return primaryCityName(AIRPORTS.find(a => a.code === data.airport)?.city) || "";
 }
 
 function buildBookingLink(data) {
@@ -1761,13 +1976,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
 
       <div className="field">
         <label>Which city are you based in?</label>
-        <input
-          type="text"
-          className="route-city-input"
-          placeholder="e.g. Rome"
-          value={firstCity}
-          onChange={e => setFirstCity(e.target.value)}
-        />
+        <CityAutocomplete value={firstCity} onChange={v => setFirstCity(v)} />
       </div>
 
       <div className="field">
@@ -1792,7 +2001,12 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
             </div>
           </div>
 
-          {stopsWithRange.map((s, i) => (
+          {stopsWithRange.map((s, i) => {
+            const legFromCity = i === 0 ? firstCity : stopsWithRange[i - 1].city;
+            const legDate = tripDateForDay(data, s.day);
+            const legDateISO = legDate ? legDate.toISOString().slice(0, 10) : null;
+            const selectedMode = legTransport[i];
+            return (
             <div key={s.day}>
               <div className="leg-transport-row">
                 <span className="leg-arrow">↓</span>
@@ -1806,18 +2020,51 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
                   </div>
                 ))}
               </div>
+
+              {selectedMode === "train" && (() => {
+                const italoLink = buildItaloLink(legFromCity, s.city, legDateISO, data.people);
+                return italoLink ? (
+                  <a href={italoLink} target="_blank" rel="noopener noreferrer sponsored" className="leg-transport-link">
+                    🚄 Search {legFromCity} → {s.city} on Italo ↗
+                  </a>
+                ) : (
+                  <div className="leg-transport-fallback">
+                    <a href={TRENITALIA_URL} target="_blank" rel="noopener noreferrer" className="leg-transport-link">
+                      🚆 Search on Trenitalia ↗
+                    </a>
+                    <p className="leg-transport-hint">{legFromCity} → {s.city} · {legDate ? formatDateEN(legDateISO) : ""} · {data.people} traveler{data.people>1?"s":""}</p>
+                  </div>
+                );
+              })()}
+
+              {selectedMode === "flight" && (() => {
+                const flightLink = buildInternalFlightLink(legFromCity, s.city, legDateISO, data.people);
+                return flightLink ? (
+                  <a href={flightLink} target="_blank" rel="noopener noreferrer sponsored" className="leg-transport-link">
+                    ✈️ Search {legFromCity} → {s.city} on Aviasales ↗
+                  </a>
+                ) : (
+                  <p className="leg-transport-hint">No flights — no airport known for one of these cities.</p>
+                );
+              })()}
+
               <div className="choice-card selected">
                 <div className="choice-icon">📍</div>
                 <div className="choice-text">
                   <div className="h">Day {s.day}{s.endDay > s.day ? `–${s.endDay}` : ""} · {s.city}</div>
+                  <div className="d">
+                    {shortDate(tripDateForDay(data, s.day))}
+                    {s.endDay > s.day ? ` – ${shortDate(tripDateForDay(data, s.endDay))}` : ""}
+                  </div>
                 </div>
                 <div className="remove-stop" onClick={() => removeStop(s.day)}>✕</div>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           <div className="route-add-row">
-            <input type="text" className="route-city-input" placeholder="City, e.g. Turin" value={cityInput} onChange={e => setCityInput(e.target.value)} />
+            <CityAutocomplete value={cityInput} onChange={v => setCityInput(v)} />
             <input
               type="number"
               min="2"
@@ -1908,7 +2155,7 @@ function CityAutocomplete({ value, onChange }) {
             <div
               key={i}
               className="autocomplete-item"
-              onMouseDown={() => { onChange(m.name); setOpen(false); }}
+              onMouseDown={() => { onChange(m.name); setMatches([]); setOpen(false); }}
             >
               <div className="ac-name">{m.name}</div>
               {m.region && <div className="ac-sub">{m.region}, Italy</div>}
@@ -1920,9 +2167,138 @@ function CityAutocomplete({ value, onChange }) {
   );
 }
 
+function HotelResults({ data, setData, city }) {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [searched, setSearched] = useState(false);
+
+  const search = async () => {
+    if (!city || !data.startDate || !data.endDate) {
+      setError("Enter a city and make sure your dates are set first.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSearched(true);
+    try {
+      const baseParams = {
+        action: "hotels",
+        address: `${city}, Italy`,
+        checkin: data.startDate,
+        checkout: data.endDate,
+        adults: String(Math.max(1, data.people || 1)),
+      };
+      const [expediaRes, hotelscomRes] = await Promise.all([
+        fetch(`${PROXY_URL}?${new URLSearchParams({...baseParams, provider: "expedia"}).toString()}`).then(r => r.json()),
+        fetch(`${PROXY_URL}?${new URLSearchParams({...baseParams, provider: "hotelscom"}).toString()}`).then(r => r.json()),
+      ]);
+
+      const combined = [];
+      if (expediaRes.success && Array.isArray(expediaRes.data)) combined.push(...expediaRes.data);
+      if (hotelscomRes.success && Array.isArray(hotelscomRes.data)) combined.push(...hotelscomRes.data);
+
+      // De-dupe by listing id (Stay22 can return the same property from both providers)
+      const seen = new Set();
+      const unique = combined.filter(h => {
+        if (seen.has(h.id)) return false;
+        seen.add(h.id);
+        return true;
+      });
+
+      if (unique.length > 0) {
+        setResults(unique);
+      } else {
+        setError(expediaRes.error || hotelscomRes.error || "No hotels found for this search.");
+        setResults([]);
+      }
+    } catch (e) {
+      setError("Couldn't reach the hotel search right now. Try again in a moment.");
+      setResults([]);
+    }
+    setLoading(false);
+  };
+
+  // Works whichever provider (booking or expedia) responded for this listing.
+  const getSupplier = (hotel) => hotel.suppliers?.expedia ? { key: "expedia", label: "Expedia", ...hotel.suppliers.expedia } : (hotel.suppliers?.hotelscom ? { key: "hotelscom", label: "Hotels.com", ...hotel.suppliers.hotelscom } : null);
+  const getPrice = (hotel) => getSupplier(hotel)?.price?.total || null;
+
+  const selectHotel = (hotel) => {
+    const supplier = getSupplier(hotel);
+    const price = getPrice(hotel);
+    setData({
+      ...data,
+      hotel: hotel.name,
+      hotelPrice: price ? Math.round(price) : (data.hotelPrice || 0),
+      hotelBookingLink: supplier?.link || hotel.url,
+    });
+  };
+
+  return (
+    <div>
+      <button className="btn-secondary" onClick={search} disabled={loading}>
+        {loading ? "Searching real hotels…" : "🔍 Show real hotels & prices"}
+      </button>
+
+      {error && <p style={{color:"#C0392B", fontSize:12.5, fontWeight:600, marginTop:8}}>{error}</p>}
+
+      {searched && !loading && !error && results.length === 0 && (
+        <p className="park-hint" style={{marginTop:8}}>No results — try a nearby larger city.</p>
+      )}
+
+      {results.length > 0 && (
+        <div className="hotel-results-list">
+          {results.map(h => {
+            const isSelected = data.hotel === h.name;
+            const nights = tripLengthDays(data);
+            return (
+              <div key={h.id} className={"hotel-card" + (isSelected ? " selected" : "")}>
+                {h.media?.thumbnail && (
+                  <img src={h.media.thumbnail} alt={h.name} className="hotel-card-img" loading="lazy" />
+                )}
+                <div className="hotel-card-body">
+                  <div className="hotel-card-name">{h.name}</div>
+                  <div className="hotel-card-meta">
+                    {h.rating?.value ? `⭐ ${h.rating.value}${h.rating.count ? ` (${h.rating.count})` : ""} · ` : ""}
+                    {h.capacity?.guests ? `${h.capacity.guests} guests` : ""}
+                    {getSupplier(h) && <span className="hotel-supplier-badge"> · {getSupplier(h).label}</span>}
+                  </div>
+                  {getPrice(h) ? (
+                    <div className="hotel-card-price">
+                      €{Math.round(getPrice(h))} <span className="hotel-card-price-sub">total, {nights} night{nights>1?"s":""}</span>
+                    </div>
+                  ) : (
+                    <div style={{fontSize:11, color:"rgba(19,42,58,0.5)"}}>Price unavailable — book to see live rate</div>
+                  )}
+                  <div className="hotel-card-actions">
+                    <button
+                      className={"btn-secondary hotel-select-btn" + (isSelected ? " selected" : "")}
+                      onClick={() => selectHotel(h)}
+                    >
+                      {isSelected ? "✓ Selected" : "Select this hotel"}
+                    </button>
+                    <a
+                      href={getSupplier(h)?.link || h.url}
+                      target="_blank"
+                      rel="noopener noreferrer sponsored"
+                      className="hotel-book-link"
+                    >
+                      Book ↗
+                    </a>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ScreenBookings({ data, setData, onNext, onBack }) {
   const tripDays = tripLengthDays(data);
-  const arrivalCity = AIRPORTS.find(a => a.code === data.airport)?.city.split(" (")[0] || "Arrival city";
+  const arrivalCity = primaryCityName(AIRPORTS.find(a => a.code === data.airport)?.city) || "Arrival city";
 
   const [multiCity, setMultiCity] = useState(data.routeCustom || false);
   const [stops, setStops] = useState(
@@ -1988,25 +2364,42 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         <label>Where do you want to stay?</label>
         <p className="park-hint">We've guessed based on your arrival airport — change it if you'd rather stay somewhere else nearby.</p>
         <CityAutocomplete
-          value={data.stayCity || guessedStayCity(data)}
+          value={data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)}
           onChange={v => setData({...data, stayCity: v})}
         />
+
+        <HotelResults
+          data={data}
+          setData={setData}
+          city={data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)}
+        />
+
+        {data.hotel && data.hotelBookingLink && (
+          <div className="choice-card selected" style={{marginTop:12}}>
+            <div className="choice-icon">🏨</div>
+            <div className="choice-text">
+              <div className="h">{data.hotel}</div>
+              <div className="d">€{data.hotelPrice} total — selected from real search</div>
+            </div>
+          </div>
+        )}
+
         <a href={buildBookingLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:10}}>
           <span className="blb-icon">🏨</span>
           <span className="blb-text">
-            <span className="blb-h">Search hotels on Booking.com</span>
+            <span className="blb-h">Or search all hotels on Booking.com</span>
             <span className="blb-d">Your dates & travelers already filled in ↗</span>
           </span>
         </a>
         <div className="price-entry-row">
-          <span className="price-entry-label">Booked? Enter what you paid:</span>
+          <span className="price-entry-label">Booked elsewhere? Enter what you paid:</span>
           <div className="price-entry-input">
             <span className="pe-sym">€</span>
             <input
               type="number"
               placeholder="0"
               value={data.hotelPrice || ""}
-              onChange={e => setData({...data, hotelPrice: Number(e.target.value) || 0, hotel: "My accommodation"})}
+              onChange={e => setData({...data, hotelPrice: Number(e.target.value) || 0, hotel: data.hotel || "My accommodation"})}
             />
           </div>
         </div>
@@ -2064,17 +2457,25 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           <label>Your route · {tripDays} days total</label>
           <p className="park-hint">e.g. Day 1 Rome, Day 4 Naples, Day 8 Turin, Day 11 Rome (heading home).</p>
 
-          {stopsWithRange.map((s, i) => (
+          {stopsWithRange.map((s, i) => {
+            const nextStop = stopsWithRange[i + 1];
+            const legDate = nextStop ? tripDateForDay(data, nextStop.day) : null;
+            const legDateISO = legDate ? legDate.toISOString().slice(0, 10) : null;
+            const selectedMode = legTransport[i];
+            return (
             <div key={s.day}>
               <div className="choice-card selected">
                 <div className="choice-icon">📍</div>
                 <div className="choice-text">
                   <div className="h">Day {s.day}{s.endDay > s.day ? `–${s.endDay}` : ""} · {s.city}</div>
-                  <div className="d">{s.endDay - s.day + 1} day{s.endDay - s.day + 1 > 1 ? "s" : ""}</div>
+                  <div className="d">
+                    {s.endDay - s.day + 1} day{s.endDay - s.day + 1 > 1 ? "s" : ""} · {shortDate(tripDateForDay(data, s.day))}
+                    {s.endDay > s.day ? ` – ${shortDate(tripDateForDay(data, s.endDay))}` : ""}
+                  </div>
                 </div>
                 {stopsWithRange.length > 1 && <div className="remove-stop" onClick={() => removeStop(s.day)}>✕</div>}
               </div>
-              {i < stopsWithRange.length - 1 && (
+              {nextStop && (
                 <div className="leg-transport-row">
                   <span className="leg-arrow">↓</span>
                   {TRANSPORT_OPTIONS.filter(t => t.id !== "drive" || data.wantsCar).map(t => (
@@ -2088,11 +2489,39 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
                   ))}
                 </div>
               )}
+
+              {nextStop && selectedMode === "train" && (() => {
+                const italoLink = buildItaloLink(s.city, nextStop.city, legDateISO, data.people);
+                return italoLink ? (
+                  <a href={italoLink} target="_blank" rel="noopener noreferrer sponsored" className="leg-transport-link">
+                    🚄 Search {s.city} → {nextStop.city} on Italo ↗
+                  </a>
+                ) : (
+                  <div className="leg-transport-fallback">
+                    <a href={TRENITALIA_URL} target="_blank" rel="noopener noreferrer" className="leg-transport-link">
+                      🚆 Search on Trenitalia ↗
+                    </a>
+                    <p className="leg-transport-hint">{s.city} → {nextStop.city} · {legDate ? formatDateEN(legDateISO) : ""} · {data.people} traveler{data.people>1?"s":""}</p>
+                  </div>
+                );
+              })()}
+
+              {nextStop && selectedMode === "flight" && (() => {
+                const flightLink = buildInternalFlightLink(s.city, nextStop.city, legDateISO, data.people);
+                return flightLink ? (
+                  <a href={flightLink} target="_blank" rel="noopener noreferrer sponsored" className="leg-transport-link">
+                    ✈️ Search {s.city} → {nextStop.city} on Aviasales ↗
+                  </a>
+                ) : (
+                  <p className="leg-transport-hint">No flights — no airport known for one of these cities.</p>
+                );
+              })()}
             </div>
-          ))}
+            );
+          })}
 
           <div className="route-add-row">
-            <input type="text" className="route-city-input" placeholder="City, e.g. Turin" value={cityInput} onChange={e => setCityInput(e.target.value)} />
+            <CityAutocomplete value={cityInput} onChange={v => setCityInput(v)} />
             <input
               type="number"
               min="1"
@@ -2644,8 +3073,11 @@ function AirportAutocomplete({ value, onChange }) {
     const city = a.city_name && a.city_name !== a.name ? `${a.city_name} — ` : "";
     const country = a.country_name ? `, ${a.country_name}` : "";
     onChange(`${city}${a.name}${country} (${a.code})`);
+    setMatches([]);
     setOpen(false);
   };
+
+  const isAlreadySelected = /\([A-Z]{3}\)\s*$/.test((value || "").trim());
 
   return (
     <div style={{position:"relative"}}>
@@ -2657,7 +3089,7 @@ function AirportAutocomplete({ value, onChange }) {
           onChange(e.target.value);
           setOpen(true);
         }}
-        onFocus={() => matches.length > 0 && setOpen(true)}
+        onFocus={() => { if (!isAlreadySelected && matches.length > 0) setOpen(true); }}
         placeholder="City, airport or IATA code"
         autoComplete="off"
       />
@@ -3119,6 +3551,11 @@ function tripDateForDay(data, dayNum) {
   const d = new Date(data.startDate + "T00:00:00");
   d.setDate(d.getDate() + (dayNum - 1));
   return d;
+}
+
+function shortDate(d) {
+  if (!d) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function formatDayStrip(d) {
