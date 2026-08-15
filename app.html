@@ -825,6 +825,16 @@
     overflow-x:auto;
     padding-bottom:2px;
   }
+  .nearby-filter-desc{
+    font-size:13px;
+    font-weight:700;
+    color:var(--amalfi-deep);
+    background:rgba(28,90,122,0.09);
+    border-radius:9px;
+    padding:9px 12px;
+    margin-top:10px;
+    line-height:1.4;
+  }
   .nearby-filter-chip{
     flex:0 0 auto;
     font-size:12.5px;
@@ -839,6 +849,34 @@
     border-color:var(--amalfi);
     background:var(--amalfi-deep);
     color:#fff;
+  }
+  .nearby-add-btn{
+    flex-shrink:0;
+    font-size:10.5px;
+    font-weight:700;
+    color:var(--amalfi-deep);
+    background:rgba(244,185,62,0.25);
+    border:1.5px solid var(--sun);
+    border-radius:8px;
+    padding:7px 9px;
+    cursor:pointer;
+    text-align:center;
+    line-height:1.4;
+  }
+  .nearby-add-btn.added{
+    background:var(--sun);
+    color:var(--amalfi-deep);
+  }
+  .stop-go-btn{
+    flex-shrink:0;
+    font-size:11.5px;
+    font-weight:700;
+    color:#fff;
+    background:var(--amalfi);
+    border-radius:8px;
+    padding:7px 10px;
+    margin-right:6px;
+    white-space:nowrap;
   }
 
   /* ---- Phrasebook ---- */
@@ -919,6 +957,31 @@
     width:9px; height:9px;
     border-radius:50%;
     flex-shrink:0;
+  }
+  .map-directions-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:10px;
+  }
+  .map-directions-link{
+    font-size:12px;
+    font-weight:700;
+    color:var(--amalfi);
+    background:rgba(28,90,122,0.08);
+    padding:8px 12px;
+    border-radius:9px;
+  }
+  .hotel-directions-btn{
+    display:block;
+    text-align:center;
+    margin:12px 0;
+    padding:12px;
+    font-size:13px;
+    font-weight:700;
+    color:#fff;
+    background:linear-gradient(135deg, var(--amalfi-deep), var(--amalfi));
+    border-radius:12px;
   }
 
   /* ---- Day strip calendar ---- */
@@ -1562,13 +1625,13 @@ const TRAVELER_TYPES = [
 ];
 
 const AIRPORTS = [
-  { code: "FCO", city: "Rome (Fiumicino)", tags: ["History & Art", "Hills"], mapX: 48, mapY: 43 },
-  { code: "MXP", city: "Milan (Malpensa)", tags: ["Lakes", "Mountains", "City"], mapX: 31, mapY: 22 },
-  { code: "LIN", city: "Milan (Linate)", tags: ["City", "Business", "Lakes"], mapX: 34, mapY: 22 },
-  { code: "BGY", city: "Milan / Bergamo (Orio al Serio)", tags: ["City", "Lakes", "Low-cost"], mapX: 37, mapY: 21 },
-  { code: "VCE", city: "Venice (Marco Polo)", tags: ["History & Art", "Mountains"], mapX: 53, mapY: 17 },
-  { code: "NAP", city: "Naples (Capodichino)", tags: ["Sea", "History & Art"], mapX: 62, mapY: 54 },
-  { code: "CTA", city: "Catania", tags: ["Sea", "Mountains (Etna)"], mapX: 63, mapY: 83 },
+  { code: "FCO", city: "Rome (Fiumicino)", tags: ["History & Art", "Hills"], mapX: 48, mapY: 43, lat: 41.8003, lng: 12.2389 },
+  { code: "MXP", city: "Milan (Malpensa)", tags: ["Lakes", "Mountains", "City"], mapX: 31, mapY: 22, lat: 45.6306, lng: 8.7281 },
+  { code: "LIN", city: "Milan (Linate)", tags: ["City", "Business", "Lakes"], mapX: 34, mapY: 22, lat: 45.4451, lng: 9.2767 },
+  { code: "BGY", city: "Milan / Bergamo (Orio al Serio)", tags: ["City", "Lakes", "Low-cost"], mapX: 37, mapY: 21, lat: 45.6739, lng: 9.7042 },
+  { code: "VCE", city: "Venice (Marco Polo)", tags: ["History & Art", "Mountains"], mapX: 53, mapY: 17, lat: 45.5053, lng: 12.3519 },
+  { code: "NAP", city: "Naples (Capodichino)", tags: ["Sea", "History & Art"], mapX: 62, mapY: 54, lat: 40.8860, lng: 14.2908 },
+  { code: "CTA", city: "Catania", tags: ["Sea", "Mountains (Etna)"], mapX: 63, mapY: 83, lat: 37.4668, lng: 15.0664 },
 ];
 
 // ---- Travelpayouts Data API integration, via a Cloudflare Worker proxy ----
@@ -4186,8 +4249,12 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
       geocodeAddress(`${data.hotel}, Italy`).then(setHotelCoords);
     }
     if (data.wantsCar) {
+      // Pickup is always at the arrival airport in our current booking flow —
+      // use its real coordinates directly instead of a vague text search.
       const airport = AIRPORTS.find(a => a.code === data.airport);
-      geocodeAddress(`${airport?.city || "Rome"} car rental`).then(setCarCoords);
+      if (airport?.lat && airport?.lng) {
+        setCarCoords({ lat: airport.lat, lng: airport.lng });
+      }
     }
   }, [data.hotel, data.wantsCar, data.airport, compact]);
 
@@ -4200,14 +4267,22 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
   }
 
   if (status === "unsupported" || status === "denied" || (status === "ok" && imgError)) {
+    const isImageFailure = status === "ok" && imgError;
     return (
       <div className="map-placeholder" style={compact ? {height:140} : {}}>
         <div className="map-placeholder-text">
-          {status === "unsupported" ? "Location not supported here" : "Couldn't access your location"}
+          {status === "unsupported" ? "Location not supported here"
+            : isImageFailure ? "Got your location, but the map image didn't load"
+            : "Couldn't access your location"}
         </div>
-        {!compact && (
+        {!compact && !isImageFailure && (
           <div className="map-placeholder-hint">
             Open this file directly in your phone's browser (not inside a preview) and allow location access when asked.
+          </div>
+        )}
+        {!compact && isImageFailure && (
+          <div className="map-placeholder-hint">
+            The map image service may be temporarily down — your location itself was found fine.
           </div>
         )}
         <button className="btn-secondary" style={{marginTop:10, width:"auto", padding:"9px 16px"}} onClick={locate}>Try again</button>
@@ -4215,17 +4290,24 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
     );
   }
 
-  const markerParts = [`${coords.lat},${coords.lng},red-pushpin`];
-  if (hotelCoords) markerParts.push(`${hotelCoords.lat},${hotelCoords.lng},blue-pushpin`);
-  if (carCoords) markerParts.push(`${carCoords.lat},${carCoords.lng},green-pushpin`);
+  const googleMarkers = [`color:red|${coords.lat},${coords.lng}`];
+  if (hotelCoords) googleMarkers.push(`color:blue|${hotelCoords.lat},${hotelCoords.lng}`);
+  if (carCoords) googleMarkers.push(`color:green|${carCoords.lat},${carCoords.lng}`);
   if (poiOffsets) {
     poiOffsets.forEach(p => {
-      markerParts.push(`${coords.lat + p.dLat},${coords.lng + p.dLng},orange-pushpin`);
+      googleMarkers.push(`color:orange|${coords.lat + p.dLat},${coords.lng + p.dLng}`);
     });
   }
   const zoom = compact ? 15 : 13;
   const h = compact ? 160 : 220;
-  const staticMapSrc = `https://staticmap.openstreetmap.de/staticmap.php?center=${coords.lat},${coords.lng}&zoom=${zoom}&size=440x${h}&markers=${markerParts.join("|")}`;
+  const mapParams = new URLSearchParams({
+    action: "staticmap",
+    center: `${coords.lat},${coords.lng}`,
+    zoom: String(zoom),
+    size: `440x${h}`,
+  });
+  googleMarkers.forEach(m => mapParams.append("markers", m));
+  const staticMapSrc = `${PROXY_URL}?${mapParams.toString()}`;
 
   return (
     <div>
@@ -4243,7 +4325,29 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
         <div className="map-legend">
           <div className="map-legend-item"><span className="map-dot" style={{background:"#C0392B"}}></span> You</div>
           {data.hotel && <div className="map-legend-item"><span className="map-dot" style={{background:"#2255AA"}}></span> {data.hotel}</div>}
-          {data.wantsCar && <div className="map-legend-item"><span className="map-dot" style={{background:"#2E8B57"}}></span> Car pickup</div>}
+          {data.wantsCar && <div className="map-legend-item"><span className="map-dot" style={{background:"#2E8B57"}}></span> Car pickup (airport)</div>}
+        </div>
+      )}
+      {!compact && (hotelCoords || carCoords) && (
+        <div className="map-directions-row">
+          {hotelCoords && (
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${hotelCoords.lat},${hotelCoords.lng}`}
+              target="_blank" rel="noopener noreferrer"
+              className="map-directions-link"
+            >
+              🏨 Directions to hotel ↗
+            </a>
+          )}
+          {carCoords && (
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${carCoords.lat},${carCoords.lng}`}
+              target="_blank" rel="noopener noreferrer"
+              className="map-directions-link"
+            >
+              🚗 Directions to car pickup ↗
+            </a>
+          )}
         </div>
       )}
       {compact && poiOffsets && (
@@ -4288,7 +4392,13 @@ function CityMap({ city }) {
   if (!coords) {
     return <div className="map-placeholder" style={{height:140}}><div className="map-placeholder-text">Map unavailable for {city}</div></div>;
   }
-  const src = `https://staticmap.openstreetmap.de/staticmap.php?center=${coords.lat},${coords.lng}&zoom=13&size=440x160&markers=${coords.lat},${coords.lng},blue-pushpin`;
+  const src = `${PROXY_URL}?${new URLSearchParams({
+    action: "staticmap",
+    center: `${coords.lat},${coords.lng}`,
+    zoom: "13",
+    size: "440x160",
+    markers: `color:blue|${coords.lat},${coords.lng}`,
+  }).toString()}`;
   return (
     <div className="map-frame-wrap">
       <img className="map-frame" style={{height:160}} src={src} alt={`Map of ${city}`} />
@@ -4332,61 +4442,54 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
       )}
 
       {isToday
-        ? <LiveLocationMap data={{}} compact poiOffsets={MOCK_POI_OFFSETS} />
+        ? <LiveLocationMap data={data} compact poiOffsets={MOCK_POI_OFFSETS} />
         : <CityMap city={city} />
       }
 
-      <div className="day-actions-grid">
-        <div className="day-action-card" onClick={() => onGoTo("nearby")}>
-          <div className="day-action-icon">🍽️</div>
-          <div className="day-action-label">Eat nearby</div>
-        </div>
-        <div className="day-action-card" onClick={() => onGoTo("nearby")}>
-          <div className="day-action-icon">🏛️</div>
-          <div className="day-action-label">Attractions</div>
-        </div>
-        <div className="day-action-card" onClick={() => onGoTo("nearby")}>
-          <div className="day-action-icon">🅿️</div>
-          <div className="day-action-label">Parking & ZTL</div>
-        </div>
-        <div className="day-action-card" onClick={() => onGoTo("phrasebook")}>
-          <div className="day-action-icon">💬</div>
-          <div className="day-action-label">Phrases</div>
-        </div>
-        <div className="day-action-card" onClick={() => onGoTo("tools")}>
-          <div className="day-action-icon">🌤️</div>
-          <div className="day-action-label">Weather</div>
+      {data.hotel && (
+        <a
+          href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(data.hotel + ", Italy")}`}
+          target="_blank" rel="noopener noreferrer"
+          className="hotel-directions-btn"
+        >
+          🏨 Directions to {data.hotel} ↗
+        </a>
+      )}
+
+      <div className="field">
+        <label>Your plan for this day</label>
+        {(!plannedStops || plannedStops.length === 0) && (
+          <div className="choice-card" style={{opacity:0.55}}>
+            <div className="choice-icon">📭</div>
+            <div className="choice-text"><div className="h">Nothing planned yet</div></div>
+          </div>
+        )}
+        {plannedStops && plannedStops.map((s, i) => (
+          <div key={i} className="choice-card selected">
+            <div className="choice-icon">📍</div>
+            <div className="choice-text"><div className="h">{s}</div></div>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s + ", Italy")}`}
+              target="_blank" rel="noopener noreferrer"
+              className="stop-go-btn"
+              onClick={e => e.stopPropagation()}
+            >
+              Go ↗
+            </a>
+            <div className="remove-stop" onClick={() => onRemoveStop(i)}>✕</div>
+          </div>
+        ))}
+        <div className="route-add-row">
+          <input
+            type="text"
+            className="route-city-input"
+            placeholder="Add a place to visit"
+            value={stopInput}
+            onChange={e => setStopInput(e.target.value)}
+          />
+          <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { if(stopInput.trim()){ onAddStop(stopInput.trim()); setStopInput(""); } }}>+ Add</button>
         </div>
       </div>
-
-      {!isToday && (
-        <div className="field">
-          <label>Your plan for this day</label>
-          {(!plannedStops || plannedStops.length === 0) && (
-            <div className="choice-card" style={{opacity:0.55}}>
-              <div className="choice-icon">📭</div>
-              <div className="choice-text"><div className="h">Nothing planned yet</div></div>
-            </div>
-          )}
-          {plannedStops && plannedStops.map((s, i) => (
-            <div key={i} className="choice-card selected">
-              <div className="choice-icon">📍</div>
-              <div className="choice-text"><div className="h">{s}</div></div>
-              <div className="remove-stop" onClick={() => onRemoveStop(i)}>✕</div>
-            </div>
-          ))}
-          <div className="route-add-row">
-            <input
-              type="text"
-              className="route-city-input"
-              placeholder="Add a place to visit"
-              value={stopInput}
-              onChange={e => setStopInput(e.target.value)}
-            />
-            <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { if(stopInput.trim()){ onAddStop(stopInput.trim()); setStopInput(""); } }}>+ Add</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -4403,7 +4506,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
   }
   const [activeDay, setActiveDay] = useState(defaultDay);
   const activeDate = tripDateForDay(data, activeDay);
-  const isTodayActive = activeDate && isSameDate(activeDate, today);
+  const isTodayActive = (activeDate && isSameDate(activeDate, today)) || (activeDay === 1 && data.arrived);
 
   const dayOverrides = data.dayCityOverrides || {};
   const dayPlans = data.dayPlans || {};
@@ -4466,7 +4569,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
           {Array.from({length: totalDays}, (_, i) => i + 1).map(dayNum => {
             const date = tripDateForDay(data, dayNum);
             const f = date ? formatDayStrip(date) : { weekday: "", dayNum: dayNum, month: "" };
-            const isToday = date && isSameDate(date, today);
+            const isToday = (date && isSameDate(date, today)) || (dayNum === 1 && data.arrived);
             const city = dayOverrides[dayNum] || cityForDay(days, dayNum);
             return (
               <div
@@ -4503,28 +4606,113 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
   );
 }
 
-const MOCK_NEARBY = [
-  { icon: "🏛️", name: "Colosseum & Roman Forum", type: "Attraction", cat: "attractions", note: "⚠️ Booking required — sells out fast", price: "€€" },
-  { icon: "🍝", name: "Trattoria da Enzo", type: "Restaurant", cat: "food", note: "Roman classics, family-run", price: "€€" },
-  { icon: "🛒", name: "Conad City", type: "Supermarket", cat: "shopping", note: "Groceries, snacks, essentials", price: "€" },
-  { icon: "🏬", name: "Roma Est Shopping Centre", type: "Shopping Mall", cat: "shopping", note: "Clothing, electronics, food court", price: "€€" },
-  { icon: "💊", name: "Farmacia Centrale", type: "Pharmacy", cat: "shopping", note: "Open until 20:00, English spoken", price: "" },
-  { icon: "🅿️", name: "Parcheggio Villa Borghese", type: "Parking", cat: "services", note: "Closest to centre, €2.50/hr", price: "€" },
-  { icon: "🚫", name: "ZTL Centro Storico", type: "Traffic zone", cat: "services", note: "No entry 7:30–19:00 without permit", price: "" },
-];
-
 const NEARBY_FILTERS = [
-  { id: "all", label: "All" },
-  { id: "food", label: "🍝 Food" },
-  { id: "attractions", label: "🏛️ Attractions" },
-  { id: "shopping", label: "🛒 Shopping" },
-  { id: "services", label: "🅿️ Parking & ZTL" },
+  { id: "food", label: "🍝 Food", desc: "🍝 Restaurants · ☕ Cafés · 🍦 Ice cream" },
+  { id: "attractions", label: "🏛️ Attractions", desc: "🏛️ Tourist attractions · Museums" },
+  { id: "shopping", label: "🛒 Shopping", desc: "🛒 Supermarkets · 🏬 Malls · 💊 Pharmacies" },
+  { id: "services", label: "🅿️ Practical", desc: "🅿️ Parking · ⛽ Gas · 🏧 ATM · 🏥 Hospital · 🚉 Station" },
 ];
 
-function DashNearby({ data }) {
+// Maps our simple filter categories to one or more Google place types.
+// A filter can cover multiple Google types (e.g. "shopping" covers
+// supermarkets, malls and pharmacies) — we query each in parallel.
+const NEARBY_CATEGORY_TYPES = {
+  food: ["restaurant", "cafe", "ice_cream"],
+  attractions: ["attraction", "museum"],
+  shopping: ["supermarket", "shopping_mall", "pharmacy"],
+  services: ["parking", "gas_station", "atm", "hospital", "train_station", "bus_station"],
+};
+
+const PLACE_TYPE_ICON = {
+  restaurant: "🍝", cafe: "☕", ice_cream: "🍦", attraction: "🏛️", museum: "🏛️",
+  supermarket: "🛒", shopping_mall: "🏬", pharmacy: "💊", parking: "🅿️",
+  gas_station: "⛽", atm: "🏧", hospital: "🏥", train_station: "🚉", bus_station: "🚌",
+};
+
+function DashNearby({ data, setData }) {
   const [mode, setMode] = useState("walk");
-  const [filter, setFilter] = useState("all");
-  const filtered = filter === "all" ? MOCK_NEARBY : MOCK_NEARBY.filter(p => p.cat === filter);
+  const [filter, setFilter] = useState("food");
+  const [coords, setCoords] = useState(null);
+  const [locStatus, setLocStatus] = useState("idle"); // idle | loading | ok | denied | unsupported
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [addedIds, setAddedIds] = useState({});
+
+  // Same "which day counts as today" logic used in the Itinerary tab —
+  // real calendar date match, or Day 1 once the user has marked arrival.
+  const today = new Date();
+  const totalDays = tripLengthDays(data);
+  let todayDayNum = null;
+  for (let i = 1; i <= totalDays; i++) {
+    const d = tripDateForDay(data, i);
+    if (d && isSameDate(d, today)) { todayDayNum = i; break; }
+  }
+  if (todayDayNum === null && data.arrived) todayDayNum = 1;
+
+  const addToItinerary = (place) => {
+    if (!todayDayNum) return;
+    const dayPlans = data.dayPlans || {};
+    const current = dayPlans[todayDayNum] || [];
+    setData({...data, dayPlans: {...dayPlans, [todayDayNum]: [...current, place.name]}});
+    setAddedIds({...addedIds, [place.id]: true});
+  };
+
+  const locate = () => {
+    if (!("geolocation" in navigator)) { setLocStatus("unsupported"); return; }
+    setLocStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocStatus("ok");
+      },
+      () => setLocStatus("denied"),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
+  React.useEffect(() => { locate(); }, []);
+
+  React.useEffect(() => {
+    if (!coords) return;
+    const types = NEARBY_CATEGORY_TYPES[filter] || ["restaurant"];
+    const searchRadius = mode === "car"
+      ? (filter === "attractions" ? "30000" : "8000")
+      : "2000";
+    setLoading(true);
+    setError("");
+    Promise.all(types.map(t => {
+      const params = new URLSearchParams({
+        action: "places",
+        lat: coords.lat,
+        lng: coords.lng,
+        type: t,
+        radius: searchRadius,
+      });
+      return fetch(`${PROXY_URL}?${params.toString()}`).then(r => r.json()).then(json => ({...json, _type: t}));
+    })).then(responses => {
+      const combined = [];
+      responses.forEach(r => {
+        if (r.success && Array.isArray(r.data)) {
+          r.data.forEach(place => combined.push({...place, _type: r._type}));
+        }
+      });
+      // De-dupe by place id, sort by rating (highest first, unrated last)
+      const seen = new Set();
+      const unique = combined.filter(p => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      }).sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      setResults(unique);
+      if (unique.length === 0) setError("No results found nearby for this category.");
+      setLoading(false);
+    }).catch(() => {
+      setError("Couldn't reach nearby search right now.");
+      setLoading(false);
+    });
+  }, [coords, filter, mode]);
+
   return (
     <div>
       <div className="field">
@@ -4533,6 +4721,7 @@ function DashNearby({ data }) {
           {data.wantsCar && <div className={"mode-opt" + (mode==="car"?" active":"")} onClick={() => setMode("car")}>🚗 By car</div>}
         </div>
       </div>
+
       <div className="field">
         <div className="nearby-filter-row">
           {NEARBY_FILTERS.map(f => (
@@ -4541,19 +4730,59 @@ function DashNearby({ data }) {
             </div>
           ))}
         </div>
+        <div className="nearby-filter-desc">
+          {NEARBY_FILTERS.find(f => f.id === filter)?.desc}
+        </div>
       </div>
-      <div className="field">
-        <label>Near you now</label>
-        {filtered.map(p => (
-          <div key={p.name} className="choice-card">
-            <div className="choice-icon">{p.icon}</div>
-            <div className="choice-text">
-              <div className="h">{p.name} {p.price && <span style={{opacity:0.5, fontWeight:500}}>· {p.price}</span>}</div>
-              <div className="d">{p.type} · {p.note}</div>
+
+      {locStatus === "denied" && (
+        <p className="park-hint">Location access denied — enable it in your browser settings to see what's nearby.</p>
+      )}
+      {locStatus === "unsupported" && (
+        <p className="park-hint">Location isn't supported on this device/browser.</p>
+      )}
+      {(locStatus === "idle" || locStatus === "loading") && (
+        <p className="park-hint">Finding your location…</p>
+      )}
+
+      {loading && <p className="park-hint">Searching nearby…</p>}
+      {error && !loading && <p className="park-hint">{error}</p>}
+
+      {!loading && results.length > 0 && (
+        <div className="field">
+          <label>Near you now</label>
+          {results.map(p => (
+            <div key={p.id} className="choice-card">
+              <div className="choice-icon">{PLACE_TYPE_ICON[p._type] || "📍"}</div>
+              <div className="choice-text">
+                <div className="h">
+                  {p.name}
+                  {p.rating && <span style={{opacity:0.6, fontWeight:500}}> · ⭐ {p.rating} ({p.ratingCount})</span>}
+                </div>
+                <div className="d">
+                  {p.address}
+                  {p.openNow === true && <span style={{color:"#2E8B57", fontWeight:700}}> · Open now</span>}
+                  {p.openNow === false && <span style={{color:"#C0392B", fontWeight:700}}> · Closed</span>}
+                </div>
+              </div>
+              {todayDayNum && (
+                <div
+                  className={"nearby-add-btn" + (addedIds[p.id] ? " added" : "")}
+                  onClick={() => !addedIds[p.id] && addToItinerary(p)}
+                >
+                  {addedIds[p.id] ? "✓ Added" : (<>+ Add<br/>to itinerary</>)}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {filter === "services" && (
+        <p className="park-hint" style={{marginTop:10}}>
+          ⚠️ ZTL (restricted traffic zones) aren't covered by this search — always check official signage or the city's ZTL map before driving into a historic centre.
+        </p>
+      )}
     </div>
   );
 }
@@ -4712,7 +4941,7 @@ function ScreenDashboard({ data, setData }) {
         {section === "house" && <DashHouse data={data} hotelTotal={hotelTotal} nights={nights} docs={documents.house} onAddDoc={(d) => addDoc("house", d)} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={setSection} dailyAmount={dailyAmount} />}
-        {section === "nearby" && data.arrived && <DashNearby data={data} />}
+        {section === "nearby" && data.arrived && <DashNearby data={data} setData={setData} />}
         {section === "phrasebook" && data.arrived && <DashPhrasebook />}
         {section === "tools" && data.arrived && <DashTools data={data} />}
       </div>
