@@ -850,20 +850,31 @@
     background:var(--amalfi-deep);
     color:#fff;
   }
-  .nearby-add-btn{
-    flex-shrink:0;
-    font-size:10.5px;
+  .nearby-result-card{
+    border:1.5px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+    margin-bottom:10px;
+    background:var(--whitewash);
+  }
+  .nearby-result-top{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .nearby-add-btn-full{
+    margin-top:10px;
+    text-align:center;
+    font-size:12.5px;
     font-weight:700;
     color:var(--amalfi-deep);
     background:rgba(244,185,62,0.25);
     border:1.5px solid var(--sun);
-    border-radius:8px;
-    padding:7px 9px;
+    border-radius:9px;
+    padding:9px;
     cursor:pointer;
-    text-align:center;
-    line-height:1.4;
   }
-  .nearby-add-btn.added{
+  .nearby-add-btn-full.added{
     background:var(--sun);
     color:var(--amalfi-deep);
   }
@@ -926,6 +937,7 @@
     height:190px;
     border:none;
     display:block;
+    object-fit:cover;
   }
   .map-you-badge{
     position:absolute;
@@ -4752,25 +4764,27 @@ function DashNearby({ data, setData }) {
         <div className="field">
           <label>Near you now</label>
           {results.map(p => (
-            <div key={p.id} className="choice-card">
-              <div className="choice-icon">{PLACE_TYPE_ICON[p._type] || "📍"}</div>
-              <div className="choice-text">
-                <div className="h">
-                  {p.name}
-                  {p.rating && <span style={{opacity:0.6, fontWeight:500}}> · ⭐ {p.rating} ({p.ratingCount})</span>}
-                </div>
-                <div className="d">
-                  {p.address}
-                  {p.openNow === true && <span style={{color:"#2E8B57", fontWeight:700}}> · Open now</span>}
-                  {p.openNow === false && <span style={{color:"#C0392B", fontWeight:700}}> · Closed</span>}
+            <div key={p.id} className="nearby-result-card">
+              <div className="nearby-result-top">
+                <div className="choice-icon">{PLACE_TYPE_ICON[p._type] || "📍"}</div>
+                <div className="choice-text">
+                  <div className="h">
+                    {p.name}
+                    {p.rating && <span style={{opacity:0.6, fontWeight:500}}> · ⭐ {p.rating} ({p.ratingCount})</span>}
+                  </div>
+                  <div className="d">
+                    {p.address}
+                    {p.openNow === true && <span style={{color:"#2E8B57", fontWeight:700}}> · Open now</span>}
+                    {p.openNow === false && <span style={{color:"#C0392B", fontWeight:700}}> · Closed</span>}
+                  </div>
                 </div>
               </div>
               {todayDayNum && (
                 <div
-                  className={"nearby-add-btn" + (addedIds[p.id] ? " added" : "")}
+                  className={"nearby-add-btn-full" + (addedIds[p.id] ? " added" : "")}
                   onClick={() => !addedIds[p.id] && addToItinerary(p)}
                 >
-                  {addedIds[p.id] ? "✓ Added" : (<>+ Add<br/>to itinerary</>)}
+                  {addedIds[p.id] ? "✓ Added to itinerary" : "+ Add to itinerary"}
                 </div>
               )}
             </div>
