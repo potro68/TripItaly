@@ -997,6 +997,28 @@
   }
   .map-placeholder-text{ font-size:13px; color:rgba(19,42,58,0.55); font-weight:500; }
   .map-placeholder-hint{ font-size:11.5px; color:rgba(19,42,58,0.45); text-align:center; padding:0 20px; line-height:1.4; }
+  .nearby-permission-card{
+    text-align:center;
+    padding:28px 20px;
+    background:var(--whitewash);
+    border:1.5px solid var(--line);
+    border-radius:16px;
+  }
+  .nearby-permission-icon{ font-size:32px; margin-bottom:8px; }
+  .nearby-permission-title{
+    font-family:'Fraunces', serif;
+    font-size:18px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .nearby-permission-text{
+    font-size:12.5px;
+    color:rgba(19,42,58,0.6);
+    line-height:1.4;
+    max-width:280px;
+    margin:0 auto;
+  }
   .map-frame-wrap{
     position:relative;
     border-radius:14px;
@@ -4336,7 +4358,7 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
     );
   };
 
-  React.useEffect(() => { locate(); }, []);
+  // Location requested only on button tap — never automatically.
 
   React.useEffect(() => {
     if (data.hotel) {
@@ -4352,7 +4374,18 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
     }
   }, [data.hotel, data.wantsCar, data.airport, compact]);
 
-  if (status === "idle" || status === "loading") {
+  if (status === "idle") {
+    return (
+      <div className="nearby-permission-card" style={compact ? {padding:16} : {}}>
+        <div className="nearby-permission-icon">📍</div>
+        <div className="nearby-permission-title">See your live location</div>
+        <p className="nearby-permission-text">TripItaly uses your location to show you on the map and give directions.</p>
+        <button className="btn-primary" style={{marginTop:12}} onClick={locate}>Use my location</button>
+      </div>
+    );
+  }
+
+  if (status === "loading") {
     return (
       <div className="map-placeholder" style={compact ? {height:140} : {}}>
         <div className="map-placeholder-text">📍 Locating you…</div>
@@ -4371,7 +4404,7 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
         </div>
         {!compact && !isImageFailure && (
           <div className="map-placeholder-hint">
-            Open this file directly in your phone's browser (not inside a preview) and allow location access when asked.
+            Location access is disabled. Enable location permission for TripItaly and try again.
           </div>
         )}
         {!compact && isImageFailure && (
@@ -4784,7 +4817,7 @@ function DashNearby({ data, setData }) {
     );
   };
 
-  React.useEffect(() => { locate(); }, []);
+  // Location requested only on button tap — see the 'Use my location' button below.
 
   React.useEffect(() => {
     if (!coords) return;
@@ -4826,6 +4859,17 @@ function DashNearby({ data, setData }) {
     });
   }, [coords, filter, mode]);
 
+  if (locStatus === "idle") {
+    return (
+      <div className="nearby-permission-card">
+        <div className="nearby-permission-icon">📍</div>
+        <div className="nearby-permission-title">Find places near me</div>
+        <p className="nearby-permission-text">TripItaly uses your location to show useful places around you.</p>
+        <button className="btn-primary" style={{marginTop:14}} onClick={locate}>Use my location</button>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="field">
@@ -4849,12 +4893,16 @@ function DashNearby({ data, setData }) {
       </div>
 
       {locStatus === "denied" && (
-        <p className="park-hint">Location access denied — enable it in your browser settings to see what's nearby.</p>
+        <div className="nearby-permission-card">
+          <div className="nearby-permission-icon">📍</div>
+          <p className="nearby-permission-text">Location access is disabled. Enable location permission for TripItaly and try again.</p>
+          <button className="btn-secondary" style={{marginTop:12}} onClick={locate}>Try again</button>
+        </div>
       )}
       {locStatus === "unsupported" && (
         <p className="park-hint">Location isn't supported on this device/browser.</p>
       )}
-      {(locStatus === "idle" || locStatus === "loading") && (
+      {locStatus === "loading" && (
         <p className="park-hint">Finding your location…</p>
       )}
 
@@ -4949,7 +4997,7 @@ function LiveTranslator() {
     const recognition = new SpeechRecognitionClass();
     recognition.continuous = false; // single-shot: press, say one phrase, done — most reliable across browsers
     recognition.interimResults = false;
-    recognition.lang = "en-US"; // browser auto-detects reasonably well even for other languages spoken
+    recognition.lang = "en-US"; // confirmed most reliable across devices — Google Translate still handles non-English input reasonably well from here
 
     recognition.onstart = () => { setListening(true); setError(""); };
     recognition.onend = () => setListening(false);
@@ -4995,7 +5043,7 @@ function LiveTranslator() {
         {micSupported ? (
           <button
             className={"mic-btn" + (listening ? " listening" : "")}
-            onClick={startListening}
+            onClick={() => startListening()}
             disabled={listening}
           >
             {listening ? "🎤 Listening…" : "🎤"}
