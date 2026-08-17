@@ -891,6 +891,77 @@
   }
 
   /* ---- Phrasebook ---- */
+  .translator-input{
+    width:100%;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+    font-family:'Sora', sans-serif;
+    font-size:14px;
+    resize:vertical;
+    margin-bottom:10px;
+    outline:none;
+  }
+  .translator-input:focus{ border-color:var(--amalfi); }
+  .translator-actions{
+    display:flex;
+    gap:8px;
+    align-items:stretch;
+  }
+  .mic-btn{
+    flex-shrink:0;
+    width:52px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+    background:var(--whitewash);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .mic-btn.listening{
+    background:#C0392B;
+    border-color:#C0392B;
+    color:#fff;
+    animation:mic-pulse 1s infinite;
+  }
+  .mic-btn.mic-unavailable{
+    opacity:0.35;
+    cursor:not-allowed;
+  }
+  @keyframes mic-pulse{
+    0%, 100% { opacity:1; }
+    50% { opacity:0.6; }
+  }
+  .translation-result{
+    margin-top:14px;
+    background:rgba(28,90,122,0.07);
+    border-radius:14px;
+    padding:16px;
+  }
+  .translation-text{
+    font-family:'Fraunces', serif;
+    font-size:19px;
+    font-weight:700;
+    color:var(--amalfi-deep);
+    margin-bottom:6px;
+    line-height:1.4;
+  }
+  .translation-meta{
+    font-size:11px;
+    color:rgba(19,42,58,0.5);
+    margin-bottom:12px;
+  }
+  .translation-speak-btn{
+    background:var(--amalfi-deep);
+    color:#fff;
+    border-radius:10px;
+    padding:10px 16px;
+    font-size:13px;
+    font-weight:700;
+    width:100%;
+  }
   .phrase-card{
     border:1.5px solid var(--line);
     border-radius:12px;
@@ -4839,17 +4910,133 @@ const MOCK_PHRASES = [
   { cat: "Shopping", it: "Posso pagare con carta?", en: "Can I pay by card?" },
 ];
 
-function DashPhrasebook() {
+function LiveTranslator() {
+  const [inputText, setInputText] = useState("");
+  const [translated, setTranslated] = useState("");
+  const [detectedLang, setDetectedLang] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [speaking, setSpeaking] = useState(false);
+  const [listening, setListening] = useState(false);
+
+  const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micSupported = !!SpeechRecognitionClass;
+
+  const translate = async (textOverride) => {
+    const text = (textOverride ?? inputText).trim();
+    if (!text) return;
+    setLoading(true);
+    setError("");
+    setTranslated("");
+    try {
+      const params = new URLSearchParams({ action: "translate", text, target: "it" });
+      const res = await fetch(`${PROXY_URL}?${params.toString()}`);
+      const json = await res.json();
+      if (json.success) {
+        setTranslated(json.translatedText);
+        setDetectedLang(json.detectedSourceLanguage || "");
+      } else {
+        setError("Couldn't translate right now — try again.");
+      }
+    } catch (e) {
+      setError("Couldn't reach the translator right now.");
+    }
+    setLoading(false);
+  };
+
+  const startListening = () => {
+    if (!micSupported) return;
+    const recognition = new SpeechRecognitionClass();
+    recognition.continuous = false; // single-shot: press, say one phrase, done — most reliable across browsers
+    recognition.interimResults = false;
+    recognition.lang = "en-US"; // browser auto-detects reasonably well even for other languages spoken
+
+    recognition.onstart = () => { setListening(true); setError(""); };
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => {
+      setListening(false);
+      setError("Couldn't hear you — try typing instead, or try again.");
+    };
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInputText(transcript);
+      translate(transcript); // translate right away once captured
+    };
+
+    recognition.start();
+  };
+
+  const speak = () => {
+    if (!translated || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel(); // stop any previous speech
+    const utterance = new SpeechSynthesisUtterance(translated);
+    utterance.lang = "it-IT";
+    utterance.rate = 0.9;
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="field">
-      <label>Useful phrases</label>
-      {MOCK_PHRASES.map((p,i) => (
-        <div key={i} className="phrase-card">
-          <div className="phrase-cat">{p.cat}</div>
-          <div className="phrase-it">{p.it}</div>
-          <div className="phrase-en">{p.en}</div>
+      <label>Translate anything to Italian</label>
+      <p className="park-hint">Type or speak in your own language — we'll translate it and can read it aloud to whoever you're talking to.</p>
+      <textarea
+        className="translator-input"
+        placeholder="Type a phrase in your language..."
+        value={inputText}
+        onChange={e => setInputText(e.target.value)}
+        rows={3}
+      />
+      <div className="translator-actions">
+        <button className="btn-secondary" style={{flex:1, marginTop:0}} onClick={() => translate()} disabled={loading || !inputText.trim()}>
+          {loading ? "Translating…" : "Translate"}
+        </button>
+        {micSupported ? (
+          <button
+            className={"mic-btn" + (listening ? " listening" : "")}
+            onClick={startListening}
+            disabled={listening}
+          >
+            {listening ? "🎤 Listening…" : "🎤"}
+          </button>
+        ) : (
+          <div className="mic-btn mic-unavailable" title="Voice input not available on this device">🎤</div>
+        )}
+      </div>
+      {!micSupported && <p className="park-hint" style={{marginTop:4}}>🎤 Voice input not available on this device — typing works fine.</p>}
+
+      {error && <p style={{color:"#C0392B", fontSize:12.5, fontWeight:600, marginTop:8}}>{error}</p>}
+
+      {translated && (
+        <div className="translation-result">
+          <div className="translation-text">{translated}</div>
+          {detectedLang && <div className="translation-meta">Detected: {detectedLang.toUpperCase()} → Italian</div>}
+          {"speechSynthesis" in window && (
+            <button className="translation-speak-btn" onClick={speak}>
+              {speaking ? "🔊 Speaking…" : "🔊 Read aloud"}
+            </button>
+          )}
         </div>
-      ))}
+      )}
+    </div>
+  );
+}
+
+function DashPhrasebook() {
+  return (
+    <div>
+      <LiveTranslator />
+      <div className="field">
+        <label>Useful phrases</label>
+        {MOCK_PHRASES.map((p,i) => (
+          <div key={i} className="phrase-card">
+            <div className="phrase-cat">{p.cat}</div>
+            <div className="phrase-it">{p.it}</div>
+            <div className="phrase-en">{p.en}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
