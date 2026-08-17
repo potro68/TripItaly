@@ -931,6 +931,17 @@
     border-radius:14px;
     overflow:hidden;
     border:1.5px solid var(--line);
+    display:block;
+  }
+  .map-tap-hint{
+    position:absolute;
+    top:10px; right:10px;
+    background:rgba(19,42,58,0.75);
+    color:#fff;
+    font-size:10.5px;
+    font-weight:700;
+    padding:5px 9px;
+    border-radius:7px;
   }
   .map-frame{
     width:100%;
@@ -1478,6 +1489,7 @@
     .print-day-h{ font-family:'Fraunces', serif; font-weight:700; font-size:15px; margin-bottom:6px; }
     .print-stop-list{ margin:0; padding-left:18px; font-size:13px; line-height:1.6; }
     .print-empty{ font-size:12px; color:#888; font-style:italic; }
+    .print-transport{ font-size:12px; font-weight:600; color:#1C5A7A; margin-bottom:6px; }
     .dash-content > *:not(.print-only){ display:none !important; }
   }
   .debug-panel{
@@ -4256,11 +4268,10 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
   React.useEffect(() => { locate(); }, []);
 
   React.useEffect(() => {
-    if (compact) return; // skip geocoding hotel/car on compact/day-view maps
     if (data.hotel) {
       geocodeAddress(`${data.hotel}, Italy`).then(setHotelCoords);
     }
-    if (data.wantsCar) {
+    if (data.wantsCar && !compact) {
       // Pickup is always at the arrival airport in our current booking flow —
       // use its real coordinates directly instead of a vague text search.
       const airport = AIRPORTS.find(a => a.code === data.airport);
@@ -4323,7 +4334,11 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
 
   return (
     <div>
-      <div className="map-frame-wrap">
+      <a
+        href={`https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`}
+        target="_blank" rel="noopener noreferrer"
+        className="map-frame-wrap"
+      >
         <img
           className="map-frame"
           style={compact ? {height:160} : {}}
@@ -4332,14 +4347,13 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
           alt="Map with your location and nearby points"
         />
         <div className="map-you-badge">📍 You are here</div>
+        <div className="map-tap-hint">Tap to open in Google Maps ↗</div>
+      </a>
+      <div className="map-legend">
+        <div className="map-legend-item"><span className="map-dot" style={{background:"#C0392B"}}></span> You</div>
+        {data.hotel && <div className="map-legend-item"><span className="map-dot" style={{background:"#2255AA"}}></span> {data.hotel}</div>}
+        {data.wantsCar && !compact && <div className="map-legend-item"><span className="map-dot" style={{background:"#2E8B57"}}></span> Car pickup (airport)</div>}
       </div>
-      {!compact && (
-        <div className="map-legend">
-          <div className="map-legend-item"><span className="map-dot" style={{background:"#C0392B"}}></span> You</div>
-          {data.hotel && <div className="map-legend-item"><span className="map-dot" style={{background:"#2255AA"}}></span> {data.hotel}</div>}
-          {data.wantsCar && <div className="map-legend-item"><span className="map-dot" style={{background:"#2E8B57"}}></span> Car pickup (airport)</div>}
-        </div>
-      )}
       {!compact && (hotelCoords || carCoords) && (
         <div className="map-directions-row">
           {hotelCoords && (
@@ -4412,10 +4426,15 @@ function CityMap({ city }) {
     markers: `color:blue|${coords.lat},${coords.lng}`,
   }).toString()}`;
   return (
-    <div className="map-frame-wrap">
+    <a
+      href={`https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`}
+      target="_blank" rel="noopener noreferrer"
+      className="map-frame-wrap"
+    >
       <img className="map-frame" style={{height:160}} src={src} alt={`Map of ${city}`} />
       <div className="map-you-badge">🏙️ {city}</div>
-    </div>
+      <div className="map-tap-hint">Tap to open in Google Maps ↗</div>
+    </a>
   );
 }
 
@@ -4560,9 +4579,20 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
           const date = tripDateForDay(data, dayNum);
           const city = dayOverrides[dayNum] || cityForDay(days, dayNum);
           const stops = dayPlans[dayNum] || [];
+
+          // Figure out if today is the first day of a new city block, and
+          // if so, how the user planned to travel there (train/flight/drive).
+          const blockIndex = days.findIndex(b => b.days.includes(dayNum));
+          const isArrivalDay = blockIndex > 0 && days[blockIndex].days[0] === dayNum;
+          const transportId = isArrivalDay ? (data.legTransport || {})[blockIndex - 1] : null;
+          const transportInfo = transportId ? TRANSPORT_OPTIONS.find(t => t.id === transportId) : null;
+
           return (
             <div key={dayNum} className="print-day">
               <div className="print-day-h">Day {dayNum}{date ? " · " + date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : ""}{city ? " · " + city : ""}</div>
+              {transportInfo && (
+                <p className="print-transport">{transportInfo.icon} Travel to {city} by {transportInfo.label.toLowerCase()}</p>
+              )}
               {stops.length > 0 ? (
                 <ul className="print-stop-list">
                   {stops.map((s, i) => <li key={i}>{s}</li>)}
@@ -4904,6 +4934,17 @@ function ScreenDashboard({ data, setData }) {
   const addDoc = (sectionId, doc) => {
     setDocuments(prev => ({...prev, [sectionId]: [...prev[sectionId], doc]}));
   };
+
+  // When the user flips "I've arrived" on, jump straight to the Itinerary
+  // tab instead of leaving them on Overview.
+  const prevArrived = React.useRef(data.arrived);
+  React.useEffect(() => {
+    if (data.arrived && !prevArrived.current) {
+      setSection("itinerary");
+    }
+    prevArrived.current = data.arrived;
+  }, [data.arrived]);
+
   const nights = tripLengthDays(data) - 1;
   const flightTotal = data.mode === "onsite" ? 0 : (data.flightPrice || 0);
   const hotelTotal = data.mode === "onsite" ? (data.prepaidTotal || 0) : (data.hotelPrice || 0); // onsite: lump prepaid into this bucket
