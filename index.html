@@ -1,268 +1,807 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TripItaly — Plan Your Trip to Italy</title>
-<meta name="description" content="TripItaly helps international travelers plan and organize trips to Italy with flights, accommodation, car rental, itineraries, nearby places, attractions, travel tools and practical local guidance.">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TripItaly — Plan, Book & Organize Your Italy Trip</title>
+  <meta name="description" content="TripItaly is a travel planner for international visitors to Italy. Plan flights, stays, trains, car rental, attractions, daily itineraries, budget, nearby places and practical travel details in one place.">
+  <meta name="theme-color" content="#0E3B52">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.tripitaly.app/">
 
-<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
-  (function () {
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TripItaly — Your Italy travel companion">
+  <meta property="og:description" content="Plan your Italy trip from departure to daily travel: flights, stays, transport, itinerary, budget and nearby places in one organized travel companion.">
+  <meta property="og:url" content="https://www.tripitaly.app/">
+  <meta property="og:site_name" content="TripItaly">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TripItaly — Your Italy travel companion">
+  <meta name="twitter:description" content="Plan and organize your trip to Italy in one place.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Existing partner script retained from the current TripItaly landing page. -->
+  <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
+    (function () {
       var script = document.createElement("script");
       script.async = 1;
       script.setAttribute("data-cmp-ab","2");
-      script.src = 'https://emrld.ltd/NTYxMTg5.js?t=561189';
+      script.src = "https://emrld.ltd/NTYxMTg5.js?t=561189";
       document.head.appendChild(script);
-  })();
-</script>
-<script>
-(function (s, t, a, y, twenty, two) {
-s.Stay22 = s.Stay22 || {};
-s.Stay22.params = { lmaID: '6a7c8ef1f8e69ff0c5a03e69' };
-twenty = t.createElement(a);
-two = t.getElementsByTagName(a)[0];
-twenty.async = 1;
-twenty.src = y;
-two.parentNode.insertBefore(twenty, two);
-})(window, document, 'script', 'https://scripts.stay22.com/letmeallez.js');
-</script>
-<style>
-:root{--navy:#0E3B52;--blue:#1C5A7A;--teal:#2E8B8B;--sun:#F4B93E;--paper:#F8F4EC;--sky:#DCEEF5;--ink:#132A3A;--muted:#607078;--line:#D7E3E8}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#F4FAFC;line-height:1.6}
-a{color:inherit}.container{max-width:1160px;margin:auto;padding:0 24px}
-nav{position:sticky;top:0;z-index:20;background:rgba(14,59,82,.98);color:#fff;border-bottom:1px solid rgba(255,255,255,.12)}
-.nav{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px}.logo{font-size:24px;font-weight:800;text-decoration:none}.logo span{color:var(--sun)}
-.links{display:flex;gap:20px;flex-wrap:wrap}.links a{text-decoration:none;font-size:14px;color:rgba(255,255,255,.9)}.links a:hover{color:var(--sun)}
-.hero{color:#fff;background:radial-gradient(circle at 80% 20%,rgba(244,185,62,.18),transparent 25%),linear-gradient(145deg,var(--navy),var(--blue) 58%,var(--teal));padding:78px 0 72px}
-.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}.kicker{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;color:#FDE2A4}
-h1{font-size:56px;line-height:1.05;margin:10px 0 18px}.hero p{font-size:19px;color:rgba(255,255,255,.86);max-width:720px}
-.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.badge{padding:9px 13px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.08);font-size:13px}
-.phone{background:var(--sky);border:10px solid #082C3D;border-radius:32px;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.phone-head{background:var(--navy);color:#fff;border-radius:16px;padding:16px;font-weight:800}
-.mini{background:#fff;border:1px solid #D5E2E7;border-radius:14px;padding:14px;margin-top:12px}.mini b{display:block;margin-bottom:3px}.mini span{font-size:13px;color:var(--muted)}
-.section{padding:72px 0}.section.alt{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.section h2{font-size:38px;line-height:1.15;margin:0 0 12px}.lead{max-width:800px;color:var(--muted);margin:0 0 30px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
-.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px}.card h3{margin:6px 0 8px;font-size:19px}.card p{margin:0;color:var(--muted);font-size:15px}.icon{font-size:28px}
-.service-link{
-  display:block;
-  text-decoration:none;
-  color:inherit;
-}
-.service-link .card{
-  height:100%;
-  cursor:pointer;
-  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-}
-.service-link:hover .card{
-  transform:translateY(-3px);
-  box-shadow:0 10px 28px rgba(14,59,82,.12);
-  border-color:#2E8B8B;
-}
-.book-btn{
-  display:inline-block;
-  margin-top:16px;
-  padding:9px 14px;
-  background:#0E3B52;
-  color:#fff;
-  border-radius:9px;
-  font-size:14px;
-  font-weight:700;
-}
+    })();
+  </script>
 
-.destination{min-height:185px;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;border-radius:18px;padding:20px;background:linear-gradient(145deg,var(--blue),var(--teal));position:relative;overflow:hidden}
-.destination:before{content:"";position:absolute;inset:-35px auto auto -35px;width:130px;height:130px;border-radius:50%;background:rgba(244,185,62,.18)}
-.destination h3,.destination p{position:relative;margin:0}.destination h3{font-size:23px}.destination p{font-size:14px;color:rgba(255,255,255,.84);margin-top:5px}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.step{background:var(--paper);border-radius:18px;padding:22px}.num{width:36px;height:36px;border-radius:50%;background:var(--sun);display:flex;align-items:center;justify-content:center;font-weight:800;margin-bottom:12px}
-.tip{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px}.tip b{display:block;margin-bottom:4px}.tip span{color:var(--muted);font-size:14px}
-.callout{background:#FFF8E6;border:1px solid #F2D487;border-radius:16px;padding:20px}
-details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px}summary{cursor:pointer;font-weight:700}details p{color:var(--muted);margin-bottom:0}
-.cta{background:var(--navy);color:#fff;padding:56px 0;text-align:center}.cta h2{font-size:36px;margin:0 0 10px}.cta p{max-width:760px;margin:auto;color:rgba(255,255,255,.82)}
-footer{background:#082C3D;color:rgba(255,255,255,.72);padding:34px 0}.footer{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}.footer a{color:#fff;text-decoration:none;margin-right:16px}
-.small{font-size:13px;color:var(--muted)}.legalbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:18px}
-@media(max-width:840px){.hero-grid,.grid3,.grid2,.steps{grid-template-columns:1fr}h1{font-size:42px}.links{display:none}.section{padding:56px 0}}
-</style>
+  <style>
+    :root{
+      --navy:#0E3B52;
+      --navy2:#082D40;
+      --blue:#1C5A7A;
+      --teal:#2E8B8B;
+      --sun:#F4B93E;
+      --sun2:#FFD777;
+      --paper:#F8F4EC;
+      --sky:#DCEEF5;
+      --sky2:#EEF8FB;
+      --ink:#132A3A;
+      --muted:#607078;
+      --line:rgba(19,42,58,.13);
+      --white:#fff;
+      --shadow:0 20px 50px rgba(14,59,82,.13);
+      --shadow-sm:0 10px 28px rgba(14,59,82,.09);
+      --radius:24px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Sora",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink);
+      background:#F7FBFC;
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+    }
+    a{color:inherit}
+    button{font:inherit}
+    .container{width:min(1160px,calc(100% - 40px));margin:0 auto}
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:1.2px;
+      text-transform:uppercase;
+      color:var(--blue);
+    }
+    .eyebrow::before{
+      content:"";
+      width:22px;height:2px;border-radius:99px;background:var(--sun);
+    }
+
+    /* Navigation */
+    .nav-wrap{
+      position:sticky;top:0;z-index:50;
+      background:rgba(8,45,64,.93);
+      backdrop-filter:blur(16px);
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .nav{
+      min-height:72px;
+      display:flex;align-items:center;justify-content:space-between;gap:26px;
+    }
+    .brand{
+      text-decoration:none;color:#fff;
+      font-family:"Fraunces",serif;
+      font-size:27px;font-weight:700;letter-spacing:.2px;
+    }
+    .brand span{color:var(--sun)}
+    .nav-links{display:flex;align-items:center;gap:24px}
+    .nav-links a{
+      text-decoration:none;color:rgba(255,255,255,.78);
+      font-size:13px;font-weight:600;
+      transition:.18s ease;
+    }
+    .nav-links a:hover{color:#fff}
+    .nav-cta{
+      background:var(--sun)!important;
+      color:var(--navy2)!important;
+      padding:10px 16px;border-radius:11px;
+      box-shadow:0 8px 20px rgba(244,185,62,.18);
+    }
+
+    /* Hero */
+    .hero{
+      position:relative;overflow:hidden;
+      color:#fff;
+      background:
+        radial-gradient(circle at 80% 13%,rgba(244,185,62,.20),transparent 23%),
+        radial-gradient(circle at 14% 88%,rgba(46,139,139,.36),transparent 30%),
+        linear-gradient(145deg,var(--navy2) 0%,var(--navy) 45%,var(--blue) 73%,var(--teal) 120%);
+      padding:92px 0 88px;
+    }
+    .hero::after{
+      content:"";position:absolute;inset:0;pointer-events:none;opacity:.08;
+      background-image:radial-gradient(circle at center,#fff 1px,transparent 1px);
+      background-size:24px 24px;
+    }
+    .hero-grid{
+      position:relative;z-index:1;
+      display:grid;grid-template-columns:1.03fr .97fr;gap:64px;align-items:center;
+    }
+    .hero .eyebrow{color:var(--sun2)}
+    .hero h1{
+      font-family:"Fraunces",serif;
+      font-size:clamp(48px,6vw,72px);
+      line-height:.98;
+      letter-spacing:-1.7px;
+      margin:18px 0 22px;
+      max-width:740px;
+    }
+    .hero h1 em{font-style:normal;color:var(--sun)}
+    .hero-copy{
+      font-size:18px;line-height:1.72;
+      color:rgba(255,255,255,.84);
+      max-width:670px;margin:0;
+    }
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:9px;
+      min-height:50px;padding:0 20px;border-radius:13px;text-decoration:none;
+      font-size:14px;font-weight:700;transition:.2s ease;border:1px solid transparent;
+    }
+    .btn-primary{
+      background:var(--sun);color:var(--navy2);
+      box-shadow:0 12px 25px rgba(244,185,62,.20);
+    }
+    .btn-primary:hover{transform:translateY(-2px);background:#F8C75C}
+    .btn-secondary{
+      color:#fff;border-color:rgba(255,255,255,.28);
+      background:rgba(255,255,255,.07);
+    }
+    .btn-secondary:hover{background:rgba(255,255,255,.12)}
+    .hero-proof{
+      display:flex;flex-wrap:wrap;gap:16px 24px;
+      margin-top:28px;color:rgba(255,255,255,.68);font-size:12px;font-weight:600;
+    }
+    .hero-proof span::before{content:"✓";color:var(--sun);margin-right:7px}
+
+    /* App preview */
+    .preview-shell{
+      position:relative;margin-left:auto;width:min(100%,450px);
+      background:linear-gradient(180deg,#153F55,#092D40);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:34px;padding:11px;
+      box-shadow:0 34px 75px rgba(0,0,0,.32);
+      transform:rotate(1.2deg);
+    }
+    .preview-shell::before{
+      content:"";position:absolute;top:17px;left:50%;transform:translateX(-50%);
+      width:82px;height:20px;border-radius:20px;background:#082A3A;z-index:2;
+    }
+    .preview{
+      background:var(--sky);border-radius:25px;overflow:hidden;color:var(--ink);
+      min-height:565px;
+    }
+    .preview-head{
+      background:var(--navy);color:#fff;padding:30px 22px 18px;
+    }
+    .preview-brand{font-family:"Fraunces",serif;font-size:22px;font-weight:700}
+    .preview-brand span{color:var(--sun)}
+    .preview-sub{font-size:10px;color:rgba(255,255,255,.65);margin-top:2px}
+    .preview-body{padding:20px}
+    .route-card{
+      background:linear-gradient(135deg,var(--navy),var(--blue));
+      color:#fff;border-radius:17px;padding:17px 18px;margin-bottom:14px;
+      box-shadow:0 10px 24px rgba(14,59,82,.18);
+    }
+    .route-top{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.62)}
+    .route-main{
+      font-family:"Fraunces",serif;font-size:21px;font-weight:700;margin-top:5px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .route-meta{font-size:11px;color:rgba(255,255,255,.75);margin-top:5px}
+    .preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .p-card{
+      background:rgba(255,255,255,.76);border:1px solid rgba(19,42,58,.08);
+      border-radius:14px;padding:14px;min-height:102px;
+    }
+    .p-icon{font-size:19px}
+    .p-label{font-weight:700;font-size:12px;margin-top:8px}
+    .p-desc{font-size:9.5px;color:var(--muted);line-height:1.4;margin-top:2px}
+    .budget-card{
+      margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;
+    }
+    .budget-row{display:flex;justify-content:space-between;gap:20px;align-items:end}
+    .budget-label{font-size:10px;color:var(--muted);font-weight:600}
+    .budget-value{font-family:"Fraunces",serif;font-weight:700;font-size:22px;color:var(--navy)}
+    .budget-track{height:6px;background:#E5EEF1;border-radius:99px;margin-top:9px;overflow:hidden}
+    .budget-fill{height:100%;width:63%;background:var(--sun);border-radius:99px}
+    .floating-note{
+      position:absolute;left:-36px;bottom:68px;
+      background:#fff;color:var(--ink);border-radius:14px;padding:11px 14px;
+      box-shadow:var(--shadow-sm);font-size:11px;font-weight:700;transform:rotate(-2deg);
+    }
+
+    /* Trust strip */
+    .trust-strip{
+      background:#fff;border-bottom:1px solid var(--line);
+    }
+    .trust-inner{
+      min-height:84px;display:grid;grid-template-columns:repeat(6,1fr);align-items:center;
+      gap:18px;color:var(--muted);font-size:12px;font-weight:700;text-align:center;
+    }
+    .trust-inner span{white-space:nowrap}
+
+    /* Generic sections */
+    .section{padding:88px 0}
+    .section.alt{background:var(--sky2)}
+    .section.dark{background:var(--navy2);color:#fff}
+    .section-head{max-width:760px;margin-bottom:40px}
+    .section h2{
+      font-family:"Fraunces",serif;
+      font-size:clamp(34px,4vw,48px);
+      line-height:1.08;letter-spacing:-.8px;margin:10px 0 14px;
+    }
+    .lead{font-size:16px;color:var(--muted);margin:0;max-width:760px}
+    .dark .lead{color:rgba(255,255,255,.70)}
+
+    /* Problem/solution */
+    .split{display:grid;grid-template-columns:.86fr 1.14fr;gap:54px;align-items:center}
+    .pain-list{display:grid;gap:12px}
+    .pain{
+      display:flex;gap:13px;align-items:flex-start;
+      background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;
+      box-shadow:0 6px 18px rgba(14,59,82,.04);
+    }
+    .pain-icon{
+      width:38px;height:38px;border-radius:11px;background:rgba(244,185,62,.20);
+      display:grid;place-items:center;flex:0 0 auto;
+    }
+    .pain b{display:block;font-size:14px;margin-bottom:2px}
+    .pain span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
+
+    /* Feature cards */
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .feature{
+      background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;
+      box-shadow:0 8px 24px rgba(14,59,82,.05);
+      transition:.2s ease;
+    }
+    .feature:hover{transform:translateY(-3px);box-shadow:var(--shadow-sm)}
+    .feature-icon{
+      width:46px;height:46px;border-radius:14px;background:rgba(28,90,122,.08);
+      display:grid;place-items:center;font-size:21px;margin-bottom:16px;
+    }
+    .feature h3{font-size:15px;margin:0 0 6px}
+    .feature p{font-size:12.5px;color:var(--muted);margin:0;line-height:1.55}
+    .feature .tag{
+      display:inline-block;margin-top:12px;padding:5px 8px;border-radius:7px;
+      background:rgba(46,139,139,.10);color:#1C6969;font-size:9.5px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.5px;
+    }
+
+    /* Steps */
+    .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:42px}
+    .step{position:relative;padding:0 24px 0 0}
+    .step:not(:last-child)::after{
+      content:"";position:absolute;top:22px;left:54px;right:14px;height:1px;
+      background:linear-gradient(90deg,var(--sun),rgba(244,185,62,.18));
+    }
+    .step-num{
+      position:relative;z-index:2;width:44px;height:44px;border-radius:50%;
+      display:grid;place-items:center;background:var(--sun);color:var(--navy2);
+      font-family:"Fraunces",serif;font-weight:700;font-size:18px;
+      box-shadow:0 7px 18px rgba(244,185,62,.20);
+    }
+    .step h3{font-size:14px;margin:16px 0 5px}
+    .step p{font-size:12px;color:var(--muted);margin:0}
+
+    /* App advertising */
+    .app-promo{
+      display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;
+    }
+    .app-promo-card{
+      background:linear-gradient(145deg,var(--navy),var(--blue));
+      border-radius:28px;padding:28px;color:#fff;box-shadow:var(--shadow);
+      position:relative;overflow:hidden;
+    }
+    .app-promo-card::after{
+      content:"";position:absolute;width:240px;height:240px;border-radius:50%;
+      background:rgba(244,185,62,.16);right:-80px;top:-90px;
+    }
+    .live-pill{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.17);
+      border-radius:999px;padding:7px 11px;font-size:10px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.6px;
+    }
+    .live-dot{width:7px;height:7px;border-radius:50%;background:#72E08A;box-shadow:0 0 0 4px rgba(114,224,138,.13)}
+    .app-promo-card h3{
+      font-family:"Fraunces",serif;font-size:34px;line-height:1.05;margin:18px 0 10px;
+      position:relative;z-index:1;
+    }
+    .app-promo-card p{font-size:13px;color:rgba(255,255,255,.76);position:relative;z-index:1}
+    .app-url{
+      display:inline-block;margin-top:12px;color:var(--sun);font-size:12px;font-weight:700;
+      position:relative;z-index:1;
+    }
+    .app-promo-card .btn{margin-top:20px;position:relative;z-index:1}
+    .store-note{
+      margin-top:14px;font-size:10.5px;color:rgba(255,255,255,.56);position:relative;z-index:1;
+    }
+    .promo-points{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .promo-point{
+      border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px;
+    }
+    .promo-point b{display:block;font-size:12px;margin-bottom:3px}
+    .promo-point span{font-size:10.5px;color:var(--muted);line-height:1.45}
+
+    /* Destinations */
+    .dest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .dest{
+      min-height:170px;border-radius:20px;padding:22px;position:relative;overflow:hidden;
+      color:#fff;display:flex;flex-direction:column;justify-content:flex-end;
+      background:linear-gradient(145deg,var(--navy),var(--teal));
+    }
+    .dest:nth-child(2){background:linear-gradient(145deg,#7A4431,#C17950)}
+    .dest:nth-child(3){background:linear-gradient(145deg,#27566B,#4590A3)}
+    .dest:nth-child(4){background:linear-gradient(145deg,#344C67,#5D7892)}
+    .dest:nth-child(5){background:linear-gradient(145deg,#345B59,#5D8D7D)}
+    .dest:nth-child(6){background:linear-gradient(145deg,#4D466E,#7E6DA1)}
+    .dest::before{
+      content:"";position:absolute;width:130px;height:130px;border:1px solid rgba(255,255,255,.15);
+      border-radius:50%;right:-30px;top:-35px;
+    }
+    .dest h3{font-family:"Fraunces",serif;font-size:23px;margin:0 0 4px}
+    .dest p{font-size:11px;color:rgba(255,255,255,.78);margin:0;max-width:260px}
+
+    /* Transparency */
+    .transparency{
+      background:#FFF9EA;border:1px solid #F0D58F;border-radius:22px;padding:26px;
+      display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;
+    }
+    .transparency-icon{
+      width:46px;height:46px;border-radius:14px;background:#FFE9AD;display:grid;place-items:center;
+      font-size:21px;
+    }
+    .transparency h3{margin:0 0 6px;font-size:15px}
+    .transparency p{margin:0;color:#6B6250;font-size:12px;line-height:1.6}
+
+    /* FAQ */
+    .faq{display:grid;grid-template-columns:.8fr 1.2fr;gap:46px}
+    details{
+      background:#fff;border:1px solid var(--line);border-radius:15px;
+      padding:16px 18px;margin-bottom:10px;
+    }
+    summary{cursor:pointer;font-weight:700;font-size:13px}
+    details p{font-size:12px;color:var(--muted);margin:10px 0 0}
+
+    /* Final CTA */
+    .final-cta{
+      background:
+        radial-gradient(circle at 80% 20%,rgba(244,185,62,.18),transparent 25%),
+        linear-gradient(135deg,var(--navy2),var(--navy),var(--blue));
+      color:#fff;padding:72px 0;text-align:center;
+    }
+    .final-cta h2{font-family:"Fraunces",serif;font-size:44px;line-height:1.08;margin:0 0 12px}
+    .final-cta p{max-width:660px;margin:0 auto;color:rgba(255,255,255,.75);font-size:14px}
+    .final-cta .hero-actions{justify-content:center}
+
+    footer{background:#062638;color:rgba(255,255,255,.62);padding:30px 0}
+    .footer{display:flex;justify-content:space-between;gap:24px;align-items:center;flex-wrap:wrap;font-size:11px}
+    .footer a{color:#fff;text-decoration:none;margin-left:18px}
+    .footer a:hover{color:var(--sun)}
+
+    @media(max-width:920px){
+      .nav-links a:not(.nav-cta){display:none}
+      .hero{padding:68px 0 70px}
+      .hero-grid,.split,.app-promo,.faq{grid-template-columns:1fr}
+      .hero-grid{gap:48px}
+      .preview-shell{margin:0 auto}
+      .feature-grid,.dest-grid{grid-template-columns:1fr 1fr}
+      .steps{grid-template-columns:1fr 1fr;gap:28px}
+      .step:nth-child(2)::after,.step:nth-child(4)::after{display:none}
+      .trust-inner{grid-template-columns:repeat(3,1fr);padding:16px 0}
+      .floating-note{left:-10px}
+    }
+    @media(max-width:620px){
+      .container{width:min(100% - 28px,1160px)}
+      .nav{min-height:64px}
+      .brand{font-size:23px}
+      .nav-cta{padding:9px 12px!important;font-size:11px!important}
+      .hero h1{font-size:45px}
+      .hero-copy{font-size:15px}
+      .hero-actions .btn{width:100%}
+      .preview-shell{transform:none}
+      .floating-note{display:none}
+      .trust-inner{grid-template-columns:1fr 1fr;font-size:10.5px}
+      .section{padding:64px 0}
+      .feature-grid,.dest-grid,.promo-points,.steps{grid-template-columns:1fr}
+      .step:not(:last-child)::after{display:none}
+      .section h2{font-size:36px}
+      .final-cta h2{font-size:36px}
+      .footer{display:block;text-align:center}
+      .footer div:last-child{margin-top:10px}
+      .footer a{margin:0 8px}
+    }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebApplication",
+    "name":"TripItaly",
+    "url":"https://www.tripitaly.app/app.html",
+    "applicationCategory":"TravelApplication",
+    "operatingSystem":"Web",
+    "description":"A travel planning companion for international visitors organizing trips to Italy."
+  }
+  </script>
 </head>
 <body>
 
-<nav>
-  <div class="container nav">
-    <a class="logo" href="#top">Trip<span>Italy</span></a>
-    <div class="links">
-      <a href="#plan">Plan</a>
-      <a href="#destinations">Destinations</a>
-      <a href="#features">Features</a>
-      <a href="#tips">Italy Tips</a>
-      <a href="#faq">FAQ</a>
-      <a href="#privacy">Privacy</a>
-    </div>
-  </div>
-</nav>
-
-<header id="top" class="hero">
-  <div class="container hero-grid">
-    <div>
-      <div class="kicker">Italy travel planning for international visitors</div>
-      <h1>Your complete Italy travel companion.</h1>
-      <p>TripItaly helps travelers prepare before departure and stay organized in Italy: flights, accommodation, car rental, trains, attractions, day-by-day itineraries, nearby places, budget tools and useful local information.</p>
-      <div class="badges">
-        <span class="badge">✈️ Flights</span><span class="badge">🏨 Accommodation</span><span class="badge">🚗 Car rental</span>
-        <span class="badge">🚆 Trains</span><span class="badge">🎟️ Attractions</span><span class="badge">📍 Nearby</span>
+  <nav class="nav-wrap" aria-label="Main navigation">
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="TripItaly home">Trip<span>Italy</span></a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#destinations">Destinations</a>
+        <a href="#faq">FAQ</a>
+        <a class="nav-cta" href="https://www.tripitaly.app/app.html">Open TripItaly →</a>
       </div>
     </div>
-    <div class="phone">
-      <div class="phone-head">TripItaly Dashboard</div>
-      <div class="mini"><b>✈️ Tickets</b><span>Keep flight details organized and access external booking partners.</span></div>
-      <div class="mini"><b>🏨 House</b><span>Find accommodation using destination, dates and travelers.</span></div>
-      <div class="mini"><b>🗺️ Itinerary</b><span>Build a flexible day-by-day route across Italian cities.</span></div>
-      <div class="mini"><b>📍 Nearby</b><span>Discover useful places around your current position.</span></div>
-    </div>
-  </div>
-</header>
+  </nav>
 
-<section id="plan" class="section">
-  <div class="container">
-    <h2>Plan your trip before you arrive</h2>
-    <p class="lead">Travel in Italy often combines several services. TripItaly is designed to organize those decisions in one place, rather than making travelers manage flights, hotels, transport, tickets and daily plans separately.</p>
-    <div class="steps">
-      <div class="step"><div class="num">1</div><h3>Choose your trip</h3><p>Set travel dates, departure location, destinations, number of travelers and preferences.</p></div>
-      <div class="step"><div class="num">2</div><h3>Build your route</h3><p>Organize cities and stops day by day, while keeping the plan editable during the journey.</p></div>
-      <div class="step"><div class="num">3</div><h3>Book with partners</h3><p>When a commercial service is needed, TripItaly can redirect users to external providers to complete the purchase.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="destinations" class="section alt">
-  <div class="container">
-    <h2>Popular Italy destinations</h2>
-    <p class="lead">TripItaly is built around common routes used by international visitors, from classic first trips to longer multi-city journeys.</p>
-    <div class="grid3">
-      <div class="destination"><h3>Rome</h3><p>Ancient history, Vatican City, major landmarks and walkable neighborhoods.</p></div>
-      <div class="destination"><h3>Florence</h3><p>Renaissance art, Tuscan cuisine and easy day trips across central Italy.</p></div>
-      <div class="destination"><h3>Venice</h3><p>Canals, islands and architecture best explored slowly on foot and by boat.</p></div>
-      <div class="destination"><h3>Milan</h3><p>Design, shopping, major transport connections and access to northern lakes.</p></div>
-      <div class="destination"><h3>Naples & Campania</h3><p>Pizza, Pompeii, Vesuvius, the Amalfi Coast and nearby islands.</p></div>
-      <div class="destination"><h3>Sicily</h3><p>Historic cities, beaches, archaeological sites, local food and Mount Etna.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="features" class="section">
-  <div class="container">
-    <h2>Everything you need to keep the trip organized</h2>
-    <p class="lead">TripItaly combines booking access with practical travel organization. It does not replace airlines, hotels or transport companies; it helps travelers keep the full journey understandable.</p>
-    <div class="grid3">
-      <a class="service-link" href="https://kiwi.tpo.li/N8pkWQIH" target="_blank" rel="nofollow sponsored noopener">
-        <div class="card">
-          <div class="icon">✈️</div>
-          <h3>Flights</h3>
-          <p>Search and compare flights for your trip to Italy.</p>
-          <span class="book-btn">Search flights →</span>
+  <header id="top" class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow">Built for international travelers visiting Italy</div>
+        <h1>Your Italy trip, <em>organized.</em></h1>
+        <p class="hero-copy">
+          From the airport you leave from to the places you discover after you arrive,
+          TripItaly keeps flights, stays, transport, itinerary, budget and practical travel
+          details together in one clear travel companion.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://www.tripitaly.app/app.html">✈️ Start planning your trip</a>
+          <a class="btn btn-secondary" href="#how">See how TripItaly works ↓</a>
         </div>
-      </a>
+        <div class="hero-proof">
+          <span>Plan before departure</span>
+          <span>Useful during the trip</span>
+          <span>Built around Italy travel</span>
+        </div>
+      </div>
 
-      <a class="service-link" href="https://booking.stay22.com/tripitaly/Kk-Cf-ZiP9" target="_blank" rel="nofollow sponsored noopener">
-        <div class="card">
-          <div class="icon">🏨</div>
+      <div class="preview-shell" aria-label="Preview of the TripItaly travel planner">
+        <div class="preview">
+          <div class="preview-head">
+            <div class="preview-brand">Trip<span>Italy</span></div>
+            <div class="preview-sub">Plan your trip. Control your budget.</div>
+          </div>
+          <div class="preview-body">
+            <div class="route-card">
+              <div class="route-top">Your Italy trip</div>
+              <div class="route-main"><span>London</span><span>→</span><span>Rome</span></div>
+              <div class="route-meta">7 days · 2 travelers · multi-city ready</div>
+            </div>
+            <div class="preview-grid">
+              <div class="p-card">
+                <div class="p-icon">✈️</div>
+                <div class="p-label">Flights</div>
+                <div class="p-desc">Route, dates and travelers ready for search.</div>
+              </div>
+              <div class="p-card">
+                <div class="p-icon">🏨</div>
+                <div class="p-label">Stay</div>
+                <div class="p-desc">Keep accommodation connected to your trip.</div>
+              </div>
+              <div class="p-card">
+                <div class="p-icon">🚆</div>
+                <div class="p-label">Between cities</div>
+                <div class="p-desc">Organize train, flight or driving legs.</div>
+              </div>
+              <div class="p-card">
+                <div class="p-icon">📍</div>
+                <div class="p-label">Nearby</div>
+                <div class="p-desc">Find useful places around you in Italy.</div>
+              </div>
+            </div>
+            <div class="budget-card">
+              <div class="budget-row">
+                <div>
+                  <div class="budget-label">TRIP BUDGET</div>
+                  <div class="budget-value">Stay in control</div>
+                </div>
+                <div class="budget-label">Daily view</div>
+              </div>
+              <div class="budget-track"><div class="budget-fill"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="floating-note">🗺️ Your route stays editable</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="trust-strip" aria-label="TripItaly feature categories">
+    <div class="container trust-inner">
+      <span>✈️ Flights</span>
+      <span>🏨 Accommodation</span>
+      <span>🚆 Trains</span>
+      <span>🚗 Car rental</span>
+      <span>🎟️ Attractions</span>
+      <span>📍 Nearby</span>
+    </div>
+  </div>
+
+  <section class="section alt">
+    <div class="container split">
+      <div class="section-head">
+        <div class="eyebrow">One trip. Many moving parts.</div>
+        <h2>Travel planning gets messy fast.</h2>
+        <p class="lead">
+          Italy trips often combine flights, several cities, different transport options,
+          bookings, tickets and daily decisions. TripItaly is designed to keep the journey
+          understandable instead of scattered across tabs, screenshots and notes.
+        </p>
+      </div>
+      <div class="pain-list">
+        <div class="pain">
+          <div class="pain-icon">🧩</div>
+          <div><b>Too many separate services</b><span>Flights, stays, rail, cars and attractions often live in different places.</span></div>
+        </div>
+        <div class="pain">
+          <div class="pain-icon">🗺️</div>
+          <div><b>Multi-city routes are harder to manage</b><span>Dates and transport legs need to stay aligned as the route changes.</span></div>
+        </div>
+        <div class="pain">
+          <div class="pain-icon">💶</div>
+          <div><b>Small costs add up</b><span>A daily budget view helps keep spending visible while you travel.</span></div>
+        </div>
+        <div class="pain">
+          <div class="pain-icon">📍</div>
+          <div><b>The plan must still work after arrival</b><span>Nearby places, directions and day plans matter once the trip actually begins.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Designed around the full journey</div>
+        <h2>Everything important, without turning your trip into a spreadsheet.</h2>
+        <p class="lead">
+          TripItaly combines planning tools with access to external travel providers,
+          while keeping your route, budget and practical trip information organized.
+        </p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature">
+          <div class="feature-icon">✈️</div>
+          <h3>Flight planning</h3>
+          <p>Start from your departure airport, explore suitable arrival airports in Italy and continue to flight search.</p>
+          <span class="tag">Before departure</span>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">🏨</div>
           <h3>Accommodation</h3>
-          <p>Search and compare accommodation for your trip to Italy.</p>
-          <span class="book-btn">Find accommodation →</span>
-        </div>
-      </a>
+          <p>Keep your stay connected to your destination, dates and traveler details instead of managing it separately.</p>
+          <span class="tag">Stay organized</span>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">🚆</div>
+          <h3>Trains & city-to-city transport</h3>
+          <p>Plan how you move between Italian cities and keep those transport choices attached to your route.</p>
+          <span class="tag">Multi-city trips</span>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">🗓️</div>
+          <h3>Day-by-day itinerary</h3>
+          <p>Build and edit a route across Italy, then keep daily stops visible while the trip is underway.</p>
+          <span class="tag">Flexible planning</span>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">💰</div>
+          <h3>Budget tracking</h3>
+          <p>Keep booked costs and daily spending visible so the trip budget stays understandable.</p>
+          <span class="tag">Daily control</span>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">📍</div>
+          <h3>Nearby places</h3>
+          <p>Use your location to discover restaurants, attractions, shopping and useful services around you.</p>
+          <span class="tag">During the trip</span>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">🚗</div>
+          <h3>Car rental & parking notes</h3>
+          <p>Keep car-related details with the rest of the trip when driving makes sense for your route.</p>
+          <span class="tag">Road trips</span>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">🎟️</div>
+          <h3>Attractions & experiences</h3>
+          <p>Connect planned stops with external booking options for museums, attractions and experiences.</p>
+          <span class="tag">Things to do</span>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">💬</div>
+          <h3>Practical Italy tools</h3>
+          <p>Useful phrases, packing support, documents and local travel information stay close to your itinerary.</p>
+          <span class="tag">Travel companion</span>
+        </article>
+      </div>
+    </div>
+  </section>
 
-      <a class="service-link" href="https://www.discovercars.com/?a_aid=TripItaly" target="_blank" rel="nofollow sponsored noopener">
-        <div class="card">
-          <div class="icon">🚗</div>
-          <h3>Car rental</h3>
-          <p>Compare car rental options for your trip around Italy.</p>
-          <span class="book-btn">Compare cars →</span>
-        </div>
-      </a>
-
-      <div class="card">
-        <div class="icon">🚆</div>
-        <h3>Trains & transport</h3>
-        <p>Plan movement between cities such as Rome, Florence, Venice, Milan and Naples.</p>
+  <section id="how" class="section alt">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">How it works</div>
+        <h2>From “we should go to Italy” to a trip you can actually follow.</h2>
+        <p class="lead">TripItaly follows the same order travelers naturally use when organizing a journey.</p>
       </div>
 
-      <a class="service-link" href="https://tiqets.tpo.li/wCsfymvJ" target="_blank" rel="nofollow sponsored noopener">
-        <div class="card">
-          <div class="icon">🎟️</div>
-          <h3>Attractions</h3>
-          <p>Discover and book attractions, museums and experiences for your trip to Italy.</p>
-          <span class="book-btn">Find tickets →</span>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Set the trip</h3>
+          <p>Add dates, travelers and where you are leaving from.</p>
         </div>
-      </a>
-
-      <div class="card"><div class="icon">📍</div><h3>Nearby places</h3><p>Discover restaurants, attractions, parking and practical points around your location.</p></div>
-      <div class="card"><div class="icon">💰</div><h3>Budget tracking</h3><p>Keep estimated and daily spending visible during a multi-city trip.</p></div>
-      <div class="card"><div class="icon">🧳</div><h3>Packing</h3><p>Keep essential travel preparation together with your trip plan.</p></div>
-      <div class="card"><div class="icon">💬</div><h3>Italian phrases</h3><p>Access useful phrases for common situations while traveling in Italy.</p></div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Choose your Italy route</h3>
+          <p>Select arrival options and build the cities you want to visit.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Connect bookings & transport</h3>
+          <p>Use external providers for flights, stays, cars, trains and attractions.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Use it in Italy</h3>
+          <p>Follow the itinerary, watch your budget and discover nearby places.</p>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="tips" class="section alt">
-  <div class="container">
-    <h2>Practical Italy travel guidance</h2>
-    <p class="lead">Good travel planning is not only about booking. These are some of the practical issues TripItaly is designed to keep visible during the journey.</p>
-    <div class="grid2">
-      <div class="tip"><b>🚆 Use trains between major cities</b><span>For many classic routes, rail travel can be simpler than renting a car.</span></div>
-      <div class="tip"><b>🚗 Rent a car selectively</b><span>A car can be useful for countryside and smaller towns, while historic centers are often easier without one.</span></div>
-      <div class="tip"><b>🚫 Watch for ZTL areas</b><span>Many cities restrict vehicle access in historic centers. Travelers should always check current official local rules.</span></div>
-      <div class="tip"><b>🎟️ Plan major attractions ahead</b><span>Popular museums and landmarks can have timed entry or limited availability during busy periods.</span></div>
-      <div class="tip"><b>📍 Keep important places organized</b><span>Saving accommodation, parking and planned stops reduces repeated searching while traveling.</span></div>
-      <div class="tip"><b>💶 Track the daily budget</b><span>Food, transport, attractions and small purchases add up quickly on a multi-city trip.</span></div>
+  <section id="app" class="section">
+    <div class="container app-promo">
+      <div class="app-promo-card">
+        <div class="live-pill"><span class="live-dot"></span> Web app live</div>
+        <h3>Try TripItaly in your browser now.</h3>
+        <p>
+          The TripItaly travel planner is available directly on the web.
+          Start building a trip without leaving this website.
+        </p>
+        <span class="app-url">www.tripitaly.app/app.html</span><br>
+        <a class="btn btn-primary" href="https://www.tripitaly.app/app.html">Open the TripItaly app →</a>
+        <div class="store-note">Android / Google Play release is being prepared.</div>
+      </div>
+
+      <div>
+        <div class="eyebrow">The app is the product</div>
+        <h2>Not just travel content. A planner you actually use.</h2>
+        <p class="lead" style="margin-bottom:22px">
+          The website explains TripItaly. The app turns that idea into a working trip plan.
+        </p>
+        <div class="promo-points">
+          <div class="promo-point"><b>🌍 International-first</b><span>Written and structured for visitors traveling into Italy.</span></div>
+          <div class="promo-point"><b>📱 Mobile-friendly</b><span>Designed to remain useful on the phone while moving around.</span></div>
+          <div class="promo-point"><b>🔁 Before + during</b><span>The same plan stays useful from booking stage through the actual trip.</span></div>
+          <div class="promo-point"><b>🧭 Italy-focused</b><span>Features are built around the practical decisions involved in traveling through Italy.</span></div>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="section">
-  <div class="container">
-    <h2>Bookings remain with external providers</h2>
-    <p class="lead">TripItaly is designed as a planning and travel-assistance product. Commercial purchases are completed on external travel-provider websites or apps.</p>
-    <div class="callout">
-      <strong>Affiliate disclosure:</strong> TripItaly may use affiliate links to third-party travel services. If a traveler completes a qualifying purchase through one of these links, TripItaly may receive a commission at no additional cost to the traveler. Prices, availability, payments, cancellations, refunds and customer support remain the responsibility of the external provider.
+  <section id="destinations" class="section dark">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow" style="color:var(--sun2)">Built for classic and multi-city Italy trips</div>
+        <h2>One country. Very different journeys.</h2>
+        <p class="lead">
+          TripItaly is designed to support the routes international visitors often combine,
+          while keeping the plan flexible enough to change along the way.
+        </p>
+      </div>
+      <div class="dest-grid">
+        <article class="dest"><h3>Rome</h3><p>Ancient history, Vatican City, neighborhoods and major transport connections.</p></article>
+        <article class="dest"><h3>Florence</h3><p>Renaissance art, Tuscany and easy connections across central Italy.</p></article>
+        <article class="dest"><h3>Venice</h3><p>Canals, islands and a city best navigated very differently from the rest of Italy.</p></article>
+        <article class="dest"><h3>Milan</h3><p>Northern gateway for design, business, lakes and onward rail connections.</p></article>
+        <article class="dest"><h3>Naples & Campania</h3><p>Naples, Pompeii, Vesuvius, islands and the routes toward the Amalfi Coast.</p></article>
+        <article class="dest"><h3>Sicily</h3><p>Historic cities, beaches, archaeology, food and longer-distance travel planning.</p></article>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="faq" class="section alt">
-  <div class="container">
-    <h2>Frequently asked questions</h2>
-    <p class="lead">Common questions about how TripItaly works.</p>
-    <details><summary>Does TripItaly sell airline tickets or hotel stays directly?</summary><p>No. In the current model, TripItaly can redirect users to external travel partners to complete bookings.</p></details>
-    <details><summary>Can TripItaly be useful after I arrive in Italy?</summary><p>Yes. The app is designed to remain useful during the trip through itinerary, nearby places, budget tracking, travel tools and practical information.</p></details>
-    <details><summary>Does TripItaly guarantee third-party prices or availability?</summary><p>No. Prices, availability and booking conditions are controlled by external providers and may change.</p></details>
-    <details><summary>How can TripItaly earn money?</summary><p>TripItaly may receive affiliate commissions from qualifying purchases made through selected external partner links.</p></details>
-  </div>
-</section>
-
-<section id="privacy" class="section">
-  <div class="container">
-    <h2>Privacy & transparency</h2>
-    <p class="lead">TripItaly is still being prepared for public mobile release. The final app privacy documentation will be updated to reflect the exact production permissions and data flows.</p>
-    <div class="legalbox">
-      <h3>Website privacy summary</h3>
-      <p class="small">This website does not currently offer account registration or direct travel checkout. Third-party affiliate or analytics tools may process technical data such as browser type, device information, referral source, page visits and link interactions. External booking providers apply their own privacy policies and terms.</p>
-      <h3>Location</h3>
-      <p class="small">The public website does not require precise location. The future mobile application may request location permission for features such as Nearby. Users will be able to control permissions through their device settings.</p>
-      <h3>Affiliate tracking</h3>
-      <p class="small">Affiliate networks and travel providers may use cookies, session identifiers, app attribution or similar technologies to determine whether a qualifying booking resulted from a TripItaly referral.</p>
+  <section class="section alt">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Clear about bookings</div>
+        <h2>TripItaly organizes the journey. Travel providers complete the purchase.</h2>
+      </div>
+      <div class="transparency">
+        <div class="transparency-icon">🤝</div>
+        <div>
+          <h3>Affiliate & external provider disclosure</h3>
+          <p>
+            TripItaly may use affiliate links to third-party travel services. If a traveler
+            completes a qualifying purchase through one of these links, TripItaly may receive
+            a commission at no additional cost to the traveler. Prices, availability, payment,
+            cancellation, refund and customer support conditions remain those of the external provider.
+          </p>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="cta">
-  <div class="container">
-    <h2>TripItaly</h2>
-    <p>A travel companion built to make planning and navigating a trip through Italy simpler, clearer and more organized for international visitors.</p>
-  </div>
-</section>
+  <section id="faq" class="section">
+    <div class="container faq">
+      <div>
+        <div class="eyebrow">FAQ</div>
+        <h2>Before you start planning.</h2>
+        <p class="lead">A few quick answers about what TripItaly does and does not do.</p>
+      </div>
+      <div>
+        <details>
+          <summary>Does TripItaly sell flights, hotels or train tickets directly?</summary>
+          <p>No. TripItaly can connect travelers to external providers where the purchase is completed.</p>
+        </details>
+        <details>
+          <summary>Is TripItaly only useful before I travel?</summary>
+          <p>No. The app is also designed for use during the trip through itinerary, budget, nearby places, maps and practical travel tools.</p>
+        </details>
+        <details>
+          <summary>Can I use TripItaly for a multi-city trip?</summary>
+          <p>Yes. The planner is designed to organize multiple Italian cities and the transport choices between them.</p>
+        </details>
+        <details>
+          <summary>Does TripItaly guarantee third-party prices or availability?</summary>
+          <p>No. Prices, schedules, availability and booking conditions are controlled by the external provider and can change.</p>
+        </details>
+        <details>
+          <summary>Why might TripItaly ask for my location?</summary>
+          <p>Location can be used for features such as Nearby, helping show useful places around your current position. Permission remains under your device or browser control.</p>
+        </details>
+      </div>
+    </div>
+  </section>
 
-<footer>
-  <div class="container footer">
-    <div>© 2026 TripItaly. All rights reserved.</div>
-    <div><a href="#privacy">Privacy</a><a href="#faq">FAQ</a><a href="#top">Back to top</a></div>
-  </div>
-</footer>
+  <section class="final-cta">
+    <div class="container">
+      <h2>Your Italy trip starts with a plan.</h2>
+      <p>
+        Build the route, connect the important bookings and keep the journey organized
+        from departure day to the last stop.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://www.tripitaly.app/app.html">Start planning with TripItaly →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container footer">
+      <div>© 2026 TripItaly. Travel planning for international visitors to Italy.</div>
+      <div>
+        <a href="#faq">FAQ</a>
+        <a href="#app">App</a>
+        <a href="#top">Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
