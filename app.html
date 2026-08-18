@@ -4007,7 +4007,7 @@ function TripRecap({ data, spent, dailyAmount }) {
   );
 }
 
-function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount }) {
+function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip }) {
   const isOnsite = data.mode === "onsite";
   const spent = totalSpent(data);
   const tripEnded = data.endDate && new Date(data.endDate + "T23:59:59") < new Date();
@@ -4074,6 +4074,20 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           <div className={"switch" + (data.arrived ? " on" : "")}><div className="switch-knob"></div></div>
         </div>
       </div>
+
+      {onStartNewTrip && (
+        <button
+          className="btn-text"
+          style={{marginTop:20}}
+          onClick={() => {
+            if (window.confirm("Start a new trip? This will clear your current trip's data.")) {
+              onStartNewTrip();
+            }
+          }}
+        >
+          Start a new trip
+        </button>
+      )}
     </div>
   );
 }
@@ -5028,7 +5042,7 @@ function LiveTranslator() {
   return (
     <div className="field">
       <label>Translate anything to Italian</label>
-      <p className="park-hint">Type or speak in your own language — we'll translate it and can read it aloud to whoever you're talking to.</p>
+      <p className="park-hint">Type in any language — we'll translate it and can read it aloud to whoever you're talking to.</p>
       <textarea
         className="translator-input"
         placeholder="Type a phrase in your language..."
@@ -5052,6 +5066,7 @@ function LiveTranslator() {
           <div className="mic-btn mic-unavailable" title="Voice input not available on this device">🎤</div>
         )}
       </div>
+      {micSupported && <p className="park-hint" style={{marginTop:4}}>🎤 Voice input currently works best in English — typing works in any language.</p>}
       {!micSupported && <p className="park-hint" style={{marginTop:4}}>🎤 Voice input not available on this device — typing works fine.</p>}
 
       {error && <p style={{color:"#C0392B", fontSize:12.5, fontWeight:600, marginTop:8}}>{error}</p>}
@@ -5163,7 +5178,7 @@ function DashTools({ data }) {
   );
 }
 
-function ScreenDashboard({ data, setData }) {
+function ScreenDashboard({ data, setData, onStartNewTrip }) {
   const [section, setSection] = useState("overview");
   const [documents, setDocuments] = useState({ tickets: [], car: [], house: [] });
   const addDoc = (sectionId, doc) => {
@@ -5225,7 +5240,7 @@ function ScreenDashboard({ data, setData }) {
         </h1>
         <p className="subtitle" style={{marginBottom:20}}>{data.itinerary}</p>
 
-        {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} />}
+        {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
         {section === "tickets" && <DashTickets data={data} setData={setData} flightTotal={flightTotal} docs={documents.tickets} onAddDoc={(d) => addDoc("tickets", d)} />}
         {section === "car" && <DashCar data={data} setData={setData} carTotal={carTotal} docs={documents.car} onAddDoc={(d) => addDoc("car", d)} />}
         {section === "house" && <DashHouse data={data} hotelTotal={hotelTotal} nights={nights} docs={documents.house} onAddDoc={(d) => addDoc("house", d)} />}
@@ -5239,11 +5254,45 @@ function ScreenDashboard({ data, setData }) {
   );
 }
 
+// Reads any previously saved trip from this device's storage. If the
+// user has already set a budget (a reasonable sign they got past the
+// first screen), we resume them straight into the dashboard instead of
+// making them redo the whole setup after the browser reloads the page
+// (which happens often when returning from an external site).
+function loadSavedTrip() {
+  try {
+    const raw = localStorage.getItem("tripitaly_data");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && parsed.budget ? parsed : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function App() {
-  const [step, setStep] = useState(0);
-  const [data, setData] = useState({
+  const savedTrip = loadSavedTrip();
+  const [step, setStep] = useState(savedTrip ? 9 : 0);
+  const [data, setData] = useState(savedTrip || {
     budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null
   });
+
+  // Save to this device automatically on every change, so nothing is
+  // lost if the browser reloads the page (e.g. after visiting an
+  // external booking site and coming back).
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("tripitaly_data", JSON.stringify(data));
+    } catch (e) {
+      // Storage full or unavailable — fail silently, not critical.
+    }
+  }, [data]);
+
+  const startNewTrip = () => {
+    try { localStorage.removeItem("tripitaly_data"); } catch (e) {}
+    setData({ budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null });
+    setStep(0);
+  };
 
   const steps = data.mode === "onsite"
     ? { 1: "Budget", 2: "Your Route" }
@@ -5266,7 +5315,7 @@ function App() {
           <div className="brand">Trip<span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
-        <ScreenDashboard data={data} setData={setData} />
+        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} />
       </div>
     );
   }
