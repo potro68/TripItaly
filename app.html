@@ -403,6 +403,19 @@
   .intro-screen .cta-bar{ padding:8px 24px 0; margin-top:20px; }
 
   /* ---- Dashboard ---- */
+  .new-trip-btn{
+    display:block;
+    width:100%;
+    text-align:center;
+    background:var(--whitewash);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--amalfi-deep);
+    margin-bottom:16px;
+  }
   .dash-budget-card{
     background:linear-gradient(135deg, var(--amalfi-deep), var(--amalfi));
     border-radius:18px;
@@ -4062,6 +4075,19 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
   ];
   return (
     <div>
+      {onStartNewTrip && (
+        <button
+          className="new-trip-btn"
+          onClick={() => {
+            if (window.confirm("Start a new trip? This will clear your current trip's data.")) {
+              onStartNewTrip();
+            }
+          }}
+        >
+          🔄 Start a new trip
+        </button>
+      )}
+
       {tripEnded && spent > 0 && <TripRecap data={data} spent={spent} dailyAmount={dailyAmount} />}
 
       <div className="dash-budget-card">
@@ -4117,20 +4143,6 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           <div className={"switch" + (data.arrived ? " on" : "")}><div className="switch-knob"></div></div>
         </div>
       </div>
-
-      {onStartNewTrip && (
-        <button
-          className="btn-text"
-          style={{marginTop:20}}
-          onClick={() => {
-            if (window.confirm("Start a new trip? This will clear your current trip's data.")) {
-              onStartNewTrip();
-            }
-          }}
-        >
-          Start a new trip
-        </button>
-      )}
     </div>
   );
 }
@@ -4230,7 +4242,9 @@ function DashTickets({ data, setData, flightTotal, docs, onAddDoc }) {
           <div className="choice-icon">✈️</div>
           <div className="choice-text">
             <div className="h">Round trip to {airport?.city}</div>
-            <div className="d">€{flightTotal.toLocaleString()} total · {data.people} traveler{data.people>1?"s":""} · {data.flexDates !== false ? "flexible ±3 days" : "fixed dates"}</div>
+            <div className="d">
+              {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people} traveler{data.people>1?"s":""} · €{flightTotal.toLocaleString()} total
+            </div>
           </div>
         </div>
         <a href={buildAviasalesLink(data)} target="_blank" rel="noopener noreferrer sponsored" className="booking-link-btn" style={{marginTop:10}}>
@@ -4317,7 +4331,9 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc }) {
           <div className="choice-icon">🚗</div>
           <div className="choice-text">
             <div className="h">{data.car || "Rental car"}</div>
-            <div className="d">€{carTotal.toLocaleString()} total · {tripLengthDays(data)} days</div>
+            <div className="d">
+              {AIRPORTS.find(a=>a.code===data.airport)?.city} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · €{carTotal.toLocaleString()} total
+            </div>
           </div>
         </div>
         <a href={buildCarRentalLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:10}}>
@@ -4367,6 +4383,7 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc }) {
 }
 
 function DashHouse({ data, hotelTotal, nights, docs, onAddDoc }) {
+  const stayCity = data.stayCity || guessedStayCity(data);
   return (
     <div>
       <div className="field">
@@ -4375,7 +4392,9 @@ function DashHouse({ data, hotelTotal, nights, docs, onAddDoc }) {
           <div className="choice-icon">🏨</div>
           <div className="choice-text">
             <div className="h">{data.hotel || "Accommodation"}</div>
-            <div className="d">€{hotelTotal.toLocaleString()} total · {nights} nights</div>
+            <div className="d">
+              {stayCity} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {nights} nights · €{hotelTotal.toLocaleString()} total
+            </div>
           </div>
         </div>
       </div>
