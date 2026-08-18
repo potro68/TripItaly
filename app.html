@@ -1777,6 +1777,87 @@
     padding:8px 4px;
   }
 
+
+  /* ---- Travel Wallet / Offline / Legal ---- */
+  .wallet-summary{
+    background:linear-gradient(135deg, var(--amalfi-deep), var(--amalfi));
+    color:#fff;
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:18px;
+  }
+  .wallet-summary-h{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .wallet-summary-d{ font-size:12px; opacity:0.82; line-height:1.45; }
+  .wallet-doc-actions{
+    display:flex;
+    gap:8px;
+    margin-top:8px;
+    flex-wrap:wrap;
+  }
+  .wallet-mini-btn{
+    border:1px solid var(--line);
+    background:rgba(28,90,122,0.07);
+    color:var(--amalfi-deep);
+    border-radius:8px;
+    padding:6px 10px;
+    font-family:'Sora',sans-serif;
+    font-size:11px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .wallet-mini-btn.danger{
+    color:#A7352A;
+    background:rgba(192,57,43,0.08);
+    border-color:rgba(192,57,43,0.22);
+  }
+  .offline-card{
+    background:var(--whitewash);
+    border:1.5px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:10px;
+  }
+  .offline-card-h{ font-weight:700; font-size:14px; margin-bottom:4px; }
+  .offline-card-d{ font-size:12px; color:rgba(19,42,58,0.62); line-height:1.5; }
+  .offline-emergency{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    background:rgba(192,57,43,0.08);
+    border:1.5px solid rgba(192,57,43,0.22);
+    border-radius:14px;
+    padding:15px 16px;
+    margin-bottom:14px;
+  }
+  .offline-emergency-num{
+    font-family:'Fraunces',serif;
+    font-size:28px;
+    font-weight:700;
+    color:#A7352A;
+  }
+  .legal-links{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+  }
+  .legal-link{
+    text-align:center;
+    text-decoration:none;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:10px 6px;
+    color:var(--amalfi-deep);
+    background:var(--whitewash);
+    font-size:11px;
+    font-weight:700;
+  }
+
 </style>
 </head>
 <body>
@@ -1789,7 +1870,7 @@
 <script type="text/babel">
 const { useState } = React;
 
-// ---- Mock data: origin -> suggested airport logic ----
+// ---- Core trip data: origin -> suggested airport logic ----
 const TRAVELER_TYPES = [
   { id: "solo", icon: "🧳", label: "Single", autoPeople: 1 },
   { id: "couple", icon: "💑", label: "Couple", autoPeople: 2 },
@@ -3587,15 +3668,6 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
   );
 }
 
-const MOCK_FLIGHTS = {
-  FCO: { price: 480, itineraries: ["Rome · Florence · Venice (7 days)", "Rome & the Amalfi Coast (7 days)"] },
-  MXP: { price: 410, itineraries: ["Milan · Lake Como · Verona (6 days)", "Milan & the Dolomites (8 days)"] },
-  LIN: { price: 430, itineraries: ["Milan · Lake Como · Verona (6 days)", "Milan & the Dolomites (8 days)"] },
-  BGY: { price: 390, itineraries: ["Milan · Lake Como · Verona (6 days)", "Milan & the Dolomites (8 days)"] },
-  VCE: { price: 495, itineraries: ["Venice · Verona · Lake Garda (6 days)", "Venice & the Dolomites (7 days)"] },
-  NAP: { price: 460, itineraries: ["Naples · Amalfi Coast · Capri (7 days)", "Naples & Pompeii Classic (5 days)"] },
-  CTA: { price: 430, itineraries: ["Taormina · Etna · Syracuse (7 days)", "Sicily Road Trip (10 days)"] },
-};
 
 function ScreenFlights({ data, setData, onNext, onBack }) {
   const airport = AIRPORTS.find(a => a.code === data.airport) || AIRPORTS[0];
@@ -3690,92 +3762,6 @@ function ScreenFlights({ data, setData, onNext, onBack }) {
     </div>
   );
 }
-const MOCK_HOTELS = [
-  { name: "Hotel Artemide", area: "Near Termini, Rome", price: 145, source: "Booking.com", rating: 8.9 },
-  { name: "Trastevere Loft", area: "Trastevere, Rome", price: 98, source: "Airbnb", rating: 4.8 },
-  { name: "Casa Amalfi View", area: "Positano centre", price: 210, source: "Airbnb", rating: 4.9 },
-];
-
-function ScreenHotel({ data, setData, onNext, onBack }) {
-  const selected = data.hotel || MOCK_HOTELS[0].name;
-  return (
-    <div className="screen">
-      <h1 className="title">Where will you stay?</h1>
-      <p className="subtitle">Options within your budget, matched to your itinerary's cities.</p>
-
-      <div className="field">
-        {MOCK_HOTELS.map(h => (
-          <div
-            key={h.name}
-            className={"choice-card" + (selected === h.name ? " selected" : "")}
-            onClick={() => setData({...data, hotel: h.name, hotelPrice: h.price})}
-          >
-            <div className="choice-icon">🏨</div>
-            <div className="choice-text">
-              <div className="h">{h.name}</div>
-              <div className="d">{h.area} · €{h.price}/night · ★{h.rating} · via {h.source}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="cta-bar">
-        <button className="btn-primary" onClick={() => { if(!data.hotelPrice) setData({...data, hotel: MOCK_HOTELS[0].name, hotelPrice: MOCK_HOTELS[0].price}); onNext(); }}>Continue</button>
-        <button className="btn-text" onClick={onBack}>← Back</button>
-      </div>
-    </div>
-  );
-}
-
-const MOCK_CARS = [
-  { name: "Compact (e.g. Fiat Panda)", price: 32 },
-  { name: "Mid-size (e.g. VW Golf)", price: 45 },
-  { name: "SUV (e.g. Jeep Renegade)", price: 62 },
-];
-
-function ScreenCar({ data, setData, onNext, onBack }) {
-  const selected = data.car || MOCK_CARS[0].name;
-  return (
-    <div className="screen">
-      <h1 className="title">Pick your rental car</h1>
-      <p className="subtitle">Daily rate, pickup at {AIRPORTS.find(a => a.code === data.airport)?.city}.</p>
-
-      <div className="field">
-        {MOCK_CARS.map(c => (
-          <div
-            key={c.name}
-            className={"choice-card" + (selected === c.name ? " selected" : "")}
-            onClick={() => setData({...data, car: c.name, carPrice: c.price})}
-          >
-            <div className="choice-icon">🚗</div>
-            <div className="choice-text">
-              <div className="h">{c.name}</div>
-              <div className="d">€{c.price}/day · ZTL & parking notes included in-app</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="cta-bar">
-        <button className="btn-primary" onClick={() => { if(!data.carPrice) setData({...data, car: MOCK_CARS[0].name, carPrice: MOCK_CARS[0].price}); onNext(); }}>Continue</button>
-        <button className="btn-text" onClick={onBack}>← Back</button>
-      </div>
-    </div>
-  );
-}
-
-const MOCK_ITINERARY_DAYS = {
-  "Rome · Florence · Venice (7 days)": [
-    { city: "Rome", days: [1,2,3], stops: ["Colosseum & Roman Forum", "Vatican Museums", "Trastevere evening walk"] },
-    { city: "Florence", days: [4,5], stops: ["Uffizi Gallery", "Duomo & Ponte Vecchio"] },
-    { city: "Venice", days: [6,7], stops: ["St Mark's Square", "Gondola ride & Murano"] },
-  ],
-  "Rome & the Amalfi Coast (7 days)": [
-    { city: "Rome", days: [1,2,3], stops: ["Colosseum & Roman Forum", "Vatican Museums", "Pantheon & Piazza Navona"] },
-    { city: "Amalfi Coast", days: [4,5,6,7], stops: ["Positano", "Capri day trip", "Ravello gardens"] },
-  ],
-};
-
 function tripLengthDays(data) {
   if (!data.startDate || !data.endDate) return 7;
   const d = (new Date(data.endDate) - new Date(data.startDate)) / 86400000;
@@ -3802,46 +3788,19 @@ function formatDayStrip(d) {
   };
 }
 
-function ScreenItinerary({ data, onNext, onBack }) {
-  const days = MOCK_ITINERARY_DAYS[data.itinerary] || Object.values(MOCK_ITINERARY_DAYS)[0];
-  return (
-    <div className="screen">
-      <h1 className="title">{data.itinerary}</h1>
-      <p className="subtitle">Your day-by-day plan — fully editable once you're in the app.</p>
-
-      {days.map(block => (
-        <div key={block.city} className="field">
-          <label>{block.city} · Day{block.days.length > 1 ? "s" : ""} {block.days.join("–")}</label>
-          {block.stops.map(s => (
-            <div key={s} className="choice-card">
-              <div className="choice-icon">📍</div>
-              <div className="choice-text">
-                <div className="h">{s}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
-
-      <div className="cta-bar">
-        <button className="btn-primary" onClick={onNext}>Confirm & set up budget tracking</button>
-        <button className="btn-text" onClick={onBack}>← Back</button>
-      </div>
-    </div>
-  );
-}
-
 const DASH_SECTIONS = [
   { id: "overview", icon: "🏠", label: "Overview" },
   { id: "tickets", icon: "✈️", label: "Tickets" },
   { id: "car", icon: "🚗", label: "Car" },
   { id: "house", icon: "🏨", label: "House" },
+  { id: "wallet", icon: "👛", label: "Wallet" },
   { id: "packing", icon: "🧳", label: "Packing" },
 ];
 
 const DASH_SECTIONS_ITALY = [
   { id: "itinerary", icon: "🗺️", label: "Itinerary" },
   { id: "nearby", icon: "📍", label: "Nearby" },
+  { id: "offline", icon: "📴", label: "Offline" },
   { id: "phrasebook", icon: "💬", label: "Phrases" },
   { id: "tools", icon: "🧰", label: "Tools" },
 ];
@@ -4147,6 +4106,99 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
   );
 }
 
+
+const TRIPITALY_DOC_DB = "tripitaly_wallet";
+const TRIPITALY_DOC_STORE = "documents";
+
+function openTravelDocDB() {
+  return new Promise((resolve, reject) => {
+    if (!("indexedDB" in window)) { reject(new Error("IndexedDB unavailable")); return; }
+    const req = indexedDB.open(TRIPITALY_DOC_DB, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(TRIPITALY_DOC_STORE)) {
+        db.createObjectStore(TRIPITALY_DOC_STORE, { keyPath: "id" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveTravelDocument(record) {
+  const db = await openTravelDocDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
+    tx.objectStore(TRIPITALY_DOC_STORE).put(record);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function loadTravelDocuments() {
+  try {
+    const db = await openTravelDocDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(TRIPITALY_DOC_STORE, "readonly");
+      const req = tx.objectStore(TRIPITALY_DOC_STORE).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+      tx.oncomplete = () => db.close();
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
+async function deleteTravelDocument(id) {
+  try {
+    const db = await openTravelDocDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
+      tx.objectStore(TRIPITALY_DOC_STORE).delete(id);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch (e) {}
+}
+
+async function clearTravelDocuments() {
+  try {
+    const db = await openTravelDocDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
+      tx.objectStore(TRIPITALY_DOC_STORE).clear();
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch (e) {}
+}
+
+async function openSavedTravelDocument(id) {
+  try {
+    const db = await openTravelDocDB();
+    const record = await new Promise((resolve, reject) => {
+      const tx = db.transaction(TRIPITALY_DOC_STORE, "readonly");
+      const req = tx.objectStore(TRIPITALY_DOC_STORE).get(id);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+      tx.oncomplete = () => db.close();
+    });
+    if (!record?.blob) return;
+    const url = URL.createObjectURL(record.blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {}
+}
+
 const DOC_TYPES = {
   tickets: [
     { id: "boarding", icon: "🎫", label: "Boarding pass" },
@@ -4165,7 +4217,7 @@ const DOC_TYPES = {
   ],
 };
 
-function DocumentUpload({ section, docs, onAdd }) {
+function DocumentUpload({ section, docs, onAdd, onRemove }) {
   const [adding, setAdding] = useState(false);
   const [pendingType, setPendingType] = useState(null);
   const fileInputRef = React.useRef(null);
@@ -4176,11 +4228,23 @@ function DocumentUpload({ section, docs, onAdd }) {
     fileInputRef.current?.click();
   };
 
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !pendingType) return;
     const typeInfo = types.find(t => t.id === pendingType);
-    onAdd({ id: Date.now(), typeId: pendingType, typeLabel: typeInfo.label, icon: typeInfo.icon, name: file.name, addedAt: new Date() });
+    const doc = {
+      id: Date.now(),
+      section,
+      typeId: pendingType,
+      typeLabel: typeInfo.label,
+      icon: typeInfo.icon,
+      name: file.name,
+      mime: file.type || "application/octet-stream",
+      size: file.size,
+      addedAt: new Date().toISOString(),
+      blob: file
+    };
+    await onAdd(doc);
     setAdding(false);
     setPendingType(null);
     e.target.value = "";
@@ -4196,7 +4260,7 @@ function DocumentUpload({ section, docs, onAdd }) {
           <div className="choice-icon">📭</div>
           <div className="choice-text">
             <div className="h">Nothing added yet</div>
-            <div className="d">Tap "Add document" below once you have it</div>
+            <div className="d">Add booking documents, tickets or confirmations when you have them</div>
           </div>
         </div>
       )}
@@ -4207,6 +4271,10 @@ function DocumentUpload({ section, docs, onAdd }) {
           <div className="choice-text">
             <div className="h">{d.typeLabel}</div>
             <div className="d">{d.name}</div>
+            <div className="wallet-doc-actions">
+              <button className="wallet-mini-btn" onClick={() => openSavedTravelDocument(d.id)}>Open</button>
+              <button className="wallet-mini-btn danger" onClick={() => onRemove?.(d.id)}>Delete</button>
+            </div>
           </div>
         </div>
       ))}
@@ -4228,7 +4296,7 @@ function DocumentUpload({ section, docs, onAdd }) {
   );
 }
 
-function DashTickets({ data, setData, flightTotal, docs, onAddDoc }) {
+function DashTickets({ data, setData, flightTotal, docs, onAddDoc, onRemoveDoc }) {
   const airport = AIRPORTS.find(a=>a.code===data.airport);
   const dp = data.departureParking || {};
   const setDp = (field, value) => setData({...data, departureParking: {...dp, [field]: value}});
@@ -4255,7 +4323,7 @@ function DashTickets({ data, setData, flightTotal, docs, onAddDoc }) {
           </span>
         </a>
       </div>
-      <DocumentUpload section="tickets" docs={docs} onAdd={onAddDoc} />
+      <DocumentUpload section="tickets" docs={docs} onAdd={onAddDoc} onRemove={onRemoveDoc} />
 
       <div className="field">
         <label>Left your own car at the departure airport?</label>
@@ -4308,7 +4376,7 @@ function DashTickets({ data, setData, flightTotal, docs, onAddDoc }) {
   );
 }
 
-function DashCar({ data, setData, carTotal, docs, onAddDoc }) {
+function DashCar({ data, setData, carTotal, docs, onAddDoc, onRemoveDoc }) {
   if (!data.wantsCar) {
     return (
       <div className="field">
@@ -4345,7 +4413,7 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc }) {
         </a>
       </div>
 
-      <DocumentUpload section="car" docs={docs} onAdd={onAddDoc} />
+      <DocumentUpload section="car" docs={docs} onAdd={onAddDoc} onRemove={onRemoveDoc} />
 
       <div className="field">
         <label>Where's your rental car parked right now?</label>
@@ -4382,7 +4450,7 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc }) {
   );
 }
 
-function DashHouse({ data, hotelTotal, nights, docs, onAddDoc }) {
+function DashHouse({ data, hotelTotal, nights, docs, onAddDoc, onRemoveDoc }) {
   const stayCity = data.stayCity || guessedStayCity(data);
   return (
     <div>
@@ -4398,7 +4466,7 @@ function DashHouse({ data, hotelTotal, nights, docs, onAddDoc }) {
           </div>
         </div>
       </div>
-      <DocumentUpload section="house" docs={docs} onAdd={onAddDoc} />
+      <DocumentUpload section="house" docs={docs} onAdd={onAddDoc} onRemove={onRemoveDoc} />
     </div>
   );
 }
@@ -4413,7 +4481,7 @@ async function geocodeAddress(query) {
   return null;
 }
 
-function LiveLocationMap({ data, poiOffsets, compact }) {
+function LiveLocationMap({ data, compact }) {
   const [coords, setCoords] = useState(null);
   const [status, setStatus] = useState("idle"); // idle | loading | ok | denied | unsupported
   const [imgError, setImgError] = useState(false);
@@ -4496,11 +4564,6 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
   const googleMarkers = [`color:red|${coords.lat},${coords.lng}`];
   if (hotelCoords) googleMarkers.push(`color:blue|${hotelCoords.lat},${hotelCoords.lng}`);
   if (carCoords) googleMarkers.push(`color:green|${carCoords.lat},${carCoords.lng}`);
-  if (poiOffsets) {
-    poiOffsets.forEach(p => {
-      googleMarkers.push(`color:orange|${coords.lat + p.dLat},${coords.lng + p.dLng}`);
-    });
-  }
   const zoom = compact ? 15 : 13;
   const h = compact ? 160 : 220;
   const mapParams = new URLSearchParams({
@@ -4556,21 +4619,10 @@ function LiveLocationMap({ data, poiOffsets, compact }) {
           )}
         </div>
       )}
-      {compact && poiOffsets && (
-        <div className="map-legend">
-          <div className="map-legend-item"><span className="map-dot" style={{background:"#C0392B"}}></span> You</div>
-          <div className="map-legend-item"><span className="map-dot" style={{background:"#E08A2E"}}></span> Nearby spots</div>
-        </div>
-      )}
     </div>
   );
 }
 
-const MOCK_POI_OFFSETS = [
-  { dLat: 0.004, dLng: 0.003 },
-  { dLat: -0.003, dLng: 0.005 },
-  { dLat: 0.002, dLng: -0.004 },
-];
 
 function isSameDate(d1, d2) {
   return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
@@ -4653,7 +4705,7 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
       )}
 
       {isToday
-        ? <LiveLocationMap data={data} compact poiOffsets={MOCK_POI_OFFSETS} />
+        ? <LiveLocationMap data={data} compact />
         : <CityMap city={city} />
       }
 
@@ -4706,7 +4758,13 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
 }
 
 function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
-  const days = data.routeBlocks || MOCK_ITINERARY_DAYS[data.itinerary] || Object.values(MOCK_ITINERARY_DAYS)[0];
+  const days = (data.routeBlocks && data.routeBlocks.length)
+    ? data.routeBlocks
+    : [{
+        city: primaryCityName(AIRPORTS.find(a => a.code === data.airport)?.city) || data.stayCity || "Italy",
+        days: Array.from({length: tripLengthDays(data)}, (_, i) => i + 1),
+        stops: []
+      }];
   const totalDays = days.reduce((max, b) => Math.max(max, ...b.days), 1);
   const today = new Date();
 
@@ -5026,7 +5084,7 @@ function DashNearby({ data, setData }) {
   );
 }
 
-const MOCK_PHRASES = [
+const USEFUL_PHRASES = [
   { cat: "Restaurant", it: "Vorrei prenotare un tavolo", en: "I'd like to book a table" },
   { cat: "Restaurant", it: "Il conto, per favore", en: "The bill, please" },
   { cat: "Taxi", it: "Quanto costa fino a...?", en: "How much to...?" },
@@ -5154,7 +5212,7 @@ function DashPhrasebook() {
       <LiveTranslator />
       <div className="field">
         <label>Useful phrases</label>
-        {MOCK_PHRASES.map((p,i) => (
+        {USEFUL_PHRASES.map((p,i) => (
           <div key={i} className="phrase-card">
             <div className="phrase-cat">{p.cat}</div>
             <div className="phrase-it">{p.it}</div>
@@ -5379,19 +5437,136 @@ function DashCurrency() {
   );
 }
 
-function DashTools({ data }) {
+
+function DashWallet({ documents, onAddDoc, onRemoveDoc }) {
+  const groups = [
+    { id:"tickets", icon:"✈️", label:"Flights & tickets" },
+    { id:"car", icon:"🚗", label:"Rental car" },
+    { id:"house", icon:"🏨", label:"Accommodation" },
+  ];
+  const total = groups.reduce((sum, g) => sum + (documents[g.id]?.length || 0), 0);
+
+  return (
+    <div>
+      <div className="wallet-summary">
+        <div className="wallet-summary-h">Travel Wallet</div>
+        <div className="wallet-summary-d">
+          Keep your flight, rental-car and accommodation documents together. No credit cards or identity documents.
+        </div>
+        <div style={{marginTop:10, fontWeight:700}}>{total} saved document{total===1?"":"s"}</div>
+      </div>
+
+      {groups.map(g => (
+        <div className="field" key={g.id}>
+          <label>{g.icon} {g.label}</label>
+          <DocumentUpload
+            section={g.id}
+            docs={documents[g.id] || []}
+            onAdd={(d) => onAddDoc(g.id, d)}
+            onRemove={(id) => onRemoveDoc(g.id, id)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DashOffline({ data }) {
+  const airport = AIRPORTS.find(a => a.code === data.airport);
+  const route = data.routeBlocks || [];
+  const savedHotel = data.hotel || "Not saved";
+  const parking = data.parkingNote || data.departureParking?.spot || "Not saved";
+
+  return (
+    <div>
+      <div className="field">
+        <label>Offline essentials</label>
+        <p className="park-hint">
+          This screen uses information already stored in TripItaly. Live maps, weather, Nearby searches and live booking prices still need internet.
+        </p>
+      </div>
+
+      <div className="offline-emergency">
+        <div>
+          <div className="offline-card-h">🚨 Emergency in Italy</div>
+          <div className="offline-card-d">Single European emergency number · free to call</div>
+        </div>
+        <a className="offline-emergency-num" href="tel:112" style={{textDecoration:"none"}}>112</a>
+      </div>
+
+      <div className="offline-card">
+        <div className="offline-card-h">🏨 Accommodation</div>
+        <div className="offline-card-d">{savedHotel}</div>
+      </div>
+
+      <div className="offline-card">
+        <div className="offline-card-h">✈️ Arrival</div>
+        <div className="offline-card-d">{airport ? `${airport.city} (${airport.code})` : "Arrival airport not saved"}</div>
+      </div>
+
+      <div className="offline-card">
+        <div className="offline-card-h">🚗 Parking reminder</div>
+        <div className="offline-card-d">{parking}</div>
+      </div>
+
+      <div className="offline-card">
+        <div className="offline-card-h">🗺️ Saved route</div>
+        <div className="offline-card-d">
+          {route.length
+            ? route.map(b => `${b.city} · Day${b.days.length>1?"s":""} ${b.days.join("–")}`).join(" → ")
+            : (data.itinerary || "No route saved yet")}
+        </div>
+      </div>
+
+      <div className="offline-card">
+        <div className="offline-card-h">💬 Quick phrases</div>
+        <div className="offline-card-d">
+          Grazie — Thank you<br/>
+          Per favore — Please<br/>
+          Dov'è la stazione? — Where is the station?<br/>
+          Ho bisogno di aiuto — I need help<br/>
+          Il conto, per favore — The bill, please
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashTools({ data, onDeleteLocalData }) {
   return (
     <div>
       <DashWeather data={data} />
       <DashCurrency />
       <div className="field">
         <label>Emergency numbers</label>
-        <div className="choice-card"><div className="choice-icon">🚨</div><div className="choice-text"><div className="h">112</div><div className="d">General emergency (EU-wide)</div></div></div>
-        <div className="choice-card"><div className="choice-icon">🏥</div><div className="choice-text"><div className="h">Nearest hospital</div><div className="d">Tap to locate</div></div></div>
+        <a href="tel:112" className="choice-card" style={{textDecoration:"none"}}>
+          <div className="choice-icon">🚨</div>
+          <div className="choice-text">
+            <div className="h">112</div>
+            <div className="d">Single European emergency number · free to call</div>
+          </div>
+        </a>
       </div>
       <div className="field">
         <label>Time zone</label>
         <div className="choice-card"><div className="choice-icon">🕐</div><div className="choice-text"><div className="h">Italy is CET / CEST</div><div className="d">Check difference from home</div></div></div>
+      </div>
+
+      <div className="field">
+        <label>Privacy & support</label>
+        <div className="legal-links">
+          <a className="legal-link" href="https://www.tripitaly.app/privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a>
+          <a className="legal-link" href="https://www.tripitaly.app/terms.html" target="_blank" rel="noopener noreferrer">Terms</a>
+          <a className="legal-link" href="https://www.tripitaly.app/support.html" target="_blank" rel="noopener noreferrer">Support</a>
+        </div>
+      </div>
+
+      <div className="field">
+        <label>Local data</label>
+        <p className="park-hint">TripItaly stores your trip and Travel Wallet documents on this device so you can return to them later.</p>
+        <button className="btn-secondary" style={{borderColor:"#C0392B", color:"#A7352A"}} onClick={onDeleteLocalData}>
+          Delete trip & local data
+        </button>
       </div>
     </div>
   );
@@ -5400,8 +5575,29 @@ function DashTools({ data }) {
 function ScreenDashboard({ data, setData, onStartNewTrip }) {
   const [section, setSection] = useState("overview");
   const [documents, setDocuments] = useState({ tickets: [], car: [], house: [] });
-  const addDoc = (sectionId, doc) => {
-    setDocuments(prev => ({...prev, [sectionId]: [...prev[sectionId], doc]}));
+
+  React.useEffect(() => {
+    loadTravelDocuments().then(all => {
+      const grouped = { tickets: [], car: [], house: [] };
+      all.forEach(d => {
+        if (grouped[d.section]) {
+          const { blob, ...meta } = d;
+          grouped[d.section].push(meta);
+        }
+      });
+      setDocuments(grouped);
+    });
+  }, []);
+
+  const addDoc = async (sectionId, doc) => {
+    await saveTravelDocument(doc);
+    const { blob, ...meta } = doc;
+    setDocuments(prev => ({...prev, [sectionId]: [...prev[sectionId], meta]}));
+  };
+
+  const removeDoc = async (sectionId, id) => {
+    await deleteTravelDocument(id);
+    setDocuments(prev => ({...prev, [sectionId]: prev[sectionId].filter(d => d.id !== id)}));
   };
 
   // When the user flips "I've arrived" on, jump straight to the Itinerary
@@ -5424,7 +5620,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
   const pctUsed = data.budget ? Math.min(100, Math.round(((lockedTotal + spent) / data.budget) * 100)) : 0;
   const dailyAmount = dailyBudget(data, (data.budget || 0) - lockedTotal);
 
-  const sections = data.mode === "onsite" ? DASH_SECTIONS.filter(s => s.id === "overview" || s.id === "packing") : DASH_SECTIONS;
+  const sections = data.mode === "onsite" ? DASH_SECTIONS.filter(s => ["overview","wallet","packing"].includes(s.id)) : DASH_SECTIONS;
   const italySections = DASH_SECTIONS_ITALY;
   const allLabels = [...DASH_SECTIONS, ...DASH_SECTIONS_ITALY];
 
@@ -5460,14 +5656,16 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
         <p className="subtitle" style={{marginBottom:20}}>{data.itinerary}</p>
 
         {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
-        {section === "tickets" && <DashTickets data={data} setData={setData} flightTotal={flightTotal} docs={documents.tickets} onAddDoc={(d) => addDoc("tickets", d)} />}
-        {section === "car" && <DashCar data={data} setData={setData} carTotal={carTotal} docs={documents.car} onAddDoc={(d) => addDoc("car", d)} />}
-        {section === "house" && <DashHouse data={data} hotelTotal={hotelTotal} nights={nights} docs={documents.house} onAddDoc={(d) => addDoc("house", d)} />}
+        {section === "tickets" && <DashTickets data={data} setData={setData} flightTotal={flightTotal} docs={documents.tickets} onAddDoc={(d) => addDoc("tickets", d)} onRemoveDoc={(id) => removeDoc("tickets", id)} />}
+        {section === "car" && <DashCar data={data} setData={setData} carTotal={carTotal} docs={documents.car} onAddDoc={(d) => addDoc("car", d)} onRemoveDoc={(id) => removeDoc("car", id)} />}
+        {section === "house" && <DashHouse data={data} hotelTotal={hotelTotal} nights={nights} docs={documents.house} onAddDoc={(d) => addDoc("house", d)} onRemoveDoc={(id) => removeDoc("house", id)} />}
+        {section === "wallet" && <DashWallet documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={setSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && data.arrived && <DashNearby data={data} setData={setData} />}
+        {section === "offline" && data.arrived && <DashOffline data={data} />}
         {section === "phrasebook" && data.arrived && <DashPhrasebook />}
-        {section === "tools" && data.arrived && <DashTools data={data} />}
+        {section === "tools" && data.arrived && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
       </div>
     </div>
   );
@@ -5507,8 +5705,11 @@ function App() {
     }
   }, [data]);
 
-  const startNewTrip = () => {
+  const startNewTrip = async () => {
+    const ok = window.confirm("Delete this trip and all locally saved Travel Wallet documents from this device?");
+    if (!ok) return;
     try { localStorage.removeItem("tripitaly_data"); } catch (e) {}
+    await clearTravelDocuments();
     setData({ budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null });
     setStep(0);
   };
