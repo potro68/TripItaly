@@ -982,6 +982,49 @@
     font-weight:700;
     color:var(--amalfi-deep);
   }
+  .currency-from-row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .currency-chip{
+    font-size:12px;
+    font-weight:700;
+    padding:7px 12px;
+    border-radius:9px;
+    border:1.5px solid var(--line);
+    cursor:pointer;
+  }
+  .currency-chip.active{
+    background:var(--amalfi-deep);
+    border-color:var(--amalfi-deep);
+    color:#fff;
+  }
+  .weather-now-card{
+    text-align:center;
+    padding:18px;
+    background:linear-gradient(135deg, rgba(28,90,122,0.08), rgba(46,139,139,0.08));
+    border-radius:16px;
+    margin-bottom:12px;
+  }
+  .weather-now-icon{ font-size:38px; margin-bottom:4px; }
+  .weather-now-temp{ font-family:'Fraunces', serif; font-size:32px; font-weight:700; color:var(--ink); }
+  .weather-now-label{ font-size:13px; color:rgba(19,42,58,0.6); margin-top:2px; }
+  .weather-forecast-row{
+    display:flex;
+    gap:8px;
+  }
+  .weather-day-chip{
+    flex:1;
+    text-align:center;
+    background:var(--whitewash);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:10px 4px;
+  }
+  .weather-day-name{ font-size:10.5px; font-weight:700; color:rgba(19,42,58,0.5); text-transform:uppercase; }
+  .weather-day-icon{ font-size:20px; margin:4px 0; }
+  .weather-day-temps{ font-size:11px; font-weight:600; color:var(--ink); }
 
   /* ---- Live location map ---- */
   .map-placeholder{
@@ -5152,19 +5195,176 @@ function DashPacking({ data, setData }) {
   );
 }
 
-function DashTools({ data }) {
+function DashWeather({ data }) {
+  const [weather, setWeather] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [coords, setCoords] = useState(null);
+  const [locStatus, setLocStatus] = useState("idle");
+
+  const locate = () => {
+    if (!("geolocation" in navigator)) { setLocStatus("unsupported"); return; }
+    setLocStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocStatus("ok");
+      },
+      () => setLocStatus("denied"),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+    );
+  };
+
+  React.useEffect(() => {
+    if (!coords) return;
+    setLoading(true);
+    setError("");
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=4`;
+    fetch(url)
+      .then(r => r.json())
+      .then(json => {
+        if (json.current) setWeather(json);
+        else setError("Couldn't load weather right now.");
+        setLoading(false);
+      })
+      .catch(() => { setError("Couldn't reach the weather service."); setLoading(false); });
+  }, [coords]);
+
+  // WMO weather codes -> icon + short label
+  const describeCode = (code) => {
+    if (code === 0) return { icon: "☀️", label: "Clear sky" };
+    if (code <= 2) return { icon: "🌤️", label: "Partly cloudy" };
+    if (code === 3) return { icon: "☁️", label: "Overcast" };
+    if (code <= 48) return { icon: "🌫️", label: "Foggy" };
+    if (code <= 57) return { icon: "🌦️", label: "Drizzle" };
+    if (code <= 67) return { icon: "🌧️", label: "Rain" };
+    if (code <= 77) return { icon: "🌨️", label: "Snow" };
+    if (code <= 82) return { icon: "🌧️", label: "Rain showers" };
+    if (code <= 86) return { icon: "🌨️", label: "Snow showers" };
+    if (code >= 95) return { icon: "⛈️", label: "Thunderstorm" };
+    return { icon: "🌤️", label: "" };
+  };
+
+  if (locStatus === "idle") {
+    return (
+      <div className="nearby-permission-card">
+        <div className="nearby-permission-icon">🌤️</div>
+        <div className="nearby-permission-title">Check the weather</div>
+        <p className="nearby-permission-text">See real, live weather for wherever you are right now.</p>
+        <button className="btn-primary" style={{marginTop:12}} onClick={locate}>Use my location</button>
+      </div>
+    );
+  }
+
+  if (locStatus === "denied") {
+    return (
+      <div className="nearby-permission-card">
+        <div className="nearby-permission-icon">🌤️</div>
+        <p className="nearby-permission-text">Location access is disabled. Enable location permission for TripItaly and try again.</p>
+        <button className="btn-secondary" style={{marginTop:12}} onClick={locate}>Try again</button>
+      </div>
+    );
+  }
+
+  if (locStatus === "unsupported") {
+    return <p className="park-hint">Location isn't supported on this device/browser.</p>;
+  }
+
+  if (locStatus === "loading" || loading) {
+    return <p className="park-hint">Loading weather…</p>;
+  }
+
+  if (error || !weather) {
+    return <p className="park-hint">{error || "No weather data available."}</p>;
+  }
+
+  const current = describeCode(weather.current.weather_code);
+
+  return (
+    <div className="field">
+      <label>Weather right now</label>
+      <div className="weather-now-card">
+        <div className="weather-now-icon">{current.icon}</div>
+        <div className="weather-now-temp">{Math.round(weather.current.temperature_2m)}°C</div>
+        <div className="weather-now-label">{current.label}</div>
+      </div>
+      <div className="weather-forecast-row">
+        {weather.daily.time.slice(1, 4).map((date, i) => {
+          const d = new Date(date + "T00:00:00");
+          const dayInfo = describeCode(weather.daily.weather_code[i + 1]);
+          return (
+            <div key={date} className="weather-day-chip">
+              <div className="weather-day-name">{d.toLocaleDateString("en-US", { weekday: "short" })}</div>
+              <div className="weather-day-icon">{dayInfo.icon}</div>
+              <div className="weather-day-temps">
+                {Math.round(weather.daily.temperature_2m_max[i + 1])}° / {Math.round(weather.daily.temperature_2m_min[i + 1])}°
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DashCurrency() {
   const [amount, setAmount] = useState(50);
-  const rate = 1.08; // mock EUR->USD
+  const [fromCurrency, setFromCurrency] = useState("USD");
+  const [rate, setRate] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [updatedAt, setUpdatedAt] = useState(null);
+
+  const COMMON_CURRENCIES = ["USD", "GBP", "CAD", "AUD", "JPY", "CHF"];
+
+  React.useEffect(() => {
+    setLoading(true);
+    setError("");
+    fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`)
+      .then(r => r.json())
+      .then(json => {
+        if (json.rates && json.rates.EUR) {
+          setRate(json.rates.EUR);
+          setUpdatedAt(json.date || null);
+        } else {
+          setError("Couldn't load exchange rate.");
+        }
+        setLoading(false);
+      })
+      .catch(() => { setError("Couldn't reach the currency service."); setLoading(false); });
+  }, [fromCurrency]);
+
+  return (
+    <div className="field">
+      <label>Currency converter</label>
+      <div className="currency-from-row">
+        {COMMON_CURRENCIES.map(c => (
+          <div key={c} className={"currency-chip" + (fromCurrency === c ? " active" : "")} onClick={() => setFromCurrency(c)}>
+            {c}
+          </div>
+        ))}
+      </div>
+      <div className="budget-input-wrap" style={{marginBottom:8, marginTop:10}}>
+        <span className="currency-sym">{fromCurrency}</span>
+        <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} />
+      </div>
+      {loading && <p className="park-hint">Loading live rate…</p>}
+      {error && <p className="park-hint">{error}</p>}
+      {!loading && rate && (
+        <>
+          <div className="convert-result">≈ €{(amount * rate).toFixed(2)} EUR</div>
+          {updatedAt && <p className="park-hint" style={{marginTop:4}}>Live rate as of {updatedAt}</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
+function DashTools({ data }) {
   return (
     <div>
-      <div className="field">
-        <label>Currency converter</label>
-        <div className="budget-input-wrap" style={{marginBottom:8}}>
-          <span className="currency-sym">€</span>
-          <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} />
-        </div>
-        <div className="convert-result">≈ ${(amount*rate).toFixed(2)} USD</div>
-      </div>
+      <DashWeather data={data} />
+      <DashCurrency />
       <div className="field">
         <label>Emergency numbers</label>
         <div className="choice-card"><div className="choice-icon">🚨</div><div className="choice-text"><div className="h">112</div><div className="d">General emergency (EU-wide)</div></div></div>
