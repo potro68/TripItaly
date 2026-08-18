@@ -4252,7 +4252,7 @@ function DocumentUpload({ section, docs, onAdd, onRemove }) {
 
   return (
     <div className="field">
-      <label>Documents & tickets</label>
+      <label>{section === "tickets" ? "Flight documents" : section === "car" ? "Car rental documents" : "Accommodation documents"}</label>
       <input type="file" ref={fileInputRef} style={{display:"none"}} onChange={handleFile} accept="image/*,application/pdf" />
 
       {docs.length === 0 && (
@@ -4260,7 +4260,7 @@ function DocumentUpload({ section, docs, onAdd, onRemove }) {
           <div className="choice-icon">📭</div>
           <div className="choice-text">
             <div className="h">Nothing added yet</div>
-            <div className="d">Add booking documents, tickets or confirmations when you have them</div>
+            <div className="d">{section === "tickets" ? "Add boarding passes, tickets or flight confirmations" : section === "car" ? "Add rental vouchers or car confirmations" : "Add hotel vouchers or accommodation confirmations"}</div>
           </div>
         </div>
       )}
@@ -5449,9 +5449,9 @@ function DashWallet({ documents, onAddDoc, onRemoveDoc }) {
   return (
     <div>
       <div className="wallet-summary">
-        <div className="wallet-summary-h">Travel Wallet</div>
+        <div className="wallet-summary-h">All travel documents</div>
         <div className="wallet-summary-d">
-          Keep your flight, rental-car and accommodation documents together. No credit cards or identity documents.
+          Your central Travel Wallet for flight, rental-car and accommodation documents. No credit cards or identity documents.
         </div>
         <div style={{marginTop:10, fontWeight:700}}>{total} saved document{total===1?"":"s"}</div>
       </div>
