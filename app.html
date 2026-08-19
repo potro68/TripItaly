@@ -2690,6 +2690,9 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
             <span className="blb-d" style={{marginTop:2}}>Compare trusted booking partners ↗</span>
           </span>
         </a>
+        <p className="park-hint" style={{marginTop:7}}>
+          Guest count is passed to supported partners. Please confirm the number of travelers before booking.
+        </p>
 
         <a
           href={buildBookingLink(data)}
@@ -2701,7 +2704,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           className="btn-secondary"
           style={{display:"block", textAlign:"center", textDecoration:"none", marginTop:8}}
         >
-          Search directly on Booking.com ↗
+          Search directly on Booking.com with your travelers ↗
         </a>
         <div className="price-entry-row">
           <span className="price-entry-label">After booking, enter the accommodation total:</span>
