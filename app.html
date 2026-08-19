@@ -1388,6 +1388,15 @@
   }
   input.route-day-input:focus{ border-color:var(--sun); }
   input.route-day-input-wide{ width:96px; font-size:12px; }
+  .route-day-stepper{display:flex;align-items:center;gap:4px;border:1.5px solid var(--line);border-radius:10px;padding:3px;background:var(--paper);flex-shrink:0}
+  .route-day-arrow{width:30px;height:34px;border:none;border-radius:7px;background:rgba(28,90,122,.08);color:var(--amalfi-deep);font-weight:800;cursor:pointer}
+  .route-day-arrow:disabled{opacity:.28;cursor:default}
+  .route-day-current{min-width:54px;text-align:center;font-size:11.5px;font-weight:700;color:var(--ink)}
+  .wallet-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:0 0 18px}
+  .wallet-tab{border:1.5px solid var(--line);background:var(--whitewash);color:var(--ink);border-radius:11px;padding:10px 6px;text-align:center;font-size:10.5px;font-weight:700;cursor:pointer}
+  .wallet-tab.active{border-color:var(--amalfi);background:rgba(28,90,122,.09);color:var(--amalfi-deep)}
+  .drive-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .drive-quick-link{display:flex;align-items:center;gap:8px;text-decoration:none;border:1.5px solid var(--line);background:var(--whitewash);color:var(--ink);border-radius:12px;padding:12px;font-size:12px;font-weight:700}
   .route-days-note{
     font-size:12px;
     font-weight:600;
@@ -2129,6 +2138,12 @@ function buildItaloLink(fromCity, toCity, date, adults) {
 // send to their official search homepage, with the trip details shown
 // nearby in the app so the user can copy them in quickly.
 const TRENITALIA_URL = "https://www.lefrecce.it/Channels.Website.WEB/";
+function buildDrivingLink(fromCity, toCity) {
+  if (!fromCity || !toCity) return "https://www.google.com/maps/";
+  const params = new URLSearchParams({api:"1", origin:`${fromCity}, Italy`, destination:`${toCity}, Italy`, travelmode:"driving"});
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
 
 // Internal flight between two Italian cities, reusing the same Aviasales
 // link builder as international flights — just with both airports inside Italy.
@@ -2206,6 +2221,7 @@ function buildStay22HotelSearchLink(data, cityOverride) {
     currency: "EUR",
     campaign: "tripitaly_app_hotel_search",
     excludeproviders: "booking",
+    roam: "true",
   });
   if (data.startDate) params.set("checkin", data.startDate);
   if (data.endDate) params.set("checkout", data.endDate);
@@ -2278,8 +2294,10 @@ function buildBookingLink(data) {
     checkin: data.startDate,
     checkout: data.endDate,
     group_adults: String(Math.max(1, data.people || 1)),
-    no_rooms: "1",
   });
+  if (data.hotelRooms && Number(data.hotelRooms) > 0) {
+    params.set("no_rooms", String(Number(data.hotelRooms)));
+  }
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
@@ -2329,7 +2347,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
       : []
   );
   const [cityInput, setCityInput] = useState("");
-  const [dayInput, setDayInput] = useState("");
+  const [dayInput, setDayInput] = useState("2");
   const [legTransport, setLegTransport] = useState(data.legTransport || {});
   const [routeError, setRouteError] = useState("");
 
@@ -2348,7 +2366,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
     if (stops.some(s => s.day === day)) { setRouteError(`You already have a city starting on day ${day}.`); return; }
     setRouteError("");
     setStops([...stops, { city, day }]);
-    setCityInput(""); setDayInput("");
+    setCityInput(""); setDayInput("2");
   };
   const removeStop = (day) => setStops(stops.filter(s => s.day !== day));
 
@@ -2469,6 +2487,11 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
                   <p className="leg-transport-hint">No flights — no airport known for one of these cities.</p>
                 );
               })()}
+              {selectedMode === "drive" && (
+                <a href={buildDrivingLink(legFromCity, s.city)} target="_blank" rel="noopener noreferrer" className="leg-transport-link">
+                  🚗 Open driving route {legFromCity} → {s.city} ↗
+                </a>
+              )}
 
               <div className="choice-card selected">
                 <div className="choice-icon">📍</div>
@@ -2487,15 +2510,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
 
           <div className="route-add-row">
             <CityAutocomplete value={cityInput} onChange={v => setCityInput(v)} />
-            <input
-              type="number"
-              min="2"
-              max={tripDays}
-              placeholder={`Day (2–${tripDays})`}
-              value={dayInput}
-              onChange={e => setDayInput(e.target.value)}
-              className="route-day-input route-day-input-wide"
-            />
+            <RouteDayStepper value={dayInput} onChange={setDayInput} min={2} max={tripDays} />
             <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={addStop}>+ Add</button>
           </div>
         </div>
@@ -2507,6 +2522,18 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
         <button className="btn-primary" onClick={handleContinue}>Continue</button>
         <button className="btn-text" onClick={onBack}>← Back</button>
       </div>
+    </div>
+  );
+}
+
+function RouteDayStepper({ value, onChange, min = 2, max }) {
+  const current = Math.min(max, Math.max(min, Number(value) || min));
+  const change = (next) => onChange(String(Math.min(max, Math.max(min, next))));
+  return (
+    <div className="route-day-stepper">
+      <button className="route-day-arrow" onClick={() => change(current - 1)} disabled={current <= min}>←</button>
+      <div className="route-day-current">Day {current}</div>
+      <button className="route-day-arrow" onClick={() => change(current + 1)} disabled={current >= max}>→</button>
     </div>
   );
 }
@@ -2608,7 +2635,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
       : [{ city: arrivalCity, day: 1 }]
   );
   const [cityInput, setCityInput] = useState("");
-  const [dayInput, setDayInput] = useState("");
+  const [dayInput, setDayInput] = useState("2");
   const [legTransport, setLegTransport] = useState(data.legTransport || {});
   const [routeError, setRouteError] = useState("");
 
@@ -2629,7 +2656,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
     setRouteError("");
     setStops([...stops, { city, day }]);
     setCityInput("");
-    setDayInput("");
+    setDayInput("2");
   };
   const removeStop = (day) => setStops(stops.filter(s => s.day !== day));
 
@@ -2669,6 +2696,24 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           onChange={v => setData({...data, stayCity: v})}
         />
 
+        <div style={{marginTop:12}}>
+          <div className="date-mini-label">Rooms for direct Booking.com search</div>
+          <div className="currency-from-row">
+            {[0,1,2,3,4].map(n => (
+              <div
+                key={n}
+                className={"currency-chip" + ((Number(data.hotelRooms || 0) === n) ? " active" : "")}
+                onClick={() => setData({...data, hotelRooms:n})}
+              >
+                {n === 0 ? "Auto" : `${n} room${n>1?"s":""}`}
+              </div>
+            ))}
+          </div>
+          <p className="park-hint" style={{marginTop:7}}>
+            Stay22 partners may allocate rooms differently based on guest count and room capacity.
+          </p>
+        </div>
+
         <a
           href={buildStay22HotelSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
           onClick={(e) => {
@@ -2692,7 +2737,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           </span>
         </a>
         <p className="park-hint" style={{marginTop:7}}>
-          Compare available partners such as Expedia, Hotels.com, Agoda and Vrbo. Please confirm travelers before booking.
+          Compare available partners such as Expedia, Hotels.com, Agoda and Vrbo. Room allocation may vary by provider — please confirm travelers and rooms before booking.
         </p>
 
         <a
@@ -2705,7 +2750,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           className="btn-secondary"
           style={{display:"block", textAlign:"center", textDecoration:"none", marginTop:8}}
         >
-          Search directly on Booking.com with your travelers ↗
+          Search directly on Booking.com with your travelers & room choice ↗
         </a>
         <div className="price-entry-row">
           <span className="price-entry-label">After booking, enter the accommodation total:</span>
@@ -2840,21 +2885,18 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
                   <p className="leg-transport-hint">No flights — no airport known for one of these cities.</p>
                 );
               })()}
+              {nextStop && selectedMode === "drive" && (
+                <a href={buildDrivingLink(s.city, nextStop.city)} target="_blank" rel="noopener noreferrer" className="leg-transport-link">
+                  🚗 Open driving route {s.city} → {nextStop.city} ↗
+                </a>
+              )}
             </div>
             );
           })}
 
           <div className="route-add-row">
             <CityAutocomplete value={cityInput} onChange={v => setCityInput(v)} />
-            <input
-              type="number"
-              min="1"
-              max={tripDays}
-              placeholder={`Day (1–${tripDays})`}
-              value={dayInput}
-              onChange={e => setDayInput(e.target.value)}
-              className="route-day-input route-day-input-wide"
-            />
+            <RouteDayStepper value={dayInput} onChange={setDayInput} min={2} max={tripDays} />
             <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={addStop}>+ Add</button>
           </div>
           {routeError && <p style={{color:"#C0392B", fontSize:12.5, fontWeight:600, marginTop:6}}>{routeError}</p>}
@@ -3827,9 +3869,6 @@ function formatDayStrip(d) {
 
 const DASH_SECTIONS = [
   { id: "overview", icon: "🏠", label: "Overview" },
-  { id: "tickets", icon: "✈️", label: "Tickets" },
-  { id: "car", icon: "🚗", label: "Car" },
-  { id: "house", icon: "🏨", label: "House" },
   { id: "wallet", icon: "👛", label: "Wallet" },
   { id: "packing", icon: "🧳", label: "Packing" },
 ];
@@ -3837,8 +3876,9 @@ const DASH_SECTIONS = [
 const DASH_SECTIONS_ITALY = [
   { id: "itinerary", icon: "🗺️", label: "Itinerary" },
   { id: "nearby", icon: "📍", label: "Nearby" },
+  { id: "drive", icon: "🚗", label: "Drive" },
   { id: "offline", icon: "📴", label: "Offline" },
-  { id: "phrasebook", icon: "💬", label: "Phrases" },
+  { id: "translate", icon: "🌐", label: "Translate" },
   { id: "tools", icon: "🧰", label: "Tools" },
 ];
 
@@ -4177,14 +4217,15 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
 
   return (
     <div>
-      {onStartNewTrip && (
-        <div className="overview-actions">
-          <button className="new-trip-btn" onClick={onStartNewTrip}>
-            <span className="new-trip-plus">＋</span>
-            New trip
-          </button>
+      <div className="field" style={{marginBottom:16}}>
+        <div className="arrival-toggle" onClick={() => setData({...data, arrived: !data.arrived})}>
+          <div>
+            <div className="arrival-toggle-h">{data.arrived ? "🇮🇹 You're in Italy" : "Not arrived yet"}</div>
+            <div className="arrival-toggle-d">{data.arrived ? "Itinerary, Nearby, Drive, Translate & Tools are unlocked" : "Mark your arrival to unlock your in-Italy tools"}</div>
+          </div>
+          <div className={"switch" + (data.arrived ? " on" : "")}><div className="switch-knob"></div></div>
         </div>
-      )}
+      </div>
 
       {todayDayNum && todaySpent > 0 && (
         <div className={"today-budget-alert " + (todayDiff > 0 ? "over" : "ok")}>
@@ -4235,14 +4276,8 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
       )}
 
       <div className="field">
-        <label>Daily budget status</label>
-        <p className="park-hint">Each slice is one day of your trip. Red = over budget, green = within budget, grey = no spending yet.</p>
-        <DailyStatusDonut data={data} dailyAmount={dailyAmount} />
-      </div>
-
-      <div className="field">
         <label>Total trip budget</label>
-        <p className="park-hint">Connected to the daily budget above: every expense moves money from Remaining budget into Ground expenses.</p>
+        <p className="park-hint">Your full trip picture. Every daily expense moves money from Remaining budget into Ground expenses.</p>
         <DonutChart
           segments={totalBudgetSegments}
           centerLabel="Total"
@@ -4250,6 +4285,15 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           showPercent={true}
         />
       </div>
+
+      <div className="field">
+        <label>Daily budget status</label>
+        <p className="park-hint">Connected to the total budget above. Each slice is one day: red = over budget, green = within budget, grey = no spending yet.</p>
+        <DailyStatusDonut data={data} dailyAmount={dailyAmount} />
+      </div>
+
+
+
 
       <div className="field">
         <label>Trip snapshot</label>
@@ -4262,15 +4306,14 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
         </div>
       </div>
 
-      <div className="field">
-        <div className="arrival-toggle" onClick={() => setData({...data, arrived: !data.arrived})}>
-          <div>
-            <div className="arrival-toggle-h">{data.arrived ? "You're in Italy" : "Not arrived yet"}</div>
-            <div className="arrival-toggle-d">{data.arrived ? "Itinerary, Nearby, Phrases & Tools are unlocked" : "Simulate arrival to unlock Itinerary, Nearby, Phrases & Tools"}</div>
-          </div>
-          <div className={"switch" + (data.arrived ? " on" : "")}><div className="switch-knob"></div></div>
+      {onStartNewTrip && (
+        <div className="overview-actions" style={{marginTop:26,marginBottom:0}}>
+          <button className="new-trip-btn" onClick={onStartNewTrip}>
+            <span className="new-trip-plus">＋</span>
+            New trip / reset current trip
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -4577,7 +4620,7 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc, onRemoveDoc }) {
           href={buildCarRentalLink(data)}
           onClick={(e) => {
             e.preventDefault();
-            openExternalWebsite(buildCarRentalLink(data), {step:9, section:"car"});
+            openExternalWebsite(buildCarRentalLink(data), {step:9, section:"wallet", walletTab:"car"});
           }}
           rel="noopener noreferrer sponsored"
           className="booking-link-btn"
@@ -5262,13 +5305,6 @@ function DashNearby({ data, setData }) {
   );
 }
 
-const USEFUL_PHRASES = [
-  { cat: "Restaurant", it: "Vorrei prenotare un tavolo", en: "I'd like to book a table" },
-  { cat: "Restaurant", it: "Il conto, per favore", en: "The bill, please" },
-  { cat: "Taxi", it: "Quanto costa fino a...?", en: "How much to...?" },
-  { cat: "Emergency", it: "Ho bisogno di un medico", en: "I need a doctor" },
-  { cat: "Shopping", it: "Posso pagare con carta?", en: "Can I pay by card?" },
-];
 
 function LiveTranslator() {
   const [inputText, setInputText] = useState("");
@@ -5384,22 +5420,8 @@ function LiveTranslator() {
   );
 }
 
-function DashPhrasebook() {
-  return (
-    <div>
-      <LiveTranslator />
-      <div className="field">
-        <label>Useful phrases</label>
-        {USEFUL_PHRASES.map((p,i) => (
-          <div key={i} className="phrase-card">
-            <div className="phrase-cat">{p.cat}</div>
-            <div className="phrase-it">{p.it}</div>
-            <div className="phrase-en">{p.en}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function DashTranslate() {
+  return <div><LiveTranslator /></div>;
 }
 
 const DEFAULT_PACKING_ITEMS = [
@@ -5616,35 +5638,70 @@ function DashCurrency() {
 }
 
 
-function DashWallet({ documents, onAddDoc, onRemoveDoc }) {
-  const groups = [
-    { id:"tickets", icon:"✈️", label:"Flights & tickets" },
-    { id:"car", icon:"🚗", label:"Rental car" },
-    { id:"house", icon:"🏨", label:"Accommodation" },
-  ];
-  const total = groups.reduce((sum, g) => sum + (documents[g.id]?.length || 0), 0);
+function DashWallet({ data, setData, documents, onAddDoc, onRemoveDoc, flightTotal, hotelTotal, carTotal, nights }) {
+  const savedTab = loadSavedUI().walletTab;
+  const [tab, setTab] = useState(savedTab || "tickets");
+  const total = Object.values(documents).reduce((sum, docs) => sum + docs.length, 0);
+  const changeTab = (id) => { setTab(id); saveUIState({step:9, section:"wallet", walletTab:id}); };
 
   return (
     <div>
       <div className="wallet-summary">
-        <div className="wallet-summary-h">All travel documents</div>
-        <div className="wallet-summary-d">
-          Your central Travel Wallet for flight, rental-car and accommodation documents. No credit cards or identity documents.
-        </div>
-        <div style={{marginTop:10, fontWeight:700}}>{total} saved document{total===1?"":"s"}</div>
+        <div className="wallet-summary-h">Travel Wallet</div>
+        <div className="wallet-summary-d">Flights, rental car and accommodation — details and travel documents in one place. No credit cards or identity documents.</div>
+        <div style={{marginTop:10,fontWeight:700}}>{total} saved document{total===1?"":"s"}</div>
       </div>
+      <div className="wallet-tabs">
+        <button className={"wallet-tab"+(tab==="tickets"?" active":"")} onClick={()=>changeTab("tickets")}>✈️ Flights & tickets</button>
+        <button className={"wallet-tab"+(tab==="car"?" active":"")} onClick={()=>changeTab("car")}>🚗 Car rental</button>
+        <button className={"wallet-tab"+(tab==="house"?" active":"")} onClick={()=>changeTab("house")}>🏨 Accommodation</button>
+      </div>
+      {tab==="tickets" && <DashTickets data={data} setData={setData} flightTotal={flightTotal} docs={documents.tickets} onAddDoc={(d)=>onAddDoc("tickets",d)} onRemoveDoc={(id)=>onRemoveDoc("tickets",id)} />}
+      {tab==="car" && <DashCar data={data} setData={setData} carTotal={carTotal} docs={documents.car} onAddDoc={(d)=>onAddDoc("car",d)} onRemoveDoc={(id)=>onRemoveDoc("car",id)} />}
+      {tab==="house" && <DashHouse data={data} hotelTotal={hotelTotal} nights={nights} docs={documents.house} onAddDoc={(d)=>onAddDoc("house",d)} onRemoveDoc={(id)=>onRemoveDoc("house",id)} />}
+    </div>
+  );
+}
 
-      {groups.map(g => (
-        <div className="field" key={g.id}>
-          <label>{g.icon} {g.label}</label>
-          <DocumentUpload
-            section={g.id}
-            docs={documents[g.id] || []}
-            onAdd={(d) => onAddDoc(g.id, d)}
-            onRemove={(id) => onRemoveDoc(g.id, id)}
-          />
+function DashDrive({ data, setData }) {
+  const totalDays = tripLengthDays(data);
+  const today = new Date();
+  let dayNum = null;
+  for (let i=1;i<=totalDays;i++){ const d=tripDateForDay(data,i); if(d&&isSameDate(d,today)){dayNum=i;break;} }
+  if(dayNum===null && data.arrived) dayNum=1;
+  const blocks=data.routeBlocks||[];
+  const currentIndex=blocks.findIndex(b=>dayNum&&b.days.includes(dayNum));
+  const currentCity=currentIndex>=0?blocks[currentIndex].city:(blocks[0]?.city||data.stayCity||guessedStayCity(data));
+  const nextCity=currentIndex>=0&&blocks[currentIndex+1]?blocks[currentIndex+1].city:null;
+  return (
+    <div>
+      <div className="field">
+        <label>Driving tools</label>
+        {nextCity ? (
+          <a href={buildDrivingLink(currentCity,nextCity)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
+            <span className="blb-icon">🧭</span>
+            <span className="blb-text"><span className="blb-h">Navigate to {nextCity}</span><span className="blb-d">{currentCity} → {nextCity} · driving route ↗</span></span>
+          </a>
+        ) : (
+          <div className="choice-card"><div className="choice-icon">🚗</div><div className="choice-text"><div className="h">You're based in {currentCity||"Italy"}</div><div className="d">No next driving leg saved yet.</div></div></div>
+        )}
+      </div>
+      <div className="field">
+        <label>Quick stops</label>
+        <div className="drive-quick-grid">
+          <a className="drive-quick-link" href="https://www.google.com/maps/search/?api=1&query=gas+station" target="_blank" rel="noopener noreferrer">⛽ Fuel nearby</a>
+          <a className="drive-quick-link" href="https://www.google.com/maps/search/?api=1&query=parking" target="_blank" rel="noopener noreferrer">🅿️ Parking nearby</a>
         </div>
-      ))}
+      </div>
+      <div className="field">
+        <label>Where did you park?</label>
+        <input type="text" className="plain" placeholder="Street, garage, level, row or spot" value={data.parkingNote||""} onChange={e=>setData({...data,parkingNote:e.target.value})}/>
+        {data.parkingNote && <p className="park-hint" style={{marginTop:7}}>📍 Saved: {data.parkingNote}</p>}
+      </div>
+      <div className="field">
+        <label>Before you drive</label>
+        <div className="choice-card"><div className="choice-icon">⚠️</div><div className="choice-text"><div className="h">Watch for ZTL & toll roads</div><div className="d">Check road signs and route conditions before entering city centres or toll roads.</div></div></div>
+      </div>
     </div>
   );
 }
@@ -5696,16 +5753,6 @@ function DashOffline({ data }) {
         </div>
       </div>
 
-      <div className="offline-card">
-        <div className="offline-card-h">💬 Quick phrases</div>
-        <div className="offline-card-d">
-          Grazie — Thank you<br/>
-          Per favore — Please<br/>
-          Dov'è la stazione? — Where is the station?<br/>
-          Ho bisogno di aiuto — I need help<br/>
-          Il conto, per favore — The bill, please
-        </div>
-      </div>
     </div>
   );
 }
@@ -5751,7 +5798,10 @@ function DashTools({ data, onDeleteLocalData }) {
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip }) {
-  const savedDashboardSection = loadSavedUI().section;
+  const savedDashboardSectionRaw = loadSavedUI().section;
+  const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
+    ? (savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet")
+    : savedDashboardSectionRaw;
   const [section, setSection] = useState(savedDashboardSection || "overview");
 
   const goSection = (id) => {
@@ -5805,7 +5855,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
   const dailyAmount = dailyBudget(data, (data.budget || 0) - lockedTotal);
 
   const sections = data.mode === "onsite" ? DASH_SECTIONS.filter(s => ["overview","wallet","packing"].includes(s.id)) : DASH_SECTIONS;
-  const italySections = DASH_SECTIONS_ITALY;
+  const italySections = DASH_SECTIONS_ITALY.filter(s => s.id !== "drive" || data.wantsCar === true);
   const allLabels = [...DASH_SECTIONS, ...DASH_SECTIONS_ITALY];
 
   return (
@@ -5840,15 +5890,13 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
         <p className="subtitle" style={{marginBottom:20}}>{data.itinerary}</p>
 
         {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
-        {section === "tickets" && <DashTickets data={data} setData={setData} flightTotal={flightTotal} docs={documents.tickets} onAddDoc={(d) => addDoc("tickets", d)} onRemoveDoc={(id) => removeDoc("tickets", id)} />}
-        {section === "car" && <DashCar data={data} setData={setData} carTotal={carTotal} docs={documents.car} onAddDoc={(d) => addDoc("car", d)} onRemoveDoc={(id) => removeDoc("car", id)} />}
-        {section === "house" && <DashHouse data={data} hotelTotal={hotelTotal} nights={nights} docs={documents.house} onAddDoc={(d) => addDoc("house", d)} onRemoveDoc={(id) => removeDoc("house", id)} />}
-        {section === "wallet" && <DashWallet documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} />}
+        {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && data.arrived && <DashNearby data={data} setData={setData} />}
+        {section === "drive" && data.arrived && data.wantsCar && <DashDrive data={data} setData={setData} />}
         {section === "offline" && data.arrived && <DashOffline data={data} />}
-        {section === "phrasebook" && data.arrived && <DashPhrasebook />}
+        {section === "translate" && data.arrived && <DashTranslate />}
         {section === "tools" && data.arrived && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
       </div>
     </div>
