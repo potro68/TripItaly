@@ -5342,27 +5342,49 @@ function LiveTranslator() {
   const [error, setError] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [listening, setListening] = useState(false);
-  const [speechLang, setSpeechLang] = useState("auto");
+  const [speechLang, setSpeechLang] = useState("en-US");
 
   const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micSupported = !!SpeechRecognitionClass;
 
   const SPEECH_LANGUAGES = [
-    { code:"auto", label:"Auto / device language" },
     { code:"en-US", label:"English" },
-    { code:"ro-RO", label:"Romanian" },
-    { code:"es-ES", label:"Spanish" },
+    { code:"auto", label:"Auto / device language" },
+    { code:"ar-SA", label:"Arabic" },
+    { code:"bg-BG", label:"Bulgarian" },
+    { code:"zh-CN", label:"Chinese (Mandarin)" },
+    { code:"hr-HR", label:"Croatian" },
+    { code:"cs-CZ", label:"Czech" },
+    { code:"nl-NL", label:"Dutch" },
+    { code:"et-EE", label:"Estonian" },
+    { code:"fi-FI", label:"Finnish" },
     { code:"fr-FR", label:"French" },
     { code:"de-DE", label:"German" },
+    { code:"el-GR", label:"Greek" },
+    { code:"he-IL", label:"Hebrew" },
+    { code:"hi-IN", label:"Hindi" },
+    { code:"hu-HU", label:"Hungarian" },
+    { code:"id-ID", label:"Indonesian" },
     { code:"it-IT", label:"Italian" },
-    { code:"pt-PT", label:"Portuguese" },
-    { code:"pl-PL", label:"Polish" },
-    { code:"nl-NL", label:"Dutch" },
     { code:"ja-JP", label:"Japanese" },
     { code:"ko-KR", label:"Korean" },
-    { code:"zh-CN", label:"Chinese" },
-    { code:"ar-SA", label:"Arabic" },
+    { code:"lv-LV", label:"Latvian" },
+    { code:"lt-LT", label:"Lithuanian" },
+    { code:"ms-MY", label:"Malay" },
+    { code:"no-NO", label:"Norwegian" },
+    { code:"pl-PL", label:"Polish" },
+    { code:"pt-PT", label:"Portuguese" },
+    { code:"ro-RO", label:"Romanian" },
+    { code:"ru-RU", label:"Russian" },
+    { code:"sr-RS", label:"Serbian" },
+    { code:"sk-SK", label:"Slovak" },
+    { code:"sl-SI", label:"Slovenian" },
+    { code:"es-ES", label:"Spanish" },
+    { code:"sv-SE", label:"Swedish" },
     { code:"th-TH", label:"Thai" },
+    { code:"tr-TR", label:"Turkish" },
+    { code:"uk-UA", label:"Ukrainian" },
+    { code:"vi-VN", label:"Vietnamese" },
   ];
 
   const translate = async (textOverride) => {
@@ -5489,7 +5511,7 @@ function LiveTranslator() {
 
       {micSupported && (
         <p className="park-hint" style={{marginTop:4}}>
-          🎤 Test mode: select the language you are speaking. “Auto” uses the phone/browser language; it does not reliably detect spoken language by itself.
+          🎤 English is selected by default. If you speak another language, choose it before tapping the microphone. “Auto” uses the phone/browser language.
         </p>
       )}
       {!micSupported && <p className="park-hint" style={{marginTop:4}}>🎤 Voice input not available on this device — typing works fine.</p>}
