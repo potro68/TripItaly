@@ -5342,9 +5342,28 @@ function LiveTranslator() {
   const [error, setError] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [listening, setListening] = useState(false);
+  const [speechLang, setSpeechLang] = useState("auto");
 
   const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micSupported = !!SpeechRecognitionClass;
+
+  const SPEECH_LANGUAGES = [
+    { code:"auto", label:"Auto / device language" },
+    { code:"en-US", label:"English" },
+    { code:"ro-RO", label:"Romanian" },
+    { code:"es-ES", label:"Spanish" },
+    { code:"fr-FR", label:"French" },
+    { code:"de-DE", label:"German" },
+    { code:"it-IT", label:"Italian" },
+    { code:"pt-PT", label:"Portuguese" },
+    { code:"pl-PL", label:"Polish" },
+    { code:"nl-NL", label:"Dutch" },
+    { code:"ja-JP", label:"Japanese" },
+    { code:"ko-KR", label:"Korean" },
+    { code:"zh-CN", label:"Chinese" },
+    { code:"ar-SA", label:"Arabic" },
+    { code:"th-TH", label:"Thai" },
+  ];
 
   const translate = async (textOverride) => {
     const text = (textOverride ?? inputText).trim();
@@ -5371,28 +5390,39 @@ function LiveTranslator() {
   const startListening = () => {
     if (!micSupported) return;
     const recognition = new SpeechRecognitionClass();
-    recognition.continuous = false; // single-shot: press, say one phrase, done — most reliable across browsers
+    recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = "en-US"; // confirmed most reliable across devices — Google Translate still handles non-English input reasonably well from here
+
+    // Web Speech does not provide reliable automatic spoken-language detection.
+    // "Auto" therefore uses the device/browser language. Other options explicitly
+    // tell the recognizer which language the traveler is speaking.
+    const deviceLang = navigator.language || navigator.userLanguage || "en-US";
+    recognition.lang = speechLang === "auto" ? deviceLang : speechLang;
 
     recognition.onstart = () => { setListening(true); setError(""); };
     recognition.onend = () => setListening(false);
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
       setListening(false);
-      setError("Couldn't hear you — try typing instead, or try again.");
+      const detail = event?.error ? ` (${event.error})` : "";
+      setError(`Couldn't hear you${detail} — try another speaking language or type instead.`);
     };
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setInputText(transcript);
-      translate(transcript); // translate right away once captured
+      translate(transcript);
     };
 
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (e) {
+      setListening(false);
+      setError("Microphone recognition couldn't start on this browser.");
+    }
   };
 
   const speak = () => {
     if (!translated || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel(); // stop any previous speech
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(translated);
     utterance.lang = "it-IT";
     utterance.rate = 0.9;
@@ -5401,10 +5431,37 @@ function LiveTranslator() {
     window.speechSynthesis.speak(utterance);
   };
 
+  const selectedSpeechLabel = SPEECH_LANGUAGES.find(x => x.code === speechLang)?.label || "English";
+
   return (
     <div className="field">
       <label>Translate anything to Italian</label>
-      <p className="park-hint">Type in any language — we'll translate it and can read it aloud to whoever you're talking to.</p>
+      <p className="park-hint">Type in any language — or choose the language you're speaking before using the microphone.</p>
+
+      {micSupported && (
+        <div style={{marginBottom:10}}>
+          <div className="date-mini-label">Speaking language</div>
+          <select
+            value={speechLang}
+            onChange={e => setSpeechLang(e.target.value)}
+            style={{
+              width:"100%",
+              padding:"11px 12px",
+              border:"1.5px solid var(--line)",
+              borderRadius:10,
+              background:"var(--paper)",
+              color:"var(--ink)",
+              fontFamily:"Sora, sans-serif",
+              fontSize:13,
+              fontWeight:600,
+              outline:"none"
+            }}
+          >
+            {SPEECH_LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+          </select>
+        </div>
+      )}
+
       <textarea
         className="translator-input"
         placeholder="Type a phrase in your language..."
@@ -5421,6 +5478,7 @@ function LiveTranslator() {
             className={"mic-btn" + (listening ? " listening" : "")}
             onClick={() => startListening()}
             disabled={listening}
+            title={`Speaking language: ${selectedSpeechLabel}`}
           >
             {listening ? "🎤 Listening…" : "🎤"}
           </button>
@@ -5428,7 +5486,12 @@ function LiveTranslator() {
           <div className="mic-btn mic-unavailable" title="Voice input not available on this device">🎤</div>
         )}
       </div>
-      {micSupported && <p className="park-hint" style={{marginTop:4}}>🎤 Voice input currently works best in English — typing works in any language.</p>}
+
+      {micSupported && (
+        <p className="park-hint" style={{marginTop:4}}>
+          🎤 Test mode: select the language you are speaking. “Auto” uses the phone/browser language; it does not reliably detect spoken language by itself.
+        </p>
+      )}
       {!micSupported && <p className="park-hint" style={{marginTop:4}}>🎤 Voice input not available on this device — typing works fine.</p>}
 
       {error && <p style={{color:"#C0392B", fontSize:12.5, fontWeight:600, marginTop:8}}>{error}</p>}
