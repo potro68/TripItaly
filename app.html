@@ -465,6 +465,39 @@
   }
 
 
+  .budget-recalc-card{
+    margin:0 0 18px;
+    padding:14px 15px;
+    border:1px solid rgba(46,139,87,0.20);
+    border-radius:14px;
+    background:rgba(46,139,87,0.07);
+  }
+  .budget-recalc-card.over{
+    border-color:rgba(192,57,43,0.18);
+    background:rgba(244,185,62,0.09);
+  }
+  .budget-recalc-kicker{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.65px;
+    font-weight:800;
+    color:var(--amalfi-deep);
+    margin-bottom:4px;
+  }
+  .budget-recalc-value{
+    font-family:'Fraunces',serif;
+    font-size:25px;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1.1;
+  }
+  .budget-recalc-copy{
+    font-size:11.5px;
+    line-height:1.45;
+    color:rgba(19,42,58,.68);
+    margin-top:5px;
+  }
+
   /* ---- Daily status donut ---- */
   .daily-status-wrap{
     display:flex;
@@ -3805,7 +3838,7 @@ const DASH_SECTIONS_ITALY = [
   { id: "tools", icon: "🧰", label: "Tools" },
 ];
 
-function DonutChart({ segments, centerLabel, centerValue }) {
+function DonutChart({ segments, centerLabel, centerValue, showPercent = false }) {
   // segments: [{label, value, color}]
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
   let acc = 0;
@@ -3829,7 +3862,10 @@ function DonutChart({ segments, centerLabel, centerValue }) {
           <div key={seg.label} className="legend-row">
             <span className="legend-dot" style={{background: seg.color}}></span>
             <span className="legend-label">{seg.label}</span>
-            <span className="legend-value">€{seg.value.toLocaleString()}</span>
+            <span className="legend-value">
+              €{Math.round(seg.value).toLocaleString()}
+              {showPercent && <span style={{fontSize:10, opacity:0.55, marginLeft:5}}>{Math.round((seg.value / total) * 100)}%</span>}
+            </span>
           </div>
         ))}
       </div>
@@ -4114,6 +4150,27 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
     .filter(e => Number(e.dayNum || e.day || 0) === todayDayNum)
     .reduce((sum, e) => sum + Number(e.amount || 0), 0);
   const todayDiff = todaySpent - dailyAmount;
+
+  // One shared budget engine drives BOTH donuts.
+  // Original ground budget = total trip budget minus fixed booked costs.
+  const groundBudget = Math.max(0, (data.budget || 0) - lockedTotal);
+  const groundSpent = spent;
+  const totalRemaining = Math.max(0, (data.budget || 0) - lockedTotal - groundSpent);
+
+  // Suggested budget for the days still to come. If today is one of the
+  // trip days, today's spending is considered closed for this recalculation.
+  const completedDays = todayDayNum ? todayDayNum : 0;
+  const remainingDays = Math.max(0, totalDays - completedDays);
+  const suggestedDaily = remainingDays > 0 ? totalRemaining / remainingDays : 0;
+
+  const totalBudgetSegments = [
+    ...(!isOnsite && flightTotal > 0 ? [{ label:"Flights", value:flightTotal, color:"#1C5A7A" }] : []),
+    ...(hotelTotal > 0 ? [{ label:isOnsite ? "Already booked" : "Stay", value:hotelTotal, color:"#2E8B8B" }] : []),
+    ...(carTotal > 0 ? [{ label:"Car", value:carTotal, color:"#F4B93E" }] : []),
+    ...(groundSpent > 0 ? [{ label:"Ground expenses", value:groundSpent, color:"#8E6FB1" }] : []),
+    ...(totalRemaining > 0 ? [{ label:"Remaining budget", value:totalRemaining, color:"#D9D2C2" }] : []),
+  ];
+
   return (
     <div>
       {onStartNewTrip && (
@@ -4151,9 +4208,20 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
         <div className="dbb-icon">📅</div>
         <div className="dbb-text">
           <div className="dbb-h">€{dailyAmount.toFixed(0)} / day</div>
-          <div className="dbb-d">Your average daily budget on the ground, over {tripLengthDays(data)} days</div>
+          <div className="dbb-d">Original daily target from your ground budget, over {tripLengthDays(data)} days</div>
         </div>
       </div>
+
+      {groundSpent > 0 && remainingDays > 0 && (
+        <div className={"budget-recalc-card" + (todayDiff > 0 ? " over" : "")}>
+          <div className="budget-recalc-kicker">Updated after your spending</div>
+          <div className="budget-recalc-value">€{suggestedDaily.toFixed(0)} / day</div>
+          <div className="budget-recalc-copy">
+            Suggested average for the remaining {remainingDays} day{remainingDays !== 1 ? "s" : ""}.
+            Every expense you add updates this amount and the total trip budget automatically.
+          </div>
+        </div>
+      )}
 
       {(data.expenses || []).length > 0 && (
         <div className="field">
@@ -4166,6 +4234,17 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
         <label>Daily budget status</label>
         <p className="park-hint">Each slice is one day of your trip. Red = over budget, green = within budget, grey = no spending yet.</p>
         <DailyStatusDonut data={data} dailyAmount={dailyAmount} />
+      </div>
+
+      <div className="field">
+        <label>Total trip budget</label>
+        <p className="park-hint">Connected to the daily budget above: every expense moves money from Remaining budget into Ground expenses.</p>
+        <DonutChart
+          segments={totalBudgetSegments}
+          centerLabel="Total"
+          centerValue={`€${Math.round(data.budget || 0).toLocaleString()}`}
+          showPercent={true}
+        />
       </div>
 
       <div className="field">
