@@ -5882,24 +5882,10 @@ function consumeResumeAnchor() {
   return anchor;
 }
 
-// Save where the user is before leaving TripItaly.
-// On Android we explicitly ask Chrome to open the web URL, with a normal
-// HTTPS fallback. This reduces "open in app or browser" prompts when Chrome
-// is available, while preserving the affiliate URL unchanged.
+// Save where the user is before leaving TripItaly, then open the
+// destination normally in the current browser. No browser is forced.
 function openExternalWebsite(url, resumeState = {}) {
   saveUIState(resumeState);
-
-  const isAndroid = /Android/i.test(navigator.userAgent || "");
-  if (isAndroid) {
-    try {
-      const noScheme = url.replace(/^https?:\/\//i, "");
-      const fallback = encodeURIComponent(url);
-      window.location.href =
-        `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
-      return;
-    } catch (e) {}
-  }
-
   window.location.href = url;
 }
 
