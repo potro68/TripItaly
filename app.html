@@ -1932,6 +1932,50 @@
     font-weight:700;
     color:#A7352A;
   }
+
+  .time-compare{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .time-card{
+    border:1.5px solid var(--line);
+    border-radius:14px;
+    background:var(--whitewash);
+    padding:14px 12px;
+  }
+  .time-card-label{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.55px;
+    font-weight:800;
+    color:rgba(19,42,58,.55);
+    margin-bottom:5px;
+  }
+  .time-card-clock{
+    font-family:'Fraunces',serif;
+    font-size:26px;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1;
+  }
+  .time-card-zone{
+    font-size:10.5px;
+    color:rgba(19,42,58,.55);
+    margin-top:5px;
+    overflow-wrap:anywhere;
+  }
+  .time-difference{
+    border-radius:10px;
+    padding:10px 12px;
+    background:rgba(28,90,122,.07);
+    color:var(--amalfi-deep);
+    font-size:12px;
+    font-weight:700;
+    text-align:center;
+  }
+
   .legal-links{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
@@ -2489,7 +2533,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
               })()}
               {selectedMode === "drive" && (
                 <a href={buildDrivingLink(legFromCity, s.city)} target="_blank" rel="noopener noreferrer" className="leg-transport-link">
-                  🚗 Open driving route {legFromCity} → {s.city} ↗
+                  🚗 Preview driving route {legFromCity} → {s.city} ↗
                 </a>
               )}
 
@@ -2887,7 +2931,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
               })()}
               {nextStop && selectedMode === "drive" && (
                 <a href={buildDrivingLink(s.city, nextStop.city)} target="_blank" rel="noopener noreferrer" className="leg-transport-link">
-                  🚗 Open driving route {s.city} → {nextStop.city} ↗
+                  🚗 Preview driving route {s.city} → {nextStop.city} ↗
                 </a>
               )}
             </div>
@@ -4616,22 +4660,6 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc, onRemoveDoc }) {
             </div>
           </div>
         </div>
-        <a
-          href={buildCarRentalLink(data)}
-          onClick={(e) => {
-            e.preventDefault();
-            openExternalWebsite(buildCarRentalLink(data), {step:9, section:"wallet", walletTab:"car"});
-          }}
-          rel="noopener noreferrer sponsored"
-          className="booking-link-btn"
-          style={{marginTop:10}}
-        >
-          <span className="blb-icon">🚗</span>
-          <span className="blb-text">
-            <span className="blb-h">Search rental cars on Booking.com</span>
-            <span className="blb-d">Your dates & airport already filled in ↗</span>
-          </span>
-        </a>
       </div>
 
       <DocumentUpload section="car" docs={docs} onAdd={onAddDoc} onRemove={onRemoveDoc} />
@@ -5667,40 +5695,81 @@ function DashDrive({ data, setData }) {
   const totalDays = tripLengthDays(data);
   const today = new Date();
   let dayNum = null;
-  for (let i=1;i<=totalDays;i++){ const d=tripDateForDay(data,i); if(d&&isSameDate(d,today)){dayNum=i;break;} }
+  for (let i=1;i<=totalDays;i++){
+    const d = tripDateForDay(data,i);
+    if (d && isSameDate(d,today)){ dayNum=i; break; }
+  }
   if(dayNum===null && data.arrived) dayNum=1;
-  const blocks=data.routeBlocks||[];
-  const currentIndex=blocks.findIndex(b=>dayNum&&b.days.includes(dayNum));
-  const currentCity=currentIndex>=0?blocks[currentIndex].city:(blocks[0]?.city||data.stayCity||guessedStayCity(data));
-  const nextCity=currentIndex>=0&&blocks[currentIndex+1]?blocks[currentIndex+1].city:null;
+
+  const blocks = data.routeBlocks || [];
+  const currentIndex = blocks.findIndex(b => dayNum && b.days.includes(dayNum));
+  const currentCity = currentIndex >= 0 ? blocks[currentIndex].city : (blocks[0]?.city || data.stayCity || guessedStayCity(data));
+  const nextCity = currentIndex >= 0 && blocks[currentIndex+1] ? blocks[currentIndex+1].city : null;
+
+  const navTo = (destination) => {
+    if (!destination) return "#";
+    const params = new URLSearchParams({
+      api: "1",
+      destination: `${destination}, Italy`,
+      travelmode: "driving",
+    });
+    return `https://www.google.com/maps/dir/?${params.toString()}`;
+  };
+
   return (
     <div>
       <div className="field">
         <label>Driving tools</label>
+        <p className="park-hint">Uses your current location now that you've marked that you're in Italy.</p>
+
         {nextCity ? (
-          <a href={buildDrivingLink(currentCity,nextCity)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
+          <a href={navTo(nextCity)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
             <span className="blb-icon">🧭</span>
-            <span className="blb-text"><span className="blb-h">Navigate to {nextCity}</span><span className="blb-d">{currentCity} → {nextCity} · driving route ↗</span></span>
+            <span className="blb-text">
+              <span className="blb-h">Navigate to {nextCity}</span>
+              <span className="blb-d">Current location → {nextCity} ↗</span>
+            </span>
           </a>
         ) : (
-          <div className="choice-card"><div className="choice-icon">🚗</div><div className="choice-text"><div className="h">You're based in {currentCity||"Italy"}</div><div className="d">No next driving leg saved yet.</div></div></div>
+          <div className="choice-card">
+            <div className="choice-icon">🚗</div>
+            <div className="choice-text">
+              <div className="h">You're based in {currentCity || "Italy"}</div>
+              <div className="d">No next driving leg saved yet.</div>
+            </div>
+          </div>
         )}
       </div>
+
       <div className="field">
         <label>Quick stops</label>
         <div className="drive-quick-grid">
-          <a className="drive-quick-link" href="https://www.google.com/maps/search/?api=1&query=gas+station" target="_blank" rel="noopener noreferrer">⛽ Fuel nearby</a>
-          <a className="drive-quick-link" href="https://www.google.com/maps/search/?api=1&query=parking" target="_blank" rel="noopener noreferrer">🅿️ Parking nearby</a>
+          <a className="drive-quick-link" href="https://www.google.com/maps/search/?api=1&query=gas+station" target="_blank" rel="noopener noreferrer">⛽ Fuel near me</a>
+          <a className="drive-quick-link" href="https://www.google.com/maps/search/?api=1&query=parking" target="_blank" rel="noopener noreferrer">🅿️ Parking near me</a>
         </div>
       </div>
+
       <div className="field">
         <label>Where did you park?</label>
-        <input type="text" className="plain" placeholder="Street, garage, level, row or spot" value={data.parkingNote||""} onChange={e=>setData({...data,parkingNote:e.target.value})}/>
+        <input
+          type="text"
+          className="plain"
+          placeholder="Street, garage, level, row or spot"
+          value={data.parkingNote || ""}
+          onChange={e => setData({...data, parkingNote:e.target.value})}
+        />
         {data.parkingNote && <p className="park-hint" style={{marginTop:7}}>📍 Saved: {data.parkingNote}</p>}
       </div>
+
       <div className="field">
         <label>Before you drive</label>
-        <div className="choice-card"><div className="choice-icon">⚠️</div><div className="choice-text"><div className="h">Watch for ZTL & toll roads</div><div className="d">Check road signs and route conditions before entering city centres or toll roads.</div></div></div>
+        <div className="choice-card">
+          <div className="choice-icon">⚠️</div>
+          <div className="choice-text">
+            <div className="h">Watch for ZTL & toll roads</div>
+            <div className="d">Check road signs and route conditions before entering city centres or toll roads.</div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -5757,6 +5826,83 @@ function DashOffline({ data }) {
   );
 }
 
+
+function friendlyTimeZoneName(tz) {
+  if (!tz) return "Home";
+  const city = (tz.split("/").pop() || tz).replace(/_/g, " ");
+  return city === "GMT" || city === "UTC" ? "Home" : city;
+}
+
+function timeZoneOffsetMinutes(timeZone, date = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year:"numeric", month:"2-digit", day:"2-digit",
+      hour:"2-digit", minute:"2-digit", second:"2-digit",
+      hourCycle:"h23"
+    }).formatToParts(date);
+    const get = (type) => Number(parts.find(p => p.type === type)?.value || 0);
+    const asUTC = Date.UTC(get("year"), get("month")-1, get("day"), get("hour"), get("minute"), get("second"));
+    return Math.round((asUTC - date.getTime()) / 60000);
+  } catch (e) {
+    return 0;
+  }
+}
+
+function formatZoneClock(date, timeZone) {
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      hour:"2-digit",
+      minute:"2-digit",
+      hourCycle:"h23"
+    }).format(date);
+  } catch (e) {
+    return "--:--";
+  }
+}
+
+function HomeItalyTime({ data }) {
+  const [now, setNow] = useState(new Date());
+  const italyZone = "Europe/Rome";
+  const homeZone = data.homeTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const italyOffset = timeZoneOffsetMinutes(italyZone, now);
+  const homeOffset = timeZoneOffsetMinutes(homeZone, now);
+  const diffHours = (italyOffset - homeOffset) / 60;
+  const diffAbs = Math.abs(diffHours);
+  const diffText = diffHours === 0
+    ? "Italy and home are on the same time"
+    : `Italy is ${Number.isInteger(diffAbs) ? diffAbs : diffAbs.toFixed(1)} hour${diffAbs === 1 ? "" : "s"} ${diffHours > 0 ? "ahead of" : "behind"} home`;
+
+  return (
+    <div className="field">
+      <label>Home & Italy time</label>
+      <div className="time-compare">
+        <div className="time-card">
+          <div className="time-card-label">🇮🇹 Italy</div>
+          <div className="time-card-clock">{formatZoneClock(now, italyZone)}</div>
+          <div className="time-card-zone">Europe/Rome</div>
+        </div>
+        <div className="time-card">
+          <div className="time-card-label">🏠 Home · {friendlyTimeZoneName(homeZone)}</div>
+          <div className="time-card-clock">{formatZoneClock(now, homeZone)}</div>
+          <div className="time-card-zone">{homeZone}</div>
+        </div>
+      </div>
+      <div className="time-difference">{diffText}</div>
+      <p className="park-hint" style={{marginTop:7}}>
+        Home time is saved automatically from your device when you plan the trip and keeps daylight-saving changes in sync.
+      </p>
+    </div>
+  );
+}
+
 function DashTools({ data, onDeleteLocalData }) {
   return (
     <div>
@@ -5772,10 +5918,7 @@ function DashTools({ data, onDeleteLocalData }) {
           </div>
         </a>
       </div>
-      <div className="field">
-        <label>Time zone</label>
-        <div className="choice-card"><div className="choice-icon">🕐</div><div className="choice-text"><div className="h">Italy is CET / CEST</div><div className="d">Check difference from home</div></div></div>
-      </div>
+      <HomeItalyTime data={data} />
 
       <div className="field">
         <label>Privacy & support</label>
@@ -5960,6 +6103,17 @@ function App() {
     budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null
   });
 
+  // Capture the traveler's home timezone before arrival. This avoids
+  // losing "home time" if the phone later switches itself to Italy time.
+  React.useEffect(() => {
+    if (!data.homeTimeZone && !data.arrived) {
+      try {
+        const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (detectedZone) setData(prev => ({...prev, homeTimeZone: detectedZone}));
+      } catch (e) {}
+    }
+  }, []);
+
   // Save to this device automatically on every change, so nothing is
   // lost if the browser reloads the page (e.g. after visiting an
   // external booking site and coming back).
@@ -5980,7 +6134,7 @@ function App() {
     if (!ok) return;
     try { localStorage.removeItem("tripitaly_data"); localStorage.removeItem(TRIPITALY_UI_KEY); } catch (e) {}
     await clearTravelDocuments();
-    setData({ budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null });
+    setData({ budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null, homeTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" });
     setStep(0);
   };
 
