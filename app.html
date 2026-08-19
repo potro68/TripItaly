@@ -403,18 +403,32 @@
   .intro-screen .cta-bar{ padding:8px 24px 0; margin-top:20px; }
 
   /* ---- Dashboard ---- */
+  .overview-actions{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:14px;
+  }
   .new-trip-btn{
-    display:block;
-    width:100%;
-    text-align:center;
-    background:var(--whitewash);
-    border:1.5px solid var(--line);
-    border-radius:12px;
-    padding:12px;
-    font-size:13px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    width:auto;
+    background:rgba(255,255,255,0.46);
+    border:1px solid rgba(14,59,82,0.18);
+    border-radius:999px;
+    padding:8px 12px;
+    font-family:'Sora',sans-serif;
+    font-size:11.5px;
     font-weight:700;
     color:var(--amalfi-deep);
-    margin-bottom:16px;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(14,59,82,0.05);
+  }
+  .new-trip-btn:active{ transform:scale(0.98); }
+  .new-trip-plus{
+    font-size:16px;
+    line-height:1;
+    color:var(--amalfi);
   }
   .dash-budget-card{
     background:linear-gradient(135deg, var(--amalfi-deep), var(--amalfi));
@@ -2037,6 +2051,11 @@ function buildStay22HotelSearchLink(data, cityOverride) {
   const params = new URLSearchParams({
     aid: STAY22_AID,
     address: `${city}, Italy`,
+    adults: String(Math.max(1, data.people || 1)),
+    children: "0",
+    lang: "en",
+    currency: "EUR",
+    campaign: "tripitaly_app_hotel_search",
   });
   if (data.startDate) params.set("checkin", data.startDate);
   if (data.endDate) params.set("checkout", data.endDate);
@@ -2494,7 +2513,6 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
 
         <a
           href={buildStay22HotelSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
-          target="_blank"
           rel="noopener noreferrer sponsored"
           className="booking-link-btn"
           style={{marginTop:10}}
@@ -2502,13 +2520,15 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           <span className="blb-icon">🏨</span>
           <span className="blb-text">
             <span className="blb-h">Search accommodation</span>
-            <span className="blb-d">Your destination & dates are ready · compare trusted booking partners ↗</span>
+            <span className="blb-d">
+              {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
+            </span>
+            <span className="blb-d" style={{marginTop:2}}>Compare trusted booking partners ↗</span>
           </span>
         </a>
 
         <a
           href={buildBookingLink(data)}
-          target="_blank"
           rel="noopener noreferrer sponsored"
           className="btn-secondary"
           style={{display:"block", textAlign:"center", textDecoration:"none", marginTop:8}}
@@ -2869,6 +2889,10 @@ function ScreenBudget({ data, setData, onNext, onBack }) {
     if (!(data.budget > 0)) { setError("Enter a budget to continue."); return; }
     if (!data.startDate || !data.endDate) { setError("Select your travel dates."); return; }
     if (!data.mode) { setError("Choose how you want to plan."); return; }
+    if (data.mode === "onsite" && typeof data.wantsCar !== "boolean") {
+      setError("Choose how you'll get around in Italy.");
+      return;
+    }
     setError("");
     onNext();
   };
@@ -2957,6 +2981,32 @@ function ScreenBudget({ data, setData, onNext, onBack }) {
           </div>
         </div>
       </div>
+
+      {data.mode === "onsite" && (
+        <div className="field">
+          <label>How will you get around?</label>
+          <div
+            className={"choice-card" + (data.wantsCar === true ? " selected" : "")}
+            onClick={() => setData({...data, wantsCar: true})}
+          >
+            <div className="choice-icon">🚗</div>
+            <div className="choice-text">
+              <div className="h">I'll drive</div>
+              <div className="d">Nearby will start in driving mode and search a wider area.</div>
+            </div>
+          </div>
+          <div
+            className={"choice-card" + (data.wantsCar === false ? " selected" : "")}
+            onClick={() => setData({...data, wantsCar: false})}
+          >
+            <div className="choice-icon">🚶</div>
+            <div className="choice-text">
+              <div className="h">On foot & transit</div>
+              <div className="d">Nearby will start with places within walking distance.</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && <p style={{color:"#C0392B", fontSize:13, marginBottom:14, fontWeight:600}}>{error}</p>}
 
@@ -3842,16 +3892,12 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
   return (
     <div>
       {onStartNewTrip && (
-        <button
-          className="new-trip-btn"
-          onClick={() => {
-            if (window.confirm("Start a new trip? This will clear your current trip's data.")) {
-              onStartNewTrip();
-            }
-          }}
-        >
-          🔄 Start a new trip
-        </button>
+        <div className="overview-actions">
+          <button className="new-trip-btn" onClick={onStartNewTrip}>
+            <span className="new-trip-plus">＋</span>
+            New trip
+          </button>
+        </div>
       )}
 
       {tripEnded && spent > 0 && <TripRecap data={data} spent={spent} dailyAmount={dailyAmount} />}
@@ -4717,7 +4763,7 @@ const PLACE_TYPE_ICON = {
 };
 
 function DashNearby({ data, setData }) {
-  const [mode, setMode] = useState("walk");
+  const [mode, setMode] = useState(data.wantsCar === true ? "car" : "walk");
   const [filter, setFilter] = useState("food");
   const [coords, setCoords] = useState(null);
   const [locStatus, setLocStatus] = useState("idle"); // idle | loading | ok | denied | unsupported
