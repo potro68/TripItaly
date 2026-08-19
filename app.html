@@ -464,6 +464,122 @@
     opacity:0.8;
   }
 
+
+  /* ---- Daily status donut ---- */
+  .daily-status-wrap{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+  .daily-status-donut{
+    width:190px;
+    height:190px;
+    border-radius:50%;
+    position:relative;
+    flex:0 0 auto;
+  }
+  .daily-status-hole{
+    position:absolute;
+    inset:38px;
+    border-radius:50%;
+    background:var(--paper);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    border:1px solid rgba(19,42,58,0.08);
+  }
+  .daily-status-hole .k{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:rgba(19,42,58,0.5);
+    font-weight:700;
+  }
+  .daily-status-hole .v{
+    font-family:'Fraunces',serif;
+    font-size:24px;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1.1;
+    margin-top:3px;
+  }
+  .daily-status-legend{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    min-width:170px;
+  }
+  .daily-status-legend-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    font-weight:600;
+  }
+  .daily-status-dot{
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    flex:0 0 auto;
+  }
+  .today-budget-alert{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border-radius:12px;
+    padding:11px 13px;
+    margin:0 0 16px;
+    font-size:12.5px;
+    font-weight:700;
+  }
+  .today-budget-alert.over{
+    background:rgba(192,57,43,0.10);
+    color:#A7352A;
+    border:1px solid rgba(192,57,43,0.20);
+  }
+  .today-budget-alert.ok{
+    background:rgba(46,139,87,0.10);
+    color:#2E7D4F;
+    border:1px solid rgba(46,139,87,0.18);
+  }
+  .day-status-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(72px,1fr));
+    gap:7px;
+    margin-top:12px;
+  }
+  .day-status-chip{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:8px 6px;
+    text-align:center;
+    background:var(--whitewash);
+  }
+  .day-status-chip.over{
+    background:rgba(192,57,43,0.08);
+    border-color:rgba(192,57,43,0.20);
+  }
+  .day-status-chip.ok{
+    background:rgba(46,139,87,0.08);
+    border-color:rgba(46,139,87,0.18);
+  }
+  .day-status-chip.empty{
+    background:rgba(19,42,58,0.04);
+  }
+  .day-status-chip .d1{
+    font-size:10px;
+    color:rgba(19,42,58,0.55);
+    font-weight:700;
+  }
+  .day-status-chip .d2{
+    font-size:12px;
+    font-weight:700;
+    margin-top:2px;
+  }
+
   /* ---- Daily budget banner (Overview) ---- */
   .daily-budget-banner{
     display:flex;
@@ -2441,6 +2557,14 @@ function CityAutocomplete({ value, onChange }) {
 
 function ScreenBookings({ data, setData, onNext, onBack }) {
   const tripDays = tripLengthDays(data);
+
+  React.useEffect(() => {
+    const anchor = consumeResumeAnchor();
+    if (!anchor) return;
+    setTimeout(() => {
+      document.getElementById(anchor)?.scrollIntoView({behavior:"smooth", block:"start"});
+    }, 120);
+  }, []);
   const arrivalCity = primaryCityName(AIRPORTS.find(a => a.code === data.airport)?.city) || "Arrival city";
 
   const [multiCity, setMultiCity] = useState(data.routeCustom || false);
@@ -2503,7 +2627,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
       <h1 className="title">Complete your bookings</h1>
       <p className="subtitle">Stay, car and — if you're moving around — transport between cities.</p>
 
-      <div className="field">
+      <div className="field" id="booking-stay">
         <label>Where do you want to stay?</label>
         <p className="park-hint">We've guessed based on your arrival airport — change it if you'd rather stay somewhere else nearby.</p>
         <CityAutocomplete
@@ -2513,6 +2637,13 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
 
         <a
           href={buildStay22HotelSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
+          onClick={(e) => {
+            e.preventDefault();
+            openExternalWebsite(
+              buildStay22HotelSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)),
+              {step:4, anchor:"booking-stay"}
+            );
+          }}
           rel="noopener noreferrer sponsored"
           className="booking-link-btn"
           style={{marginTop:10}}
@@ -2529,6 +2660,10 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
 
         <a
           href={buildBookingLink(data)}
+          onClick={(e) => {
+            e.preventDefault();
+            openExternalWebsite(buildBookingLink(data), {step:4, anchor:"booking-stay"});
+          }}
           rel="noopener noreferrer sponsored"
           className="btn-secondary"
           style={{display:"block", textAlign:"center", textDecoration:"none", marginTop:8}}
@@ -2549,7 +2684,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         </div>
       </div>
 
-      <div className="field">
+      <div className="field" id="booking-car">
         <label>Rental car?</label>
         <div className={"choice-card" + (data.wantsCar === true ? " selected" : "")} onClick={() => setData({...data, wantsCar: true})}>
           <div className="choice-icon">🚗</div>
@@ -2564,7 +2699,15 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
       {data.wantsCar && (
         <div className="field">
           <label>Your rental car</label>
-          <a href={buildCarRentalLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
+          <a
+            href={buildCarRentalLink(data)}
+            onClick={(e) => {
+              e.preventDefault();
+              openExternalWebsite(buildCarRentalLink(data), {step:4, anchor:"booking-car"});
+            }}
+            rel="noopener noreferrer sponsored"
+            className="booking-link-btn"
+          >
             <span className="blb-icon">🚗</span>
             <span className="blb-text">
               <span className="blb-h">Search rental cars on Booking.com</span>
@@ -3879,16 +4022,98 @@ function TripRecap({ data, spent, dailyAmount }) {
   );
 }
 
+
+function DailyStatusDonut({ data, dailyAmount }) {
+  const totalDays = tripLengthDays(data);
+  const spentByDay = {};
+  (data.expenses || []).forEach(e => {
+    const day = Number(e.dayNum || e.day || 0);
+    if (day >= 1 && day <= totalDays) {
+      spentByDay[day] = (spentByDay[day] || 0) + Number(e.amount || 0);
+    }
+  });
+
+  const statuses = Array.from({length: totalDays}, (_, i) => {
+    const day = i + 1;
+    const spent = spentByDay[day] || 0;
+    const hasData = spent > 0;
+    const status = !hasData ? "empty" : (spent > dailyAmount ? "over" : "ok");
+    return { day, spent, status };
+  });
+
+  const colors = statuses.map(s =>
+    s.status === "over" ? "#D6453D" :
+    s.status === "ok" ? "#7BCB82" :
+    "#D8DDE1"
+  );
+
+  const slice = 360 / Math.max(1, totalDays);
+  const stops = [];
+  statuses.forEach((s, i) => {
+    const a = i * slice;
+    const b = (i + 1) * slice;
+    const gap = Math.min(1.2, slice * 0.04);
+    stops.push(`${colors[i]} ${a}deg ${Math.max(a, b-gap)}deg`);
+    stops.push(`#F8F4EC ${Math.max(a, b-gap)}deg ${b}deg`);
+  });
+  const background = `conic-gradient(${stops.join(",")})`;
+
+  return (
+    <div>
+      <div className="daily-status-wrap">
+        <div className="daily-status-donut" style={{background}}>
+          <div className="daily-status-hole">
+            <div className="k">Daily target</div>
+            <div className="v">€{dailyAmount.toFixed(0)}</div>
+          </div>
+        </div>
+
+        <div className="daily-status-legend">
+          <div className="daily-status-legend-row">
+            <span className="daily-status-dot" style={{background:"#D6453D"}}></span>
+            Over budget
+          </div>
+          <div className="daily-status-legend-row">
+            <span className="daily-status-dot" style={{background:"#7BCB82"}}></span>
+            Within budget
+          </div>
+          <div className="daily-status-legend-row">
+            <span className="daily-status-dot" style={{background:"#D8DDE1"}}></span>
+            No spending yet
+          </div>
+        </div>
+      </div>
+
+      <div className="day-status-list">
+        {statuses.map(s => (
+          <div key={s.day} className={`day-status-chip ${s.status}`}>
+            <div className="d1">Day {s.day}</div>
+            <div className="d2">{s.spent > 0 ? `€${s.spent.toFixed(0)}` : "—"}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip }) {
   const isOnsite = data.mode === "onsite";
   const spent = totalSpent(data);
   const tripEnded = data.endDate && new Date(data.endDate + "T23:59:59") < new Date();
-  const chartSegments = [
-    ...(!isOnsite ? [{ label: "Flights", value: flightTotal, color: "#1C5A7A" }] : []),
-    { label: isOnsite ? "Already booked" : "Stay", value: hotelTotal, color: "#2E8B8B" },
-    ...(carTotal > 0 ? [{ label: "Car", value: carTotal, color: "#F4B93E" }] : []),
-    { label: "Daily budget left", value: Math.max(0, remaining), color: "#D9D2C2" },
-  ];
+
+  const totalDays = tripLengthDays(data);
+  const today = new Date();
+  let todayDayNum = null;
+  for (let i = 1; i <= totalDays; i++) {
+    const d = tripDateForDay(data, i);
+    if (d && isSameDate(d, today)) { todayDayNum = i; break; }
+  }
+  if (todayDayNum === null && data.arrived) todayDayNum = 1;
+
+  const todaySpent = (data.expenses || [])
+    .filter(e => Number(e.dayNum || e.day || 0) === todayDayNum)
+    .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const todayDiff = todaySpent - dailyAmount;
   return (
     <div>
       {onStartNewTrip && (
@@ -3897,6 +4122,17 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
             <span className="new-trip-plus">＋</span>
             New trip
           </button>
+        </div>
+      )}
+
+      {todayDayNum && todaySpent > 0 && (
+        <div className={"today-budget-alert " + (todayDiff > 0 ? "over" : "ok")}>
+          <span>{todayDiff > 0 ? "⚠️" : "✅"}</span>
+          <span>
+            {todayDiff > 0
+              ? `€${todayDiff.toFixed(0)} over today's budget`
+              : `€${Math.abs(todayDiff).toFixed(0)} left in today's budget`}
+          </span>
         </div>
       )}
 
@@ -3927,12 +4163,9 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
       )}
 
       <div className="field">
-        <label>Where your budget goes</label>
-        <DonutChart
-          segments={chartSegments}
-          centerLabel="Total"
-          centerValue={`€${(data.budget||0).toLocaleString()}`}
-        />
+        <label>Daily budget status</label>
+        <p className="park-hint">Each slice is one day of your trip. Red = over budget, green = within budget, grey = no spending yet.</p>
+        <DailyStatusDonut data={data} dailyAmount={dailyAmount} />
       </div>
 
       <div className="field">
@@ -4257,7 +4490,16 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc, onRemoveDoc }) {
             </div>
           </div>
         </div>
-        <a href={buildCarRentalLink(data)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:10}}>
+        <a
+          href={buildCarRentalLink(data)}
+          onClick={(e) => {
+            e.preventDefault();
+            openExternalWebsite(buildCarRentalLink(data), {step:9, section:"car"});
+          }}
+          rel="noopener noreferrer sponsored"
+          className="booking-link-btn"
+          style={{marginTop:10}}
+        >
           <span className="blb-icon">🚗</span>
           <span className="blb-text">
             <span className="blb-h">Search rental cars on Booking.com</span>
@@ -5426,7 +5668,13 @@ function DashTools({ data, onDeleteLocalData }) {
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip }) {
-  const [section, setSection] = useState("overview");
+  const savedDashboardSection = loadSavedUI().section;
+  const [section, setSection] = useState(savedDashboardSection || "overview");
+
+  const goSection = (id) => {
+    setSection(id);
+    saveUIState({step:9, section:id});
+  };
   const [documents, setDocuments] = useState({ tickets: [], car: [], house: [] });
 
   React.useEffect(() => {
@@ -5458,7 +5706,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
   const prevArrived = React.useRef(data.arrived);
   React.useEffect(() => {
     if (data.arrived && !prevArrived.current) {
-      setSection("itinerary");
+      goSection("itinerary");
     }
     prevArrived.current = data.arrived;
   }, [data.arrived]);
@@ -5484,7 +5732,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
           <div
             key={s.id}
             className={"dash-nav-item" + (section === s.id ? " active" : "")}
-            onClick={() => setSection(s.id)}
+            onClick={() => goSection(s.id)}
           >
             <div className="dash-nav-icon">{s.icon}</div>
             <div className="dash-nav-label">{s.label}</div>
@@ -5495,7 +5743,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
           <div
             key={s.id}
             className={"dash-nav-item" + (section === s.id ? " active" : "") + (!data.arrived ? " locked" : "")}
-            onClick={() => data.arrived && setSection(s.id)}
+            onClick={() => data.arrived && goSection(s.id)}
           >
             <div className="dash-nav-icon">{data.arrived ? s.icon : "🔒"}</div>
             <div className="dash-nav-label">{s.label}</div>
@@ -5514,7 +5762,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
         {section === "house" && <DashHouse data={data} hotelTotal={hotelTotal} nights={nights} docs={documents.house} onAddDoc={(d) => addDoc("house", d)} onRemoveDoc={(id) => removeDoc("house", id)} />}
         {section === "wallet" && <DashWallet documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
-        {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={setSection} dailyAmount={dailyAmount} />}
+        {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && data.arrived && <DashNearby data={data} setData={setData} />}
         {section === "offline" && data.arrived && <DashOffline data={data} />}
         {section === "phrasebook" && data.arrived && <DashPhrasebook />}
@@ -5529,6 +5777,53 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
 // first screen), we resume them straight into the dashboard instead of
 // making them redo the whole setup after the browser reloads the page
 // (which happens often when returning from an external site).
+
+const TRIPITALY_UI_KEY = "tripitaly_ui_state";
+
+function loadSavedUI() {
+  try {
+    const raw = localStorage.getItem(TRIPITALY_UI_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveUIState(update) {
+  try {
+    const current = loadSavedUI();
+    localStorage.setItem(TRIPITALY_UI_KEY, JSON.stringify({...current, ...update}));
+  } catch (e) {}
+}
+
+function consumeResumeAnchor() {
+  const ui = loadSavedUI();
+  const anchor = ui.anchor || "";
+  if (anchor) saveUIState({anchor:""});
+  return anchor;
+}
+
+// Save where the user is before leaving TripItaly.
+// On Android we explicitly ask Chrome to open the web URL, with a normal
+// HTTPS fallback. This reduces "open in app or browser" prompts when Chrome
+// is available, while preserving the affiliate URL unchanged.
+function openExternalWebsite(url, resumeState = {}) {
+  saveUIState(resumeState);
+
+  const isAndroid = /Android/i.test(navigator.userAgent || "");
+  if (isAndroid) {
+    try {
+      const noScheme = url.replace(/^https?:\/\//i, "");
+      const fallback = encodeURIComponent(url);
+      window.location.href =
+        `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
+      return;
+    } catch (e) {}
+  }
+
+  window.location.href = url;
+}
+
 function loadSavedTrip() {
   try {
     const raw = localStorage.getItem("tripitaly_data");
@@ -5542,7 +5837,8 @@ function loadSavedTrip() {
 
 function App() {
   const savedTrip = loadSavedTrip();
-  const [step, setStep] = useState(savedTrip ? 9 : 0);
+  const savedUI = loadSavedUI();
+  const [step, setStep] = useState(savedTrip ? (Number(savedUI.step) || 9) : 0);
   const [data, setData] = useState(savedTrip || {
     budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null
   });
@@ -5558,10 +5854,14 @@ function App() {
     }
   }, [data]);
 
+  React.useEffect(() => {
+    if (savedTrip || data.budget) saveUIState({step});
+  }, [step]);
+
   const startNewTrip = async () => {
     const ok = window.confirm("Delete this trip and all locally saved Travel Wallet documents from this device?");
     if (!ok) return;
-    try { localStorage.removeItem("tripitaly_data"); } catch (e) {}
+    try { localStorage.removeItem("tripitaly_data"); localStorage.removeItem(TRIPITALY_UI_KEY); } catch (e) {}
     await clearTravelDocuments();
     setData({ budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null });
     setStep(0);
@@ -5584,7 +5884,7 @@ function App() {
     return (
       <div className="app">
         <div className="topbar" style={{paddingBottom:20, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-          <div className="dash-back-btn" onClick={() => setStep(4)}>← Back</div>
+          <div className="dash-back-btn" onClick={() => { saveUIState({step:4, anchor:""}); setStep(4); }}>← Back</div>
           <div className="brand">Trip<span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
