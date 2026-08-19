@@ -2205,6 +2205,7 @@ function buildStay22HotelSearchLink(data, cityOverride) {
     lang: "en",
     currency: "EUR",
     campaign: "tripitaly_app_hotel_search",
+    excludeproviders: "booking",
   });
   if (data.startDate) params.set("checkin", data.startDate);
   if (data.endDate) params.set("checkout", data.endDate);
@@ -2691,7 +2692,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           </span>
         </a>
         <p className="park-hint" style={{marginTop:7}}>
-          Guest count is passed to supported partners. Please confirm the number of travelers before booking.
+          Compare available partners such as Expedia, Hotels.com, Agoda and Vrbo. Please confirm travelers before booking.
         </p>
 
         <a
