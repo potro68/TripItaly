@@ -5278,7 +5278,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
   return (
     <div>
       <div className="field no-print">
-        <button className="btn-secondary" onClick={handlePrint}>🖨️ Print / Save itinerary as PDF</button>
+        <button className="btn-secondary" onClick={handlePrint}>📄 Save itinerary as PDF</button>
       </div>
 
       {/* Print-only version: full itinerary, hidden on screen, shown when printing */}
@@ -5995,14 +5995,7 @@ function DashWallet({ data, setData, documents, onAddDoc, onRemoveDoc, flightTot
         <div style={{marginTop:10,fontWeight:700}}>{total} saved document{total===1?"":"s"}</div>
       </div>
 
-      <div className="field">
-        <label>🗺️ Trip itinerary</label>
-        <p className="park-hint">One live itinerary, available here and in Offline. No duplicate file is stored.</p>
-        <div className="route-add-row">
-          <button className="btn-secondary" style={{marginTop:0}} onClick={() => onGoTo("itinerary")}>Open itinerary</button>
-          <button className="btn-secondary" style={{marginTop:0}} onClick={() => printTripItinerary(data)}>Save / Print PDF</button>
-        </div>
-      </div>
+
       <div className="wallet-tabs">
         <button className={"wallet-tab"+(tab==="tickets"?" active":"")} onClick={()=>changeTab("tickets")}>✈️ Flights & tickets</button>
         <button className={"wallet-tab"+(tab==="car"?" active":"")} onClick={()=>changeTab("car")}>🚗 Car rental</button>
@@ -6147,12 +6140,12 @@ function DashOffline({ data }) {
       </div>
 
       <div className="offline-card">
-        <div className="offline-card-h">📄 Itinerary PDF</div>
+        <div className="offline-card-h">🗺️ Trip itinerary</div>
         <div className="offline-card-d" style={{marginBottom:10}}>
-          Includes each day, date, city, saved plans and travel-between-cities details.
+          View your saved route, cities and daily plans here. Save / PDF stays in Itinerary only.
         </div>
-        <button className="btn-secondary" style={{marginTop:0}} onClick={() => printTripItinerary(data)}>
-          Save / Print itinerary PDF
+        <button className="btn-secondary" style={{marginTop:0}} onClick={() => window.dispatchEvent(new CustomEvent("tripitaly-open-section", {detail:"itinerary"}))}>
+          View itinerary
         </button>
       </div>
 
@@ -6285,6 +6278,14 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
     setSection(id);
     saveUIState({step:9, section:id});
   };
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e?.detail) goSection(e.detail);
+    };
+    window.addEventListener("tripitaly-open-section", handler);
+    return () => window.removeEventListener("tripitaly-open-section", handler);
+  }, []);
   const [documents, setDocuments] = useState({ tickets: [], car: [], house: [] });
 
   React.useEffect(() => {
