@@ -5020,6 +5020,122 @@ function CityMap({ city }) {
   );
 }
 
+
+function itineraryDaysFromData(data) {
+  const routeBlocks = (data.routeBlocks && data.routeBlocks.length)
+    ? data.routeBlocks
+    : [{
+        city: primaryCityName(AIRPORTS.find(a => a.code === data.airport)?.city) || data.stayCity || "Italy",
+        days: Array.from({length: tripLengthDays(data)}, (_, i) => i + 1),
+        stops: []
+      }];
+
+  const totalDays = routeBlocks.reduce((max, b) => Math.max(max, ...(b.days || [1])), 1);
+  const overrides = data.dayCityOverrides || {};
+  const plans = data.dayPlans || {};
+
+  return Array.from({length: totalDays}, (_, i) => {
+    const dayNum = i + 1;
+    const date = tripDateForDay(data, dayNum);
+    const city = overrides[dayNum] || cityForDay(routeBlocks, dayNum) || "";
+    const stops = plans[dayNum] || [];
+
+    const blockIndex = routeBlocks.findIndex(b => (b.days || []).includes(dayNum));
+    const isArrivalDay = blockIndex > 0 && routeBlocks[blockIndex]?.days?.[0] === dayNum;
+    const transportId = isArrivalDay ? (data.legTransport || {})[blockIndex - 1] : null;
+    const transportInfo = transportId ? TRANSPORT_OPTIONS.find(t => t.id === transportId) : null;
+
+    return { dayNum, date, city, stops, transportInfo };
+  });
+}
+
+function escapePrintHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function printTripItinerary(data) {
+  const days = itineraryDaysFromData(data);
+  const hotel = data.hotel || "";
+  const routeName = data.itinerary || "Italy trip";
+  const people = data.people || 1;
+
+  const daysHTML = days.map(d => {
+    const dateText = d.date
+      ? d.date.toLocaleDateString("en-US", {weekday:"long", month:"long", day:"numeric", year:"numeric"})
+      : `Day ${d.dayNum}`;
+
+    const planHTML = d.stops.length
+      ? `<ul>${d.stops.map(s => `<li>${escapePrintHTML(s)}</li>`).join("")}</ul>`
+      : `<div class="empty">No plans saved for this day yet.</div>`;
+
+    const transportHTML = d.transportInfo
+      ? `<div class="transport">${escapePrintHTML(d.transportInfo.icon)} Travel to ${escapePrintHTML(d.city)} by ${escapePrintHTML(d.transportInfo.label.toLowerCase())}</div>`
+      : "";
+
+    return `
+      <section class="day">
+        <h2>Day ${d.dayNum} · ${escapePrintHTML(dateText)}</h2>
+        <div class="city">📍 ${escapePrintHTML(d.city || "City not set")}</div>
+        ${transportHTML}
+        ${planHTML}
+      </section>
+    `;
+  }).join("");
+
+  const popup = window.open("", "_blank");
+  if (!popup) {
+    alert("Please allow pop-ups for TripItaly to print or save your itinerary as PDF.");
+    return;
+  }
+
+  popup.document.open();
+  popup.document.write(`<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TripItaly Itinerary</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:Arial,sans-serif;color:#132A3A;background:#fff;margin:0;padding:28px;line-height:1.45}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 4px}
+  .sub{font-size:13px;color:#60717B;margin-bottom:18px}
+  .summary{border:1px solid #CDD6DA;border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:13px}
+  .day{break-inside:avoid;border-bottom:1px solid #DDE3E6;padding:0 0 15px;margin:0 0 16px}
+  .day h2{font-size:17px;margin:0 0 5px}
+  .city{font-weight:700;font-size:14px;margin-bottom:6px}
+  .transport{font-size:12px;color:#1C5A7A;font-weight:700;margin-bottom:6px}
+  ul{margin:6px 0 0;padding-left:20px}
+  li{margin:3px 0;font-size:13px}
+  .empty{font-size:12px;color:#7D8A91;font-style:italic}
+  .foot{margin-top:20px;font-size:11px;color:#7D8A91}
+  @media print{body{padding:0}.wrap{max-width:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TripItaly · ${escapePrintHTML(routeName)}</h1>
+  <div class="sub">${escapePrintHTML(formatDateEN(data.startDate))} → ${escapePrintHTML(formatDateEN(data.endDate))} · ${people} traveler${people > 1 ? "s" : ""}</div>
+  <div class="summary">
+    <strong>Emergency:</strong> 112 (EU-wide)
+    ${hotel ? `<br><strong>Accommodation:</strong> ${escapePrintHTML(hotel)}` : ""}
+    ${data.parkingNote ? `<br><strong>Parking:</strong> ${escapePrintHTML(data.parkingNote)}` : ""}
+  </div>
+  ${daysHTML}
+  <div class="foot">Generated from your saved TripItaly itinerary.</div>
+</div>
+<script>
+  window.addEventListener("load", () => setTimeout(() => window.print(), 250));
+<\/script>
+</body>
+</html>`);
+  popup.document.close();
+}
+
 function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedStops, onAddStop, onRemoveStop, onCityChange, onGoTo, dailyAmount }) {
   const dateLabel = date ? date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : `Day ${dayNum}`;
   const [editingCity, setEditingCity] = useState(false);
@@ -5103,13 +5219,18 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
           <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { if(stopInput.trim()){ onAddStop(stopInput.trim()); setStopInput(""); } }}>+ Add</button>
         </div>
 
-        <div style={{marginTop:10,padding:"11px 12px",borderRadius:11,background:"rgba(28,90,122,.07)",border:"1px solid rgba(28,90,122,.13)",fontSize:11.5,lineHeight:1.45,color:"var(--ink)"}}>
-          📍 Looking for a real place to go? Use{" "}
-          <button type="button" onClick={() => onGoTo("nearby")} style={{border:"none",background:"transparent",padding:0,color:"var(--amalfi-deep)",font:"inherit",fontWeight:800,textDecoration:"underline",cursor:"pointer"}}>
-            Nearby
-          </button>
-          {" "}to find restaurants, cafés, attractions and other places around you.
-        </div>
+        <button
+          type="button"
+          onClick={() => onGoTo("nearby")}
+          className="booking-link-btn"
+          style={{width:"100%", border:"none", cursor:"pointer", textAlign:"left", marginTop:12}}
+        >
+          <span className="blb-icon">📍</span>
+          <span className="blb-text">
+            <span className="blb-h">Find real places with Nearby</span>
+            <span className="blb-d">Restaurants, cafés, attractions and useful places around you →</span>
+          </span>
+        </button>
       </div>
     </div>
   );
@@ -5152,7 +5273,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
     setData({...data, dayPlans: {...dayPlans, [dayNum]: current.filter((_, i) => i !== idx)}});
   };
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => printTripItinerary(data);
 
   return (
     <div>
@@ -5860,7 +5981,7 @@ function DashCurrency() {
 }
 
 
-function DashWallet({ data, setData, documents, onAddDoc, onRemoveDoc, flightTotal, hotelTotal, carTotal, nights }) {
+function DashWallet({ data, setData, documents, onAddDoc, onRemoveDoc, flightTotal, hotelTotal, carTotal, nights, onGoTo }) {
   const savedTab = loadSavedUI().walletTab;
   const [tab, setTab] = useState(savedTab || "tickets");
   const total = Object.values(documents).reduce((sum, docs) => sum + docs.length, 0);
@@ -5872,6 +5993,15 @@ function DashWallet({ data, setData, documents, onAddDoc, onRemoveDoc, flightTot
         <div className="wallet-summary-h">Travel Wallet</div>
         <div className="wallet-summary-d">Flights, rental car and accommodation — details and travel documents in one place. No credit cards or identity documents.</div>
         <div style={{marginTop:10,fontWeight:700}}>{total} saved document{total===1?"":"s"}</div>
+      </div>
+
+      <div className="field">
+        <label>🗺️ Trip itinerary</label>
+        <p className="park-hint">One live itinerary, available here and in Offline. No duplicate file is stored.</p>
+        <div className="route-add-row">
+          <button className="btn-secondary" style={{marginTop:0}} onClick={() => onGoTo("itinerary")}>Open itinerary</button>
+          <button className="btn-secondary" style={{marginTop:0}} onClick={() => printTripItinerary(data)}>Save / Print PDF</button>
+        </div>
       </div>
       <div className="wallet-tabs">
         <button className={"wallet-tab"+(tab==="tickets"?" active":"")} onClick={()=>changeTab("tickets")}>✈️ Flights & tickets</button>
@@ -6014,6 +6144,16 @@ function DashOffline({ data }) {
             ? route.map(b => `${b.city} · Day${b.days.length>1?"s":""} ${b.days.join("–")}`).join(" → ")
             : (data.itinerary || "No route saved yet")}
         </div>
+      </div>
+
+      <div className="offline-card">
+        <div className="offline-card-h">📄 Itinerary PDF</div>
+        <div className="offline-card-d" style={{marginBottom:10}}>
+          Includes each day, date, city, saved plans and travel-between-cities details.
+        </div>
+        <button className="btn-secondary" style={{marginTop:0}} onClick={() => printTripItinerary(data)}>
+          Save / Print itinerary PDF
+        </button>
       </div>
 
     </div>
@@ -6227,7 +6367,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         <p className="subtitle" style={{marginBottom:20}}>{data.itinerary}</p>
 
         {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
-        {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} />}
+        {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} />}
         {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
