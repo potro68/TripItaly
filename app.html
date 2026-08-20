@@ -2541,7 +2541,11 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
                   <div
                     key={t.id}
                     className={"leg-chip" + (legTransport[i] === t.id ? " active" : "")}
-                    onClick={() => setLegTransport({...legTransport, [i]: t.id})}
+                    onClick={() => {
+                      const nextLegTransport = {...legTransport, [i]: t.id};
+                      setLegTransport(nextLegTransport);
+                      setData(prev => ({...prev, legTransport: nextLegTransport}));
+                    }}
                   >
                     {t.icon} {t.label}
                   </div>
@@ -2576,7 +2580,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
               })()}
               {selectedMode === "drive" && (
                 <a href={buildDrivingLink(legFromCity, s.city)} target="_blank" rel="noopener noreferrer" className="leg-transport-link">
-                  🚗 Preview driving route {legFromCity} → {s.city} ↗
+                  🧭 Open driving route {legFromCity} → {s.city} ↗
                 </a>
               )}
 
@@ -2938,7 +2942,11 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
                     <div
                       key={t.id}
                       className={"leg-chip" + (legTransport[i] === t.id ? " active" : "")}
-                      onClick={() => setLegTransport({...legTransport, [i]: t.id})}
+                      onClick={() => {
+                      const nextLegTransport = {...legTransport, [i]: t.id};
+                      setLegTransport(nextLegTransport);
+                      setData(prev => ({...prev, legTransport: nextLegTransport}));
+                    }}
                     >
                       {t.icon} {t.label}
                     </div>
@@ -2974,7 +2982,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
               })()}
               {nextStop && selectedMode === "drive" && (
                 <a href={buildDrivingLink(s.city, nextStop.city)} target="_blank" rel="noopener noreferrer" className="leg-transport-link">
-                  🚗 Preview driving route {s.city} → {nextStop.city} ↗
+                  🧭 Open driving route {s.city} → {nextStop.city} ↗
                 </a>
               )}
             </div>
@@ -4008,7 +4016,7 @@ function menuLabel(id, lang) {
   return TRIP_ENGINE_MENU_TRANSLATIONS[lang]?.[id] || TRIP_ENGINE_MENU_TRANSLATIONS.en[id] || id;
 }
 
-function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme }) {
+function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
   return (
     <div>
       <div className="field">
@@ -4028,6 +4036,34 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme }) {
             <span className="tc-icon">🌙</span><span className="tc-label">Navy & Gold</span>
           </div>
         </div>
+      </div>
+
+      <div className="field">
+        <label>Past trips & recovery</label>
+        <p className="park-hint">
+          Starting a new trip never destroys your current holiday. TripItaly archives it first so you can restore it if you tapped reset by mistake.
+        </p>
+        {(!archives || archives.length === 0) ? (
+          <div className="choice-card" style={{opacity:.6}}>
+            <div className="choice-icon">🗂️</div>
+            <div className="choice-text"><div className="h">No archived trips yet</div><div className="d">Completed or replaced trips will appear here.</div></div>
+          </div>
+        ) : archives.map(item => {
+          const label = tripArchiveLabel(item);
+          const ageDays = Math.floor((Date.now() - item.archivedAt) / 86400000);
+          const recovery = ageDays < TRIP_ENGINE_RECOVERY_DAYS;
+          return (
+            <div className="offline-card" key={item.archiveId}>
+              <div className="offline-card-h">🇮🇹 {label.route}</div>
+              <div className="offline-card-d">{label.dates || "Saved trip"} · {recovery ? `Recovery available · ${TRIP_ENGINE_RECOVERY_DAYS-ageDays} day${TRIP_ENGINE_RECOVERY_DAYS-ageDays===1?"":"s"} left` : "Archived trip"}</div>
+              <div className="wallet-doc-actions">
+                <button className="wallet-mini-btn" onClick={() => onRestoreTrip(item.archiveId)}>Restore trip</button>
+                <button className="wallet-mini-btn" onClick={() => printTripItinerary(item.data)}>Save memory PDF</button>
+                <button className="wallet-mini-btn danger" onClick={() => onDeleteArchive(item.archiveId)}>Delete permanently</button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -4457,11 +4493,24 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
         </div>
       </div>
 
+      {data.endDate && new Date(data.endDate + "T23:59:59") < new Date() && (
+        <div className="field" style={{marginTop:20}}>
+          <div className="choice-card selected">
+            <div className="choice-icon">🇮🇹</div>
+            <div className="choice-text">
+              <div className="h">Your Italy trip is complete</div>
+              <div className="d">Nothing is deleted automatically. Keep your trip, save a memory PDF, or archive it when you start a new one.</div>
+            </div>
+          </div>
+          <button className="btn-secondary" style={{marginTop:10}} onClick={() => printTripItinerary(data)}>📄 Save trip memory as PDF</button>
+        </div>
+      )}
+
       {onStartNewTrip && (
         <div className="overview-actions" style={{marginTop:26,marginBottom:0}}>
           <button className="new-trip-btn" onClick={onStartNewTrip}>
             <span className="new-trip-plus">＋</span>
-            New trip / reset current trip
+            Start a new trip
           </button>
         </div>
       )}
@@ -4519,6 +4568,76 @@ async function deleteTravelDocument(id) {
     await new Promise((resolve, reject) => {
       const tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
       tx.objectStore(TRIPITALY_DOC_STORE).delete(id);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch (e) {}
+}
+
+
+async function archiveActiveTravelDocuments(archiveId) {
+  if (!archiveId) return;
+  try {
+    const db = await openTravelDocDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
+      const store = tx.objectStore(TRIPITALY_DOC_STORE);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        (req.result || []).forEach(record => {
+          if (!record.archivedTripId) {
+            store.put({...record, archivedTripId: archiveId});
+          }
+        });
+      };
+      req.onerror = () => reject(req.error);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch (e) {}
+}
+
+async function restoreArchivedTravelDocuments(archiveId) {
+  if (!archiveId) return;
+  try {
+    const db = await openTravelDocDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
+      const store = tx.objectStore(TRIPITALY_DOC_STORE);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        (req.result || []).forEach(record => {
+          if (record.archivedTripId === archiveId) {
+            const restored = {...record};
+            delete restored.archivedTripId;
+            store.put(restored);
+          }
+        });
+      };
+      req.onerror = () => reject(req.error);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch (e) {}
+}
+
+async function deleteArchivedTravelDocuments(archiveId) {
+  if (!archiveId) return;
+  try {
+    const db = await openTravelDocDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
+      const store = tx.objectStore(TRIPITALY_DOC_STORE);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        (req.result || []).forEach(record => {
+          if (record.archivedTripId === archiveId) store.delete(record.id);
+        });
+      };
+      req.onerror = () => reject(req.error);
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
     });
@@ -5252,7 +5371,10 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
     const d = tripDateForDay(data, i);
     if (d && isSameDate(d, today)) { defaultDay = i; break; }
   }
-  const [activeDay, setActiveDay] = useState(defaultDay);
+  const savedItineraryDay = Number(loadSavedUI().itineraryDay || 0);
+  const [activeDay, setActiveDay] = useState(
+    savedItineraryDay >= 1 && savedItineraryDay <= totalDays ? savedItineraryDay : defaultDay
+  );
   const activeDate = tripDateForDay(data, activeDay);
   const isTodayActive = (activeDate && isSameDate(activeDate, today)) || (activeDay === 1 && data.arrived);
 
@@ -5334,7 +5456,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
               <div
                 key={dayNum}
                 className={"day-chip" + (activeDay === dayNum ? " active" : "") + (isToday ? " today" : "")}
-                onClick={() => setActiveDay(dayNum)}
+                onClick={() => { setActiveDay(dayNum); saveUIState({step:9, section:"itinerary", itineraryDay:dayNum}); }}
               >
                 {isToday && <div className="today-dot"></div>}
                 <div className="day-chip-wd">{f.weekday}</div>
@@ -6009,20 +6131,7 @@ function DashWallet({ data, setData, documents, onAddDoc, onRemoveDoc, flightTot
 }
 
 function DashDrive({ data, setData }) {
-  const totalDays = tripLengthDays(data);
-  const today = new Date();
-  let dayNum = null;
-  for (let i=1;i<=totalDays;i++){
-    const d = tripDateForDay(data,i);
-    if (d && isSameDate(d,today)){ dayNum=i; break; }
-  }
-  if(dayNum===null && data.arrived) dayNum=1;
-
-  const blocks = data.routeBlocks || [];
-  const currentIndex = blocks.findIndex(b => dayNum && b.days.includes(dayNum));
-  const currentCity = currentIndex >= 0 ? blocks[currentIndex].city : (blocks[0]?.city || data.stayCity || guessedStayCity(data));
-  const nextCity = currentIndex >= 0 && blocks[currentIndex+1] ? blocks[currentIndex+1].city : null;
-
+  const blocks = (data.routeBlocks && data.routeBlocks.length) ? data.routeBlocks : [];
   const navTo = (destination) => {
     if (!destination) return "#";
     const params = new URLSearchParams({
@@ -6033,26 +6142,55 @@ function DashDrive({ data, setData }) {
     return `https://www.google.com/maps/dir/?${params.toString()}`;
   };
 
+  // Every city change saved in Your Route becomes a driving day here.
+  // Repeated cities are intentionally kept (e.g. Milan → Turin → Milan).
+  const driveLegs = [];
+  for (let i = 1; i < blocks.length; i++) {
+    const from = blocks[i - 1]?.city;
+    const to = blocks[i]?.city;
+    const dayNum = blocks[i]?.days?.[0];
+    if (!from || !to || !dayNum) continue;
+    const date = tripDateForDay(data, dayNum);
+    driveLegs.push({
+      from,
+      to,
+      dayNum,
+      dateLabel: date
+        ? date.toLocaleDateString("en-US", {weekday:"short", month:"short", day:"numeric"})
+        : `Day ${dayNum}`,
+    });
+  }
+
   return (
     <div>
       <div className="field">
-        <label>Driving tools</label>
-        <p className="park-hint">Uses your current location now that you've marked that you're in Italy.</p>
+        <label>Your driving calendar</label>
+        <p className="park-hint">
+          Built automatically from Your Route. On each travel day, Navigate starts from your phone's current location.
+        </p>
 
-        {nextCity ? (
-          <a href={navTo(nextCity)} target="_blank" rel="noopener noreferrer" className="booking-link-btn">
-            <span className="blb-icon">🧭</span>
-            <span className="blb-text">
-              <span className="blb-h">Navigate to {nextCity}</span>
-              <span className="blb-d">Current location → {nextCity} ↗</span>
-            </span>
-          </a>
-        ) : (
+        {driveLegs.length ? driveLegs.map((leg, i) => (
+          <div key={`${leg.dayNum}-${leg.from}-${leg.to}-${i}`} className="offline-card" style={{marginBottom:10}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,marginBottom:8}}>
+              <div>
+                <div className="date-mini-label">Day {leg.dayNum} · {leg.dateLabel}</div>
+                <div className="offline-card-h" style={{marginTop:3}}>🚗 {leg.from} → {leg.to}</div>
+              </div>
+            </div>
+            <a href={navTo(leg.to)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:0}}>
+              <span className="blb-icon">🧭</span>
+              <span className="blb-text">
+                <span className="blb-h">Navigate to {leg.to}</span>
+                <span className="blb-d">Current location → {leg.to} ↗</span>
+              </span>
+            </a>
+          </div>
+        )) : (
           <div className="choice-card">
             <div className="choice-icon">🚗</div>
             <div className="choice-text">
-              <div className="h">You're based in {currentCity || "Italy"}</div>
-              <div className="d">No next driving leg saved yet.</div>
+              <div className="h">No driving days saved yet</div>
+              <div className="d">Add another city in Your Route to create your driving calendar.</div>
             </div>
           </div>
         )}
@@ -6267,7 +6405,7 @@ function DashTools({ data, onDeleteLocalData }) {
   );
 }
 
-function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme }) {
+function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
     ? (savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet")
@@ -6292,7 +6430,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
     loadTravelDocuments().then(all => {
       const grouped = { tickets: [], car: [], house: [] };
       all.forEach(d => {
-        if (grouped[d.section]) {
+        if (!d.archivedTripId && grouped[d.section]) {
           const { blob, ...meta } = d;
           grouped[d.section].push(meta);
         }
@@ -6370,7 +6508,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
-        {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} />}
+        {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
         {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && data.arrived && <DashNearby data={data} setData={setData} />}
         {section === "drive" && data.arrived && data.wantsCar && <DashDrive data={data} setData={setData} />}
@@ -6389,6 +6527,46 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
 // (which happens often when returning from an external site).
 
 const TRIPITALY_UI_KEY = "tripitaly_ui_state";
+const TRIP_ENGINE_ARCHIVE_KEY = "tripengine_trip_archive";
+const TRIP_ENGINE_RECOVERY_DAYS = 7;
+
+function loadTripArchive() {
+  try {
+    const raw = localStorage.getItem(TRIP_ENGINE_ARCHIVE_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveTripArchive(list) {
+  try {
+    localStorage.setItem(TRIP_ENGINE_ARCHIVE_KEY, JSON.stringify(list.slice(0, 12)));
+  } catch (e) {}
+}
+
+function archiveTripSnapshot(data, uiState = {}) {
+  if (!data || !data.budget) return null;
+  const archiveId = `trip-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+  const item = {
+    archiveId,
+    archivedAt: Date.now(),
+    data: JSON.parse(JSON.stringify(data)),
+    uiState: JSON.parse(JSON.stringify(uiState || {})),
+  };
+  const list = [item, ...loadTripArchive().filter(x => x.archiveId !== archiveId)];
+  saveTripArchive(list);
+  return item;
+}
+
+function tripArchiveLabel(item) {
+  const d = item?.data || {};
+  const route = d.itinerary || d.stayCity || "Italy trip";
+  const dates = d.startDate && d.endDate ? `${formatDateEN(d.startDate)} → ${formatDateEN(d.endDate)}` : "";
+  return { route, dates };
+}
+
 
 function loadSavedUI() {
   try {
@@ -6438,6 +6616,7 @@ function App() {
   const [data, setData] = useState(savedTrip || {
     budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null
   });
+  const [archives, setArchives] = useState(() => loadTripArchive());
   // Shared Trip Engine UI preferences. Country-specific apps can reuse these
   // without duplicating Settings logic. Legacy TripItaly keys are read once
   // for backward compatibility.
@@ -6495,12 +6674,65 @@ function App() {
   }, [step]);
 
   const startNewTrip = async () => {
-    const ok = window.confirm("Delete this trip and all locally saved Travel Wallet documents from this device?");
+    const ok = window.confirm(
+      "Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later."
+    );
     if (!ok) return;
-    try { localStorage.removeItem("tripitaly_data"); localStorage.removeItem(TRIPITALY_UI_KEY); } catch (e) {}
-    await clearTravelDocuments();
-    setData({ budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null, homeTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" });
+
+    const currentUI = loadSavedUI();
+    const archived = archiveTripSnapshot(data, currentUI);
+    if (archived) {
+      await archiveActiveTravelDocuments(archived.archiveId);
+      setArchives(loadTripArchive());
+    }
+
+    try {
+      localStorage.removeItem("tripitaly_data");
+      localStorage.setItem(TRIPITALY_UI_KEY, JSON.stringify({step:0, section:"overview"}));
+    } catch (e) {}
+
+    setData({
+      budget:null, startDate:"", endDate:"", people:1, travelerType:"solo",
+      mode:null, origin:"", airport:null,
+      homeTimeZone:Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+    });
     setStep(0);
+  };
+
+  const restoreArchivedTrip = async (archiveId) => {
+    const list = loadTripArchive();
+    const item = list.find(x => x.archiveId === archiveId);
+    if (!item) return;
+    const ok = window.confirm("Restore this trip? Your current trip will be archived first if it contains data.");
+    if (!ok) return;
+
+    if (data?.budget) {
+      const currentArchived = archiveTripSnapshot(data, loadSavedUI());
+      if (currentArchived) await archiveActiveTravelDocuments(currentArchived.archiveId);
+    }
+
+    await restoreArchivedTravelDocuments(archiveId);
+    const remainingArchive = loadTripArchive().filter(x => x.archiveId !== archiveId);
+    saveTripArchive(remainingArchive);
+    setArchives(remainingArchive);
+
+    const restoredData = JSON.parse(JSON.stringify(item.data));
+    setData(restoredData);
+    try {
+      localStorage.setItem("tripitaly_data", JSON.stringify(restoredData));
+      localStorage.setItem(TRIPITALY_UI_KEY, JSON.stringify({...item.uiState, step:9}));
+    } catch (e) {}
+    setStep(9);
+    window.location.reload();
+  };
+
+  const deleteArchivedTrip = async (archiveId) => {
+    const ok = window.confirm("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.");
+    if (!ok) return;
+    await deleteArchivedTravelDocuments(archiveId);
+    const next = loadTripArchive().filter(x => x.archiveId !== archiveId);
+    saveTripArchive(next);
+    setArchives(next);
   };
 
   const steps = data.mode === "onsite"
@@ -6524,7 +6756,7 @@ function App() {
           <div className="brand">Trip<span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
-        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} />
+        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={restoreArchivedTrip} onDeleteArchive={deleteArchivedTrip} />
       </div>
     );
   }
