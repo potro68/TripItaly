@@ -1993,6 +1993,49 @@
     font-weight:700;
   }
 
+
+  body.theme-navy{
+    background:#071A2E;
+    color:#F4C84A;
+  }
+  body.theme-navy .app,
+  body.theme-navy .dash-layout,
+  body.theme-navy .dash-content{
+    background:#071A2E;
+  }
+  body.theme-navy .topbar,
+  body.theme-navy .dash-sidebar,
+  body.theme-navy .choice-card,
+  body.theme-navy .field input,
+  body.theme-navy .field textarea,
+  body.theme-navy .field select,
+  body.theme-navy .wallet-summary,
+  body.theme-navy .wallet-tab,
+  body.theme-navy .day-panel,
+  body.theme-navy .offline-card,
+  body.theme-navy .time-card{
+    background:#0D2742 !important;
+    color:#F4C84A !important;
+    border-color:rgba(244,200,74,.28) !important;
+  }
+  body.theme-navy .title,
+  body.theme-navy .brand,
+  body.theme-navy .dash-nav-label,
+  body.theme-navy label,
+  body.theme-navy .h,
+  body.theme-navy .choice-text .h{
+    color:#F4C84A !important;
+  }
+  body.theme-navy .subtitle,
+  body.theme-navy .park-hint,
+  body.theme-navy .choice-text .d,
+  body.theme-navy .time-card-zone{
+    color:rgba(255,240,185,.72) !important;
+  }
+  body.theme-navy .dash-nav-item.active{
+    background:rgba(244,200,74,.14) !important;
+  }
+
 </style>
 </head>
 <body>
@@ -3915,6 +3958,7 @@ const DASH_SECTIONS = [
   { id: "overview", icon: "🏠", label: "Overview" },
   { id: "wallet", icon: "👛", label: "Wallet" },
   { id: "packing", icon: "🧳", label: "Packing" },
+  { id: "settings", icon: "⚙️", label: "Settings" },
 ];
 
 const DASH_SECTIONS_ITALY = [
@@ -3925,6 +3969,69 @@ const DASH_SECTIONS_ITALY = [
   { id: "translate", icon: "🌐", label: "Translate" },
   { id: "tools", icon: "🧰", label: "Tools" },
 ];
+
+
+// Shared Trip Engine configuration seam.
+// Future country apps override destination data here instead of rewriting core UI logic.
+const TRIP_ENGINE_APP = {
+  id: "tripitaly",
+  destinationCountry: "Italy",
+  destinationCountryCode: "IT",
+  destinationTimeZone: "Europe/Rome",
+  brandName: "TripItaly",
+  defaultLanguage: "en",
+};
+
+const MENU_LANGUAGES = [
+  {code:"en", label:"English"},
+  {code:"it", label:"Italiano"},
+  {code:"de", label:"Deutsch"},
+  {code:"fr", label:"Français"},
+  {code:"es", label:"Español"},
+  {code:"pt", label:"Português"},
+  {code:"ja", label:"日本語"},
+  {code:"th", label:"ไทย"},
+];
+
+const TRIP_ENGINE_MENU_TRANSLATIONS = {
+  en:{overview:"Overview",wallet:"Wallet",packing:"Packing",settings:"Settings",itinerary:"Itinerary",nearby:"Nearby",drive:"Drive",offline:"Offline",translate:"Translate",tools:"Tools"},
+  it:{overview:"Panoramica",wallet:"Portafoglio",packing:"Bagaglio",settings:"Impostazioni",itinerary:"Itinerario",nearby:"Nelle vicinanze",drive:"Guida",offline:"Offline",translate:"Traduci",tools:"Strumenti"},
+  de:{overview:"Übersicht",wallet:"Reise-Wallet",packing:"Gepäck",settings:"Einstellungen",itinerary:"Reiseplan",nearby:"In der Nähe",drive:"Fahren",offline:"Offline",translate:"Übersetzen",tools:"Werkzeuge"},
+  fr:{overview:"Aperçu",wallet:"Portefeuille",packing:"Bagages",settings:"Paramètres",itinerary:"Itinéraire",nearby:"À proximité",drive:"Conduite",offline:"Hors ligne",translate:"Traduire",tools:"Outils"},
+  es:{overview:"Resumen",wallet:"Cartera",packing:"Equipaje",settings:"Ajustes",itinerary:"Itinerario",nearby:"Cerca de ti",drive:"Conducir",offline:"Sin conexión",translate:"Traducir",tools:"Herramientas"},
+  pt:{overview:"Visão geral",wallet:"Carteira",packing:"Bagagem",settings:"Definições",itinerary:"Itinerário",nearby:"Perto de si",drive:"Conduzir",offline:"Offline",translate:"Traduzir",tools:"Ferramentas"},
+  ja:{overview:"概要",wallet:"ウォレット",packing:"荷造り",settings:"設定",itinerary:"旅程",nearby:"周辺",drive:"ドライブ",offline:"オフライン",translate:"翻訳",tools:"ツール"},
+  th:{overview:"ภาพรวม",wallet:"กระเป๋าเดินทาง",packing:"จัดกระเป๋า",settings:"การตั้งค่า",itinerary:"กำหนดการ",nearby:"ใกล้ฉัน",drive:"ขับรถ",offline:"ออฟไลน์",translate:"แปลภาษา",tools:"เครื่องมือ"},
+};
+
+function menuLabel(id, lang) {
+  return TRIP_ENGINE_MENU_TRANSLATIONS[lang]?.[id] || TRIP_ENGINE_MENU_TRANSLATIONS.en[id] || id;
+}
+
+function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme }) {
+  return (
+    <div>
+      <div className="field">
+        <label>Menu language</label>
+        <p className="park-hint">Changes the navigation menu only. Translate and its microphone languages stay unchanged.</p>
+        <select className="plain" value={uiLanguage} onChange={e=>setUiLanguage(e.target.value)}>
+          {MENU_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.label}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <label>Theme</label>
+        <div className="traveler-grid" style={{gridTemplateColumns:"1fr 1fr"}}>
+          <div className={"traveler-chip"+(theme==="classic"?" selected":"")} onClick={()=>setTheme("classic")}>
+            <span className="tc-icon">☀️</span><span className="tc-label">Classic</span>
+          </div>
+          <div className={"traveler-chip"+(theme==="navy"?" selected":"")} onClick={()=>setTheme("navy")}>
+            <span className="tc-icon">🌙</span><span className="tc-label">Navy & Gold</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DonutChart({ segments, centerLabel, centerValue, showPercent = false }) {
   // segments: [{label, value, color}]
@@ -4571,13 +4678,7 @@ function DashTickets({ data, setData, flightTotal, docs, onAddDoc, onRemoveDoc }
             </div>
           </div>
         </div>
-        <a href={buildAviasalesLink(data)} target="_blank" rel="noopener noreferrer sponsored" className="booking-link-btn" style={{marginTop:10}}>
-          <span className="blb-icon">✈️</span>
-          <span className="blb-text">
-            <span className="blb-h">Search flights on Aviasales</span>
-            <span className="blb-d">Your dates & travelers already filled in ↗</span>
-          </span>
-        </a>
+        
       </div>
       <DocumentUpload section="tickets" docs={docs} onAdd={onAddDoc} onRemove={onRemoveDoc} />
 
@@ -4995,11 +5096,19 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
           <input
             type="text"
             className="route-city-input"
-            placeholder="Add a place to visit"
+            placeholder="Add a note or a place you already know"
             value={stopInput}
             onChange={e => setStopInput(e.target.value)}
           />
           <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { if(stopInput.trim()){ onAddStop(stopInput.trim()); setStopInput(""); } }}>+ Add</button>
+        </div>
+
+        <div style={{marginTop:10,padding:"11px 12px",borderRadius:11,background:"rgba(28,90,122,.07)",border:"1px solid rgba(28,90,122,.13)",fontSize:11.5,lineHeight:1.45,color:"var(--ink)"}}>
+          📍 Looking for a real place to go? Use{" "}
+          <button type="button" onClick={() => onGoTo("nearby")} style={{border:"none",background:"transparent",padding:0,color:"var(--amalfi-deep)",font:"inherit",fontWeight:800,textDecoration:"underline",cursor:"pointer"}}>
+            Nearby
+          </button>
+          {" "}to find restaurants, cafés, attractions and other places around you.
         </div>
       </div>
     </div>
@@ -5462,7 +5571,7 @@ function LiveTranslator() {
 
       {micSupported && (
         <div style={{marginBottom:10}}>
-          <div className="date-mini-label">Speaking language</div>
+          <div className="date-mini-label" style={{fontSize:13.5, fontWeight:800, marginBottom:7}}>Speaking language</div>
           <select
             value={speechLang}
             onChange={e => setSpeechLang(e.target.value)}
@@ -5949,7 +6058,7 @@ function formatZoneClock(date, timeZone) {
 
 function HomeItalyTime({ data }) {
   const [now, setNow] = useState(new Date());
-  const italyZone = "Europe/Rome";
+  const italyZone = TRIP_ENGINE_APP.destinationTimeZone;
   const homeZone = data.homeTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
   React.useEffect(() => {
@@ -6025,7 +6134,7 @@ function DashTools({ data, onDeleteLocalData }) {
   );
 }
 
-function ScreenDashboard({ data, setData, onStartNewTrip }) {
+function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme }) {
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
     ? (savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet")
@@ -6096,7 +6205,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
             onClick={() => goSection(s.id)}
           >
             <div className="dash-nav-icon">{s.icon}</div>
-            <div className="dash-nav-label">{s.label}</div>
+            <div className="dash-nav-label">{menuLabel(s.id, uiLanguage)}</div>
           </div>
         ))}
         <div className="dash-nav-divider"></div>
@@ -6107,19 +6216,20 @@ function ScreenDashboard({ data, setData, onStartNewTrip }) {
             onClick={() => data.arrived && goSection(s.id)}
           >
             <div className="dash-nav-icon">{data.arrived ? s.icon : "🔒"}</div>
-            <div className="dash-nav-label">{s.label}</div>
+            <div className="dash-nav-label">{menuLabel(s.id, uiLanguage)}</div>
           </div>
         ))}
       </div>
       <div className="dash-content">
         <h1 className="title" style={{fontSize:22, marginBottom:4}}>
-          {allLabels.find(s=>s.id===section)?.label}
+          {menuLabel(section, uiLanguage)}
         </h1>
         <p className="subtitle" style={{marginBottom:20}}>{data.itinerary}</p>
 
         {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
+        {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} />}
         {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && data.arrived && <DashNearby data={data} setData={setData} />}
         {section === "drive" && data.arrived && data.wantsCar && <DashDrive data={data} setData={setData} />}
@@ -6187,6 +6297,35 @@ function App() {
   const [data, setData] = useState(savedTrip || {
     budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null
   });
+  // Shared Trip Engine UI preferences. Country-specific apps can reuse these
+  // without duplicating Settings logic. Legacy TripItaly keys are read once
+  // for backward compatibility.
+  const TRIP_ENGINE_UI_LANGUAGE_KEY = "tripengine_ui_language";
+  const TRIP_ENGINE_THEME_KEY = "tripengine_theme";
+
+  const [uiLanguage, setUiLanguageState] = useState(() =>
+    localStorage.getItem(TRIP_ENGINE_UI_LANGUAGE_KEY) ||
+    localStorage.getItem("tripitaly_ui_language") ||
+    "en"
+  );
+  const [theme, setThemeState] = useState(() =>
+    localStorage.getItem(TRIP_ENGINE_THEME_KEY) ||
+    localStorage.getItem("tripitaly_theme") ||
+    "classic"
+  );
+
+  const setUiLanguage = (lang) => {
+    setUiLanguageState(lang);
+    try { localStorage.setItem(TRIP_ENGINE_UI_LANGUAGE_KEY, lang); } catch(e) {}
+  };
+  const setTheme = (nextTheme) => {
+    setThemeState(nextTheme);
+    try { localStorage.setItem(TRIP_ENGINE_THEME_KEY, nextTheme); } catch(e) {}
+  };
+
+  React.useEffect(() => {
+    document.body.classList.toggle("theme-navy", theme === "navy");
+  }, [theme]);
 
   // Capture the traveler's home timezone before arrival. This avoids
   // losing "home time" if the phone later switches itself to Italy time.
@@ -6244,7 +6383,7 @@ function App() {
           <div className="brand">Trip<span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
-        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} />
+        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} />
       </div>
     );
   }
