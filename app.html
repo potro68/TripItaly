@@ -4473,6 +4473,10 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
   const [gpsCheck, setGpsCheck] = useState({status:"idle", message:""});
 
   const verifyItalyArrival = async () => {
+    if (data.devItalyAccess) {
+      setGpsCheck({status:"ok", message:"TEMP DEVELOPER ACCESS is active. Disable it first to test the real GPS lock."});
+      return;
+    }
     if (data.arrived) {
       setData({...data, arrived:false});
       setGpsCheck({status:"idle", message:"Italy live tools locked again."});
@@ -4570,6 +4574,45 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
         >
           🧪 TEMP · Test my GPS country
         </button>
+
+        <button
+          className="btn-secondary"
+          style={{marginTop:9,borderStyle:"dashed",borderColor:"#C0392B",color:"#A7352A"}}
+          onClick={() => {
+            const next = !data.devItalyAccess;
+            setData({
+              ...data,
+              devItalyAccess: next,
+              arrived: next ? true : false,
+              gpsVerifiedCountry: next ? "DEV" : (data.gpsVerifiedCountry || null),
+              gpsVerifiedAt: Date.now()
+            });
+            setGpsCheck({
+              status: next ? "ok" : "idle",
+              message: next
+                ? "TEMP DEVELOPER ACCESS ON · All Italy trip tools are unlocked for testing outside Italy."
+                : "TEMP DEVELOPER ACCESS OFF · GPS rules are active again."
+            });
+          }}
+        >
+          {data.devItalyAccess ? "🧪 TEMP · Disable full test access" : "🧪 TEMP · Unlock all Italy tools"}
+        </button>
+
+        {data.devItalyAccess && (
+          <div style={{
+            marginTop:9,
+            padding:"10px 12px",
+            borderRadius:10,
+            border:"1.5px dashed #C0392B",
+            background:"rgba(192,57,43,.07)",
+            color:"#8E2F26",
+            fontSize:11.5,
+            fontWeight:700,
+            lineHeight:1.45
+          }}>
+            TEST MODE ONLY · GPS country lock is bypassed so you can test every feature from Romania. Remove this control before the public release.
+          </div>
+        )}
       </div>
 
       {todayDayNum && todaySpent > 0 && (
@@ -6666,12 +6709,13 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
 
   // When the user flips "I've arrived" on, jump straight to the Itinerary
   // tab instead of leaving them on Overview.
-  const prevArrived = React.useRef(data.arrived);
+  const prevArrived = React.useRef(data.arrived || data.devItalyAccess);
   React.useEffect(() => {
-    if (data.arrived && !prevArrived.current) {
+    const accessNow = data.arrived || data.devItalyAccess;
+    if (accessNow && !prevArrived.current) {
       goSection("itinerary");
     }
-    prevArrived.current = data.arrived;
+    prevArrived.current = accessNow;
   }, [data.arrived]);
 
   const nights = tripLengthDays(data) - 1;
@@ -6705,10 +6749,10 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {italySections.map(s => (
           <div
             key={s.id}
-            className={"dash-nav-item" + (section === s.id ? " active" : "") + (!data.arrived ? " locked" : "")}
-            onClick={() => data.arrived && goSection(s.id)}
+            className={"dash-nav-item" + (section === s.id ? " active" : "") + (!(data.arrived || data.devItalyAccess) ? " locked" : "")}
+            onClick={() => (data.arrived || data.devItalyAccess) && goSection(s.id)}
           >
-            <div className="dash-nav-icon">{data.arrived ? s.icon : "🔒"}</div>
+            <div className="dash-nav-icon">{(data.arrived || data.devItalyAccess) ? s.icon : "🔒"}</div>
             <div className="dash-nav-label">{menuLabel(s.id, uiLanguage)}</div>
           </div>
         ))}
@@ -6723,12 +6767,12 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
-        {section === "itinerary" && data.arrived && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
-        {section === "nearby" && data.arrived && <DashNearby data={data} setData={setData} />}
-        {section === "drive" && data.arrived && data.wantsCar && <DashDrive data={data} setData={setData} />}
-        {section === "offline" && data.arrived && <DashOffline data={data} />}
-        {section === "translate" && data.arrived && <DashTranslate />}
-        {section === "tools" && data.arrived && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
+        {section === "itinerary" && (data.arrived || data.devItalyAccess) && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
+        {section === "nearby" && (data.arrived || data.devItalyAccess) && <DashNearby data={data} setData={setData} />}
+        {section === "drive" && (data.arrived || data.devItalyAccess) && data.wantsCar && <DashDrive data={data} setData={setData} />}
+        {section === "offline" && (data.arrived || data.devItalyAccess) && <DashOffline data={data} />}
+        {section === "translate" && (data.arrived || data.devItalyAccess) && <DashTranslate />}
+        {section === "tools" && (data.arrived || data.devItalyAccess) && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
       </div>
     </div>
   );
