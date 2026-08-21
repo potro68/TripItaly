@@ -2073,6 +2073,26 @@ const AIRPORTS = [
 // This is the ONLY line you need to edit — nothing else in this file needs to change.
 const PROXY_URL = "https://tripitaly-proxy.potrocag.workers.dev";
 
+// Anonymous persistent installation ID used only for server-side anti-abuse
+// rate limiting. It is not an account, name, email, GPS coordinate or ad ID.
+const TRIP_DEVICE_ID_KEY = "tripengine_device_id_v1";
+function getTripDeviceId() {
+  try {
+    let id = localStorage.getItem(TRIP_DEVICE_ID_KEY);
+    if (!id) {
+      const random = (crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+      id = `ti_${random.replace(/[^A-Za-z0-9_-]/g, "_")}`;
+      localStorage.setItem(TRIP_DEVICE_ID_KEY, id);
+    }
+    return id;
+  } catch (e) {
+    return `ti_session_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+  }
+}
+
+
 // ---- Trip Engine API usage monitor / client anti-abuse guard ----
 // Normal travelers should never notice these limits. They are deliberately
 // generous and are meant to stop accidental loops or obviously automated use.
@@ -5253,6 +5273,7 @@ function LiveLocationMap({ data, compact }) {
     center: `${coords.lat},${coords.lng}`,
     zoom: String(zoom),
     size: `440x${h}`,
+    device_id: getTripDeviceId(),
   });
   googleMarkers.forEach(m => mapParams.append("markers", m));
   const staticMapSrc = `${PROXY_URL}?${mapParams.toString()}`;
@@ -5338,6 +5359,7 @@ function CityMap({ city }) {
     zoom: "13",
     size: "440x160",
     markers: `color:blue|${coords.lat},${coords.lng}`,
+    device_id: getTripDeviceId(),
   }).toString()}`;
   return (
     <a
@@ -5824,6 +5846,7 @@ function DashNearby({ data, setData }) {
         lng: coords.lng,
         type: t,
         radius: searchRadius,
+        device_id: getTripDeviceId(),
       });
       const guard = checkApiRate("places");
       if (!guard.ok) return Promise.resolve({success:false, data:[], _type:t, _rateLimited:true, _rateMessage:apiRateMessage(guard)});
@@ -6008,7 +6031,12 @@ function LiveTranslator() {
     setError("");
     setTranslated("");
     try {
-      const params = new URLSearchParams({ action: "translate", text, target: "it" });
+      const params = new URLSearchParams({
+        action: "translate",
+        text,
+        target: "it",
+        device_id: getTripDeviceId(),
+      });
       const guard = checkApiRate("translate");
       if (!guard.ok) {
         setError(apiRateMessage(guard));
