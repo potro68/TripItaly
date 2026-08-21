@@ -2697,8 +2697,18 @@ function CityAutocomplete({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [userEditing, setUserEditing] = useState(false);
 
   React.useEffect(() => {
+    // A prefilled city must stay quiet when this page opens or reopens.
+    // Autocomplete starts only after the user actually types/edits the field.
+    if (!userEditing) {
+      setMatches([]);
+      setOpen(false);
+      setLoading(false);
+      return;
+    }
+
     const term = (value || "").trim();
     if (term.length < 2) {
       setMatches([]);
@@ -2722,7 +2732,6 @@ function CityAutocomplete({ value, onChange }) {
               region: p.address?.state || "",
               display: p.display_name,
             }));
-          // De-dupe by name
           const seen = new Set();
           const unique = places.filter(p => {
             if (seen.has(p.name)) return false;
@@ -2739,7 +2748,7 @@ function CityAutocomplete({ value, onChange }) {
     }, 350);
 
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [value]);
+  }, [value, userEditing]);
 
   return (
     <div className="autocomplete-wrap">
@@ -2748,8 +2757,11 @@ function CityAutocomplete({ value, onChange }) {
         className="route-city-input"
         placeholder="e.g. Milan, Como, Lecco..."
         value={value}
-        onChange={e => onChange(e.target.value)}
-        onFocus={() => matches.length > 0 && setOpen(true)}
+        onChange={e => {
+          setUserEditing(true);
+          onChange(e.target.value);
+        }}
+        onFocus={() => userEditing && matches.length > 0 && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
       {loading && <div className="autocomplete-loading">Searching…</div>}
@@ -2759,7 +2771,7 @@ function CityAutocomplete({ value, onChange }) {
             <div
               key={i}
               className="autocomplete-item"
-              onMouseDown={() => { onChange(m.name); setMatches([]); setOpen(false); }}
+              onMouseDown={() => { onChange(m.name); setMatches([]); setOpen(false); setUserEditing(false); }}
             >
               <div className="ac-name">{m.name}</div>
               {m.region && <div className="ac-sub">{m.region}, Italy</div>}
