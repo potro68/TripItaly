@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TripItaly</title>
+<title>TripItaly TEST FINALIZATION · app31 · TripItaly</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -2073,6 +2073,80 @@ const AIRPORTS = [
 // This is the ONLY line you need to edit — nothing else in this file needs to change.
 const PROXY_URL = "https://tripitaly-proxy.potrocag.workers.dev";
 
+// ---- Trip Engine API usage monitor / client anti-abuse guard ----
+// Normal travelers should never notice these limits. They are deliberately
+// generous and are meant to stop accidental loops or obviously automated use.
+// Production should mirror/enforce the same idea server-side in the Worker.
+const TRIP_API_USAGE_KEY = "tripengine_api_usage_v1";
+const TRIP_API_RATE_KEY = "tripengine_api_rate_v1";
+
+const TRIP_API_LIMITS = {
+  places:    { tenMin: 120, day: 600, blockMinutes: 30 },
+  translate: { tenMin: 180, day: 800, blockMinutes: 30 },
+};
+
+function loadApiUsage() {
+  try { return JSON.parse(localStorage.getItem(TRIP_API_USAGE_KEY) || "{}"); }
+  catch(e) { return {}; }
+}
+function saveApiUsage(v) {
+  try { localStorage.setItem(TRIP_API_USAGE_KEY, JSON.stringify(v)); } catch(e) {}
+}
+function recordApiUsage(kind, amount = 1) {
+  const now = new Date();
+  const month = now.toISOString().slice(0,7);
+  const day = now.toISOString().slice(0,10);
+  const all = loadApiUsage();
+  if (!all[month]) all[month] = {};
+  if (!all[month][kind]) all[month][kind] = {calls:0, units:0, days:{}};
+  all[month][kind].calls += 1;
+  all[month][kind].units += Number(amount || 1);
+  all[month][kind].days[day] = (all[month][kind].days[day] || 0) + 1;
+  saveApiUsage(all);
+  window.dispatchEvent(new CustomEvent("tripitaly-api-usage-updated"));
+}
+function apiUsageThisMonth(kind) {
+  const month = new Date().toISOString().slice(0,7);
+  return loadApiUsage()?.[month]?.[kind] || {calls:0,units:0,days:{}};
+}
+
+function loadApiRate() {
+  try { return JSON.parse(localStorage.getItem(TRIP_API_RATE_KEY) || "{}"); }
+  catch(e) { return {}; }
+}
+function saveApiRate(v) {
+  try { localStorage.setItem(TRIP_API_RATE_KEY, JSON.stringify(v)); } catch(e) {}
+}
+function checkApiRate(kind) {
+  const cfg = TRIP_API_LIMITS[kind];
+  if (!cfg) return {ok:true};
+  const now = Date.now();
+  const tenMinAgo = now - 10*60*1000;
+  const dayAgo = now - 24*60*60*1000;
+  const all = loadApiRate();
+  const state = all[kind] || {hits:[], blockedUntil:0};
+  if (state.blockedUntil && now < state.blockedUntil) {
+    return {ok:false, retryAt:state.blockedUntil};
+  }
+  state.hits = (state.hits || []).filter(ts => ts >= dayAgo);
+  const recent = state.hits.filter(ts => ts >= tenMinAgo).length;
+  if (recent >= cfg.tenMin || state.hits.length >= cfg.day) {
+    state.blockedUntil = now + cfg.blockMinutes*60*1000;
+    all[kind] = state; saveApiRate(all);
+    return {ok:false, retryAt:state.blockedUntil};
+  }
+  state.hits.push(now);
+  state.blockedUntil = 0;
+  all[kind] = state; saveApiRate(all);
+  return {ok:true};
+}
+function apiRateMessage(result) {
+  if (!result || result.ok) return "";
+  const mins = Math.max(1, Math.ceil((result.retryAt - Date.now())/60000));
+  return `Too many requests in a short time. This service is temporarily paused for about ${mins} minute${mins===1?"":"s"} to protect TripItaly.`;
+}
+
+
 function extractIATA(originText) {
   // origin looks like "London Heathrow (LHR)" from the autocomplete
   const match = originText.match(/\(([A-Z]{3})\)\s*$/);
@@ -2264,21 +2338,11 @@ function buildInternalFlightLink(fromCity, toCity, date, adults) {
   const toCode = INTERNAL_FLIGHT_AIRPORTS[toCity];
   if (!fromCode || !toCode || !date) return null;
 
-  const params = new URLSearchParams({
-    origin_iata: fromCode,
-    destination_iata: toCode,
-    depart_date: date,
-    oneway: "1",
-    adults: String(Math.min(9, Math.max(1, adults || 1))),
-    children: "0",
-    infants: "0",
-    trip_class: "0",
-    currency: "EUR",
-    locale: "en",
-    marker: AVIASALES_MARKER,
-  });
-
-  return `https://search.aviasales.com/flights/?${params.toString()}`;
+  const pax = Math.min(9, Math.max(1, adults || 1));
+  // Keep domestic searches on the international Aviasales .com flow.
+  // Explicit locale/currency are retained as a hint even if the provider
+  // later applies its own geo/language preferences.
+  return `https://www.aviasales.com/search/${fromCode}${ddmm(date)}${toCode}${pax}?marker=${encodeURIComponent(AVIASALES_MARKER)}&locale=en&currency=EUR`;
 }
 
 // Real tracked affiliate links.
@@ -2865,7 +2929,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         </div>
         <div className={"choice-card" + (data.wantsCar === false ? " selected" : "")} onClick={() => setData({...data, wantsCar: false})}>
           <div className="choice-icon">🚆</div>
-          <div className="choice-text"><div className="h">No, trains & transit</div></div>
+          <div className="choice-text"><div className="h">No rental car</div></div>
         </div>
       </div>
 
@@ -3318,7 +3382,7 @@ function ScreenBudget({ data, setData, onNext, onBack }) {
           >
             <div className="choice-icon">🚶</div>
             <div className="choice-text">
-              <div className="h">On foot & transit</div>
+              <div className="h">No car</div>
               <div className="d">Nearby will start with places within walking distance.</div>
             </div>
           </div>
@@ -4017,6 +4081,14 @@ function menuLabel(id, lang) {
 }
 
 function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
+  const [usageTick, setUsageTick] = useState(0);
+  React.useEffect(() => {
+    const h = () => setUsageTick(x => x + 1);
+    window.addEventListener("tripitaly-api-usage-updated", h);
+    return () => window.removeEventListener("tripitaly-api-usage-updated", h);
+  }, []);
+  const placesUsage = apiUsageThisMonth("places");
+  const translateUsage = apiUsageThisMonth("translate");
   return (
     <div>
       <div className="field">
@@ -4035,6 +4107,19 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
           <div className={"traveler-chip"+(theme==="navy"?" selected":"")} onClick={()=>setTheme("navy")}>
             <span className="tc-icon">🌙</span><span className="tc-label">Navy & Gold</span>
           </div>
+        </div>
+      </div>
+
+      <div className="field">
+        <label>API usage · this month</label>
+        <p className="park-hint">Local diagnostic counter for testing. Normal use stays open; obvious request abuse is temporarily paused.</p>
+        <div className="offline-card">
+          <div className="offline-card-h">📍 Nearby / Places</div>
+          <div className="offline-card-d">{placesUsage.calls || 0} API calls recorded on this device · Google Pro free cap reference: 5,000/month</div>
+        </div>
+        <div className="offline-card">
+          <div className="offline-card-h">🌐 Translate</div>
+          <div className="offline-card-d">{(translateUsage.units || 0).toLocaleString()} characters recorded on this device · NMT free allowance reference: 500,000 characters/month</div>
         </div>
       </div>
 
@@ -4363,7 +4448,52 @@ function DailyStatusDonut({ data, dailyAmount }) {
   );
 }
 
+
+async function detectCurrentCountry() {
+  if (!("geolocation" in navigator)) throw new Error("Location is not supported on this device.");
+  const pos = await new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy:true, timeout:15000, maximumAge:30000
+    });
+  });
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+
+  // Country verification through OpenStreetMap reverse geocoding.
+  // For the owner test this distinguishes Romania vs Italy from real GPS.
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&format=json&zoom=3&addressdetails=1`;
+  const res = await fetch(url, {headers:{"Accept-Language":"en"}});
+  if (!res.ok) throw new Error("Country verification is temporarily unavailable.");
+  const json = await res.json();
+  const countryCode = String(json?.address?.country_code || "").toUpperCase();
+  return {lat, lng, countryCode, country:json?.address?.country || countryCode || "Unknown"};
+}
+
 function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip }) {
+  const [gpsCheck, setGpsCheck] = useState({status:"idle", message:""});
+
+  const verifyItalyArrival = async () => {
+    if (data.arrived) {
+      setData({...data, arrived:false});
+      setGpsCheck({status:"idle", message:"Italy live tools locked again."});
+      return;
+    }
+    setGpsCheck({status:"loading", message:"Checking your real GPS location…"});
+    try {
+      const loc = await detectCurrentCountry();
+      if (loc.countryCode === "IT") {
+        setData({...data, arrived:true, gpsVerifiedCountry:"IT", gpsVerifiedAt:Date.now()});
+        setGpsCheck({status:"ok", message:`GPS verified: ${loc.country}. Italy tools unlocked.`});
+      } else {
+        setData({...data, arrived:false, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
+        setGpsCheck({status:"blocked", message:`GPS verified: ${loc.country}. Italy tools stay locked until the phone is physically in Italy.`});
+      }
+    } catch (e) {
+      setData({...data, arrived:false});
+      setGpsCheck({status:"error", message:e?.message || "Couldn't verify your location."});
+    }
+  };
+
   const isOnsite = data.mode === "onsite";
   const spent = totalSpent(data);
   const tripEnded = data.endDate && new Date(data.endDate + "T23:59:59") < new Date();
@@ -4405,13 +4535,41 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
   return (
     <div>
       <div className="field" style={{marginBottom:16}}>
-        <div className="arrival-toggle" onClick={() => setData({...data, arrived: !data.arrived})}>
+        <div className="arrival-toggle" onClick={verifyItalyArrival}>
           <div>
-            <div className="arrival-toggle-h">{data.arrived ? "🇮🇹 You're in Italy" : "Not arrived yet"}</div>
-            <div className="arrival-toggle-d">{data.arrived ? "Itinerary, Nearby, Drive, Translate & Tools are unlocked" : "Mark your arrival to unlock your in-Italy tools"}</div>
+            <div className="arrival-toggle-h">{data.arrived ? "🇮🇹 You're in Italy" : "You are in Italy?"}</div>
+            <div className="arrival-toggle-d">
+              {data.arrived
+                ? "GPS verified · Itinerary, Nearby, Drive, Translate & Tools are unlocked"
+                : (gpsCheck.status === "loading" ? "Checking real phone location…" : "Tap to verify your GPS location and unlock Italy tools")}
+            </div>
           </div>
           <div className={"switch" + (data.arrived ? " on" : "")}><div className="switch-knob"></div></div>
         </div>
+        {gpsCheck.message && (
+          <p className="park-hint" style={{marginTop:8,fontWeight:700}}>
+            {gpsCheck.status === "ok" ? "✅ " : gpsCheck.status === "blocked" ? "🔒 " : gpsCheck.status === "error" ? "⚠️ " : "📍 "}
+            {gpsCheck.message}
+          </p>
+        )}
+        <button
+          className="btn-secondary"
+          style={{marginTop:9,borderStyle:"dashed"}}
+          onClick={async () => {
+            setGpsCheck({status:"loading",message:"TEMP test: reading GPS and country…"});
+            try {
+              const loc = await detectCurrentCountry();
+              setGpsCheck({
+                status:loc.countryCode==="IT"?"ok":"blocked",
+                message:`TEMP GPS TEST · ${loc.country} (${loc.countryCode || "?"}) · ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
+              });
+            } catch(e) {
+              setGpsCheck({status:"error",message:`TEMP GPS TEST · ${e?.message || "failed"}`});
+            }
+          }}
+        >
+          🧪 TEMP · Test my GPS country
+        </button>
       </div>
 
       {todayDayNum && todaySpent > 0 && (
@@ -4860,8 +5018,8 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc, onRemoveDoc }) {
         <div className="choice-card" style={{opacity:0.55}}>
           <div className="choice-icon">🚆</div>
           <div className="choice-text">
-            <div className="h">You chose trains & transit</div>
-            <div className="d">No car rental for this trip</div>
+            <div className="h">No rental car</div>
+            <div className="d">You can still use trains, flights and other transport from your itinerary.</div>
           </div>
         </div>
       </div>
@@ -5255,7 +5413,7 @@ function printTripItinerary(data) {
   popup.document.close();
 }
 
-function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedStops, onAddStop, onRemoveStop, onCityChange, onGoTo, dailyAmount }) {
+function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedStops, onAddStop, onRemoveStop, onCityChange, onGoTo, dailyAmount, transfer }) {
   const dateLabel = date ? date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : `Day ${dayNum}`;
   const [editingCity, setEditingCity] = useState(false);
   const [cityDraft, setCityDraft] = useState(city || "");
@@ -5265,6 +5423,33 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
     <div className="day-panel">
       <div className="day-panel-title">{isToday ? "What would you like to do today?" : "Planning ahead"}</div>
       <div className="day-panel-date">{dateLabel}</div>
+
+      {transfer && (
+        <div className="field" style={{marginTop:14}}>
+          <label>Travel to your next city</label>
+          <div className="choice-card selected" style={{marginBottom:9}}>
+            <div className="choice-icon">🧭</div>
+            <div className="choice-text">
+              <div className="h">{transfer.from} → {transfer.to}</div>
+              <div className="d">{date ? formatDateEN(date.toISOString().slice(0,10)) : `Day ${dayNum}`} · Choose how you want to check this transfer</div>
+            </div>
+          </div>
+          <div className="route-add-row" style={{alignItems:"stretch"}}>
+            {transfer.trainUrl ? (
+              <a href={transfer.trainUrl} target="_blank" rel="noopener noreferrer sponsored" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>🚆 Check trains</a>
+            ) : (
+              <a href={TRENITALIA_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>🚆 Check trains</a>
+            )}
+            {transfer.flightUrl && (
+              <a href={transfer.flightUrl} target="_blank" rel="noopener noreferrer sponsored" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>✈️ Check flights</a>
+            )}
+            {data.wantsCar && (
+              <a href={buildDrivingLink(transfer.from, transfer.to)} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>🚗 Navigate</a>
+            )}
+          </div>
+          {!transfer.trainUrl && <p className="park-hint" style={{marginTop:7}}>Train search opens Trenitalia; route/date are shown here so you can enter them quickly.</p>}
+        </div>
+      )}
 
       <DayBudgetCard data={data} setData={setData} dayNum={dayNum} dailyAmount={dailyAmount} />
 
@@ -5397,6 +5582,20 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
 
   const handlePrint = () => printTripItinerary(data);
 
+  const activeBlockIndex = days.findIndex(b => (b.days || []).includes(activeDay));
+  const activeIsTransferDay = activeBlockIndex > 0 && days[activeBlockIndex]?.days?.[0] === activeDay;
+  const transfer = activeIsTransferDay ? (() => {
+    const from = days[activeBlockIndex - 1]?.city;
+    const to = days[activeBlockIndex]?.city;
+    const dateISO = activeDate ? activeDate.toISOString().slice(0,10) : "";
+    return {
+      from,
+      to,
+      trainUrl: buildItaloLink(from, to, dateISO, data.people),
+      flightUrl: buildInternalFlightLink(from, to, dateISO, data.people),
+    };
+  })() : null;
+
   return (
     <div>
       <div className="field no-print">
@@ -5482,6 +5681,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
         onCityChange={(c) => setCityOverride(activeDay, c)}
         onGoTo={onGoTo}
         dailyAmount={dailyAmount}
+        transfer={transfer}
       />
     </div>
   );
@@ -5570,9 +5770,16 @@ function DashNearby({ data, setData }) {
         type: t,
         radius: searchRadius,
       });
+      const guard = checkApiRate("places");
+      if (!guard.ok) return Promise.resolve({success:false, data:[], _type:t, _rateLimited:true, _rateMessage:apiRateMessage(guard)});
+      recordApiUsage("places", 1);
       return fetch(`${PROXY_URL}?${params.toString()}`).then(r => r.json()).then(json => ({...json, _type: t}));
     })).then(responses => {
       const combined = [];
+      const limited = responses.find(r => r._rateLimited);
+      if (limited) {
+        setError(limited._rateMessage || "Nearby is temporarily paused because of unusually high request volume.");
+      }
       responses.forEach(r => {
         if (r.success && Array.isArray(r.data)) {
           r.data.forEach(place => combined.push({...place, _type: r._type}));
@@ -5747,6 +5954,13 @@ function LiveTranslator() {
     setTranslated("");
     try {
       const params = new URLSearchParams({ action: "translate", text, target: "it" });
+      const guard = checkApiRate("translate");
+      if (!guard.ok) {
+        setError(apiRateMessage(guard));
+        setLoading(false);
+        return;
+      }
+      recordApiUsage("translate", text.length);
       const res = await fetch(`${PROXY_URL}?${params.toString()}`);
       const json = await res.json();
       if (json.success) {
