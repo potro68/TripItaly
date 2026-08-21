@@ -5851,7 +5851,15 @@ function DashNearby({ data, setData }) {
       const guard = checkApiRate("places");
       if (!guard.ok) return Promise.resolve({success:false, data:[], _type:t, _rateLimited:true, _rateMessage:apiRateMessage(guard)});
       recordApiUsage("places", 1);
-      return fetch(`${PROXY_URL}?${params.toString()}`).then(r => r.json()).then(json => ({...json, _type: t}));
+      return fetch(`${PROXY_URL}?${params.toString()}`)
+        .then(async r => {
+          const json = await r.json();
+          if (r.status === 429 || json.rateLimited) {
+            return {...json, success:false, data:[], _type:t, _rateLimited:true,
+              _rateMessage: json.error || "Too many requests in a short time. Please wait a moment and try again."};
+          }
+          return {...json, _type:t};
+        });
     })).then(responses => {
       const combined = [];
       const limited = responses.find(r => r._rateLimited);
@@ -6046,7 +6054,11 @@ function LiveTranslator() {
       recordApiUsage("translate", text.length);
       const res = await fetch(`${PROXY_URL}?${params.toString()}`);
       const json = await res.json();
-      if (json.success) {
+      if (res.status === 429 || json.rateLimited) {
+        const retry = Number(json.retryAfterSeconds || 60);
+        const mins = Math.max(1, Math.ceil(retry / 60));
+        setError(`Too many requests in a short time. Translation is temporarily paused. Please try again in about ${mins} minute${mins === 1 ? "" : "s"}.`);
+      } else if (json.success) {
         setTranslated(json.translatedText);
         setDetectedLang(json.detectedSourceLanguage || "");
       } else {
