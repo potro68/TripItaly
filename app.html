@@ -4501,14 +4501,10 @@ async function detectCurrentCountry() {
   return {lat, lng, countryCode, country:json?.address?.country || countryCode || "Unknown"};
 }
 
-function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip }) {
+function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip, trialState }) {
   const [gpsCheck, setGpsCheck] = useState({status:"idle", message:""});
 
   const verifyItalyArrival = async () => {
-    if (data.devItalyAccess) {
-      setGpsCheck({status:"ok", message:"TEMP DEVELOPER ACCESS is active. Disable it first to test the real GPS lock."});
-      return;
-    }
     if (data.arrived) {
       setData({...data, arrived:false});
       setGpsCheck({status:"idle", message:"Italy live tools locked again."});
@@ -4607,44 +4603,28 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           🧪 TEMP · Test my GPS country
         </button>
 
-        <button
-          className="btn-secondary"
-          style={{marginTop:9,borderStyle:"dashed",borderColor:"#C0392B",color:"#A7352A"}}
-          onClick={() => {
-            const next = !data.devItalyAccess;
-            setData({
-              ...data,
-              devItalyAccess: next,
-              arrived: next ? true : false,
-              gpsVerifiedCountry: next ? "DEV" : (data.gpsVerifiedCountry || null),
-              gpsVerifiedAt: Date.now()
-            });
-            setGpsCheck({
-              status: next ? "ok" : "idle",
-              message: next
-                ? "TEMP DEVELOPER ACCESS ON · All Italy trip tools are unlocked for testing outside Italy."
-                : "TEMP DEVELOPER ACCESS OFF · GPS rules are active again."
-            });
-          }}
-        >
-          {data.devItalyAccess ? "🧪 TEMP · Disable full test access" : "🧪 TEMP · Unlock all Italy tools"}
-        </button>
-
-        {data.devItalyAccess && (
-          <div style={{
-            marginTop:9,
-            padding:"10px 12px",
-            borderRadius:10,
-            border:"1.5px dashed #C0392B",
-            background:"rgba(192,57,43,.07)",
-            color:"#8E2F26",
-            fontSize:11.5,
-            fontWeight:700,
-            lineHeight:1.45
-          }}>
-            TEST MODE ONLY · GPS country lock is bypassed so you can test every feature from Romania. Remove this control before the public release.
+        <div style={{
+          marginTop:10,
+          padding:"11px 12px",
+          borderRadius:11,
+          border: trialState?.active ? "1px solid rgba(28,90,122,.2)" : "1px solid rgba(120,120,120,.18)",
+          background: trialState?.active ? "rgba(28,90,122,.07)" : "rgba(120,120,120,.06)"
+        }}>
+          <div style={{fontWeight:800,fontSize:12.5}}>
+            {data.arrived
+              ? "🇮🇹 Italy access active"
+              : trialState?.active
+                ? `🎁 TEST trial active · ${formatTrialRemaining(trialState.remainingMs)} left`
+                : "🔒 TEST trial expired"}
           </div>
-        )}
+          <div className="park-hint" style={{marginTop:4}}>
+            {data.arrived
+              ? "GPS verified in Italy. Live trip tools stay unlocked."
+              : trialState?.active
+                ? "For this test, all Italy tools are available outside Italy for one hour. The timer continues even if you close and reopen the app."
+                : "The one-hour test trial has ended. Italy tools are locked outside Italy and will unlock again when GPS verifies that the phone is physically in Italy."}
+          </div>
+        </div>
       </div>
 
       {todayDayNum && todaySpent > 0 && (
@@ -6715,6 +6695,15 @@ function DashTools({ data, onDeleteLocalData }) {
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
+  const [trialNow, setTrialNow] = useState(Date.now());
+  React.useEffect(() => {
+    ensureTrialStarted();
+    const timer = setInterval(() => setTrialNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const trialState = getTrialState(trialNow);
+  const italyAccess = Boolean(data.arrived || trialState.active);
+
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
     ? (savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet")
@@ -6761,14 +6750,14 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
 
   // When the user flips "I've arrived" on, jump straight to the Itinerary
   // tab instead of leaving them on Overview.
-  const prevArrived = React.useRef(data.arrived || data.devItalyAccess);
+  const prevArrived = React.useRef(italyAccess);
   React.useEffect(() => {
-    const accessNow = data.arrived || data.devItalyAccess;
+    const accessNow = italyAccess;
     if (accessNow && !prevArrived.current) {
       goSection("itinerary");
     }
     prevArrived.current = accessNow;
-  }, [data.arrived]);
+  }, [data.arrived, trialState.active]);
 
   const nights = tripLengthDays(data) - 1;
   const flightTotal = data.mode === "onsite" ? 0 : (data.flightPrice || 0);
@@ -6801,10 +6790,10 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {italySections.map(s => (
           <div
             key={s.id}
-            className={"dash-nav-item" + (section === s.id ? " active" : "") + (!(data.arrived || data.devItalyAccess) ? " locked" : "")}
-            onClick={() => (data.arrived || data.devItalyAccess) && goSection(s.id)}
+            className={"dash-nav-item" + (section === s.id ? " active" : "") + (!(italyAccess) ? " locked" : "")}
+            onClick={() => (italyAccess) && goSection(s.id)}
           >
-            <div className="dash-nav-icon">{(data.arrived || data.devItalyAccess) ? s.icon : "🔒"}</div>
+            <div className="dash-nav-icon">{(italyAccess) ? s.icon : "🔒"}</div>
             <div className="dash-nav-label">{menuLabel(s.id, uiLanguage)}</div>
           </div>
         ))}
@@ -6815,16 +6804,16 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         </h1>
         <p className="subtitle" style={{marginBottom:20}}>{data.itinerary}</p>
 
-        {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
+        {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} trialState={trialState} />}
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
-        {section === "itinerary" && (data.arrived || data.devItalyAccess) && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
-        {section === "nearby" && (data.arrived || data.devItalyAccess) && <DashNearby data={data} setData={setData} />}
-        {section === "drive" && (data.arrived || data.devItalyAccess) && data.wantsCar && <DashDrive data={data} setData={setData} />}
-        {section === "offline" && (data.arrived || data.devItalyAccess) && <DashOffline data={data} />}
-        {section === "translate" && (data.arrived || data.devItalyAccess) && <DashTranslate />}
-        {section === "tools" && (data.arrived || data.devItalyAccess) && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
+        {section === "itinerary" && (italyAccess) && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
+        {section === "nearby" && (italyAccess) && <DashNearby data={data} setData={setData} />}
+        {section === "drive" && (italyAccess) && data.wantsCar && <DashDrive data={data} setData={setData} />}
+        {section === "offline" && (italyAccess) && <DashOffline data={data} />}
+        {section === "translate" && (italyAccess) && <DashTranslate />}
+        {section === "tools" && (italyAccess) && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
       </div>
     </div>
   );
@@ -6839,6 +6828,41 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
 const TRIPITALY_UI_KEY = "tripitaly_ui_state";
 const TRIP_ENGINE_ARCHIVE_KEY = "tripengine_trip_archive";
 const TRIP_ENGINE_RECOVERY_DAYS = 7;
+const TRIP_ENGINE_TRIAL_KEY = "tripengine_trial_started_at_v1";
+const TRIP_ENGINE_TRIAL_DURATION_MS = 60 * 60 * 1000; // TEST ONLY: 1 hour
+
+function ensureTrialStarted() {
+  try {
+    let started = Number(localStorage.getItem(TRIP_ENGINE_TRIAL_KEY) || 0);
+    if (!started) {
+      started = Date.now();
+      localStorage.setItem(TRIP_ENGINE_TRIAL_KEY, String(started));
+    }
+    return started;
+  } catch (e) {
+    return Date.now();
+  }
+}
+
+function getTrialState(now = Date.now()) {
+  const started = ensureTrialStarted();
+  const endsAt = started + TRIP_ENGINE_TRIAL_DURATION_MS;
+  const remainingMs = Math.max(0, endsAt - now);
+  return {
+    started,
+    endsAt,
+    active: remainingMs > 0,
+    remainingMs
+  };
+}
+
+function formatTrialRemaining(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2,"0")}`;
+}
+
 
 function loadTripArchive() {
   try {
