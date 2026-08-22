@@ -4113,14 +4113,6 @@ function menuLabel(id, lang) {
 }
 
 function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
-  const [usageTick, setUsageTick] = useState(0);
-  React.useEffect(() => {
-    const h = () => setUsageTick(x => x + 1);
-    window.addEventListener("tripitaly-api-usage-updated", h);
-    return () => window.removeEventListener("tripitaly-api-usage-updated", h);
-  }, []);
-  const placesUsage = apiUsageThisMonth("places");
-  const translateUsage = apiUsageThisMonth("translate");
   return (
     <div>
       <div className="field">
@@ -4139,19 +4131,6 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
           <div className={"traveler-chip"+(theme==="navy"?" selected":"")} onClick={()=>setTheme("navy")}>
             <span className="tc-icon">🌙</span><span className="tc-label">Navy & Gold</span>
           </div>
-        </div>
-      </div>
-
-      <div className="field">
-        <label>API usage · this month</label>
-        <p className="park-hint">Local diagnostic counter for testing. Normal use stays open; obvious request abuse is temporarily paused.</p>
-        <div className="offline-card">
-          <div className="offline-card-h">📍 Nearby / Places</div>
-          <div className="offline-card-d">{placesUsage.calls || 0} API calls recorded on this device · Google Pro free cap reference: 5,000/month</div>
-        </div>
-        <div className="offline-card">
-          <div className="offline-card-h">🌐 Translate</div>
-          <div className="offline-card-d">{(translateUsage.units || 0).toLocaleString()} characters recorded on this device · NMT free allowance reference: 500,000 characters/month</div>
         </div>
       </div>
 
@@ -4588,19 +4567,19 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           className="btn-secondary"
           style={{marginTop:9,borderStyle:"dashed"}}
           onClick={async () => {
-            setGpsCheck({status:"loading",message:"TEMP test: reading GPS and country…"});
+            setGpsCheck({status:"loading",message:"Checking GPS location and country…"});
             try {
               const loc = await detectCurrentCountry();
               setGpsCheck({
                 status:loc.countryCode==="IT"?"ok":"blocked",
-                message:`TEMP GPS TEST · ${loc.country} (${loc.countryCode || "?"}) · ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
+                message:`GPS · ${loc.country} (${loc.countryCode || "?"}) · ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
               });
             } catch(e) {
-              setGpsCheck({status:"error",message:`TEMP GPS TEST · ${e?.message || "failed"}`});
+              setGpsCheck({status:"error",message:`GPS · ${e?.message || "failed"}`});
             }
           }}
         >
-          🧪 TEMP · Test my GPS country
+          📍 Check my GPS location
         </button>
 
         <div style={{
@@ -4614,15 +4593,15 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
             {data.arrived
               ? "🇮🇹 Italy access active"
               : trialState?.active
-                ? `🎁 TEST trial active · ${formatTrialRemaining(trialState.remainingMs)} left`
-                : "🔒 TEST trial expired"}
+                ? `🎁 Pre-trip access active · ${formatTrialRemaining(trialState.remainingMs)} left`
+                : "🔒 Pre-trip access ended"}
           </div>
           <div className="park-hint" style={{marginTop:4}}>
             {data.arrived
               ? "GPS verified in Italy. Live trip tools stay unlocked."
               : trialState?.active
-                ? "For this test, all Italy tools are available outside Italy for one hour. The timer continues even if you close and reopen the app."
-                : "The one-hour test trial has ended. Italy tools are locked outside Italy and will unlock again when GPS verifies that the phone is physically in Italy."}
+                ? "All Italy tools are available outside Italy for 12 hours after first activation. The timer continues even if you close and reopen the app."
+                : "Your 12-hour pre-trip access has ended. Italy tools are locked outside Italy and will unlock again when GPS verifies that the phone is physically in Italy."}
           </div>
         </div>
       </div>
@@ -6829,7 +6808,7 @@ const TRIPITALY_UI_KEY = "tripitaly_ui_state";
 const TRIP_ENGINE_ARCHIVE_KEY = "tripengine_trip_archive";
 const TRIP_ENGINE_RECOVERY_DAYS = 7;
 const TRIP_ENGINE_TRIAL_KEY = "tripengine_trial_started_at_v1";
-const TRIP_ENGINE_TRIAL_DURATION_MS = 60 * 60 * 1000; // TEST ONLY: 1 hour
+const TRIP_ENGINE_TRIAL_DURATION_MS = 12 * 60 * 60 * 1000; // 12-hour pre-trip access
 
 function ensureTrialStarted() {
   try {
