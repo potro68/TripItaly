@@ -3193,7 +3193,7 @@ function ScreenIntro({ onNext }) {
       <div className="intro-hero">
         <div className="intro-hero-plane">✈️</div>
         <div className="intro-eyebrow">Welcome to</div>
-        <h1 className="intro-title">Trip<span className="accent-ink">Italy</span></h1>
+        <h1 className="intro-title">68T <span className="accent-ink">Italy</span></h1>
         <p className="intro-tagline">Plan your trip, control your budget.</p>
       </div>
 
@@ -7135,7 +7135,7 @@ function App() {
       <div className="app">
         <div className="topbar" style={{paddingBottom:20, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div className="dash-back-btn" onClick={() => { saveUIState({step:4, anchor:""}); setStep(4); }}>← Back</div>
-          <div className="brand">Trip<span className="accent">Italy</span></div>
+          <div className="brand">68T <span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
         <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={restoreArchivedTrip} onDeleteArchive={deleteArchivedTrip} />
@@ -7146,7 +7146,7 @@ function App() {
   return (
     <div className="app">
       <div className="topbar">
-        <div className="brand">Trip<span className="accent">Italy</span></div>
+        <div className="brand">68T <span className="accent">Italy</span></div>
         <div className="progress-track">
           <div className="progress-fill" style={{width: `${(step/totalSteps)*100}%`}}></div>
         </div>
