@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>68T Italy</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1C5A7A">
+<link rel="icon" href="/icons/68t_italy_192.png">
+<link rel="apple-touch-icon" href="/icons/68t_italy_512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -7163,6 +7167,17 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+<script>
+  // Register the Service Worker so the app shell can load even offline.
+  // Plain vanilla JS (not Babel/JSX) — runs after the app itself has started.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/service-worker.js").catch(() => {
+        // Fails silently — the app still works fully online without it.
+      });
+    });
+  }
 </script>
 </body>
 </html>
