@@ -1,0 +1,28 @@
+{
+  "name": "68T Italy - Your Italy Travel Companion",
+  "short_name": "68T Italy",
+  "description": "Plan, book, and navigate your trip to Italy — flights, hotels, trains, and everything you need, in one app.",
+  "start_url": "/app.html",
+  "id": "/app.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E3B52",
+  "theme_color": "#1C5A7A",
+  "lang": "en",
+  "categories": ["travel", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/68t_italy_192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/68t_italy_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
