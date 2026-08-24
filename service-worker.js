@@ -1,4 +1,4 @@
-// 68T Italy Service Worker
+// 687 Italy Service Worker
 // Caches the "app shell" (the app itself, plus React/Babel and icons) so the
 // app can still OPEN without an internet connection. This is separate from
 // the in-app "Offline essentials" feature, which handles trip DATA offline —
@@ -8,7 +8,7 @@
 // real internet and is intentionally NOT cached here — those already have
 // their own honest "couldn't reach..." messages built into the app.
 
-const CACHE_NAME = "68t-italy-shell-v1";
+const CACHE_NAME = "687-italy-shell-v1";
 
 const APP_SHELL_URLS = [
   "/app.html",
