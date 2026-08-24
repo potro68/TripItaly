@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>68T Italy</title>
+<title>687 Italy</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1C5A7A">
 <link rel="icon" href="/icons/68t_italy_192.png">
@@ -2167,7 +2167,7 @@ function checkApiRate(kind) {
 function apiRateMessage(result) {
   if (!result || result.ok) return "";
   const mins = Math.max(1, Math.ceil((result.retryAt - Date.now())/60000));
-  return `Too many requests in a short time. This service is temporarily paused for about ${mins} minute${mins===1?"":"s"} to protect 68T Italy.`;
+  return `Too many requests in a short time. This service is temporarily paused for about ${mins} minute${mins===1?"":"s"} to protect 687 Italy.`;
 }
 
 
@@ -3197,7 +3197,7 @@ function ScreenIntro({ onNext }) {
       <div className="intro-hero">
         <div className="intro-hero-plane">✈️</div>
         <div className="intro-eyebrow">Welcome to</div>
-        <h1 className="intro-title">68T <span className="accent-ink">Italy</span></h1>
+        <h1 className="intro-title">687 <span className="accent-ink">Italy</span></h1>
         <p className="intro-tagline">Plan your trip, control your budget.</p>
       </div>
 
@@ -4011,7 +4011,7 @@ function ScreenFlights({ data, setData, onNext, onBack }) {
         </a>
 
         <p className="park-hint" style={{marginTop:-2, marginBottom:12}}>
-          Prices and availability are shown on the partner's website. 68T Italy does not display a live fare on this screen.
+          Prices and availability are shown on the partner's website. 687 Italy does not display a live fare on this screen.
         </p>
 
         <div className="price-entry-row">
@@ -4086,7 +4086,7 @@ const TRIP_ENGINE_APP = {
   destinationCountry: "Italy",
   destinationCountryCode: "IT",
   destinationTimeZone: "Europe/Rome",
-  brandName: "68T Italy",
+  brandName: "687 Italy",
   defaultLanguage: "en",
 };
 
@@ -4196,7 +4196,7 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
       <div className="field">
         <label>Past trips & recovery</label>
         <p className="park-hint">
-          Starting a new trip never destroys your current holiday. 68T Italy archives it first so you can restore it if you tapped reset by mistake.
+          Starting a new trip never destroys your current holiday. 687 Italy archives it first so you can restore it if you tapped reset by mistake.
         </p>
         {(!archives || archives.length === 0) ? (
           <div className="choice-card" style={{opacity:.6}}>
@@ -4232,7 +4232,7 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
           cursor:"default"
         }}
       >
-        68T Italy · version 1.0
+        687 Italy · version 1.0
       </div>
     </div>
   );
@@ -5257,7 +5257,7 @@ function LiveLocationMap({ data, compact }) {
       <div className="nearby-permission-card" style={compact ? {padding:16} : {}}>
         <div className="nearby-permission-icon">📍</div>
         <div className="nearby-permission-title">See your live location</div>
-        <p className="nearby-permission-text">68T Italy uses your location to show you on the map and give directions.</p>
+        <p className="nearby-permission-text">687 Italy uses your location to show you on the map and give directions.</p>
         <button className="btn-primary" style={{marginTop:12}} onClick={locate}>Use my location</button>
       </div>
     );
@@ -5282,7 +5282,7 @@ function LiveLocationMap({ data, compact }) {
         </div>
         {!compact && !isImageFailure && (
           <div className="map-placeholder-hint">
-            Location access is disabled. Enable location permission for 68T Italy and try again.
+            Location access is disabled. Enable location permission for 687 Italy and try again.
           </div>
         )}
         {!compact && isImageFailure && (
@@ -5474,7 +5474,7 @@ function printTripItinerary(data) {
 
   const popup = window.open("", "_blank");
   if (!popup) {
-    alert("Please allow pop-ups for 68T Italy to print or save your itinerary as PDF.");
+    alert("Please allow pop-ups for 687 Italy to print or save your itinerary as PDF.");
     return;
   }
 
@@ -5483,7 +5483,7 @@ function printTripItinerary(data) {
 <html>
 <head>
 <meta charset="utf-8">
-<title>68T Italy Itinerary</title>
+<title>687 Italy Itinerary</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   body{font-family:Arial,sans-serif;color:#132A3A;background:#fff;margin:0;padding:28px;line-height:1.45}
@@ -5504,7 +5504,7 @@ function printTripItinerary(data) {
 </head>
 <body>
 <div class="wrap">
-  <h1>68T Italy · ${escapePrintHTML(routeName)}</h1>
+  <h1>687 Italy · ${escapePrintHTML(routeName)}</h1>
   <div class="sub">${escapePrintHTML(formatDateEN(data.startDate))} → ${escapePrintHTML(formatDateEN(data.endDate))} · ${people} traveler${people > 1 ? "s" : ""}</div>
   <div class="summary">
     <strong>Emergency:</strong> 112 (EU-wide)
@@ -5512,7 +5512,7 @@ function printTripItinerary(data) {
     ${data.parkingNote ? `<br><strong>Parking:</strong> ${escapePrintHTML(data.parkingNote)}` : ""}
   </div>
   ${daysHTML}
-  <div class="foot">Generated from your saved 68T Italy itinerary.</div>
+  <div class="foot">Generated from your saved 687 Italy itinerary.</div>
 </div>
 <script>
   window.addEventListener("load", () => setTimeout(() => window.print(), 250));
@@ -5713,7 +5713,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
 
       {/* Print-only version: full itinerary, hidden on screen, shown when printing */}
       <div className="print-only">
-        <h1 className="print-title">68T Italy — {data.itinerary}</h1>
+        <h1 className="print-title">687 Italy — {data.itinerary}</h1>
         <p className="print-sub">{formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people} traveler{data.people>1?"s":""}</p>
         <div className="print-emergency">
           <strong>Emergency:</strong> 112 (EU-wide)
@@ -5924,7 +5924,7 @@ function DashNearby({ data, setData }) {
       <div className="nearby-permission-card">
         <div className="nearby-permission-icon">📍</div>
         <div className="nearby-permission-title">Find places near me</div>
-        <p className="nearby-permission-text">68T Italy uses your location to show useful places around you.</p>
+        <p className="nearby-permission-text">687 Italy uses your location to show useful places around you.</p>
         <button className="btn-primary" style={{marginTop:14}} onClick={locate}>Use my location</button>
       </div>
     );
@@ -5955,7 +5955,7 @@ function DashNearby({ data, setData }) {
       {locStatus === "denied" && (
         <div className="nearby-permission-card">
           <div className="nearby-permission-icon">📍</div>
-          <p className="nearby-permission-text">Location access is disabled. Enable location permission for 68T Italy and try again.</p>
+          <p className="nearby-permission-text">Location access is disabled. Enable location permission for 687 Italy and try again.</p>
           <button className="btn-secondary" style={{marginTop:12}} onClick={locate}>Try again</button>
         </div>
       )}
@@ -6343,7 +6343,7 @@ function DashWeather({ data }) {
     return (
       <div className="nearby-permission-card">
         <div className="nearby-permission-icon">🌤️</div>
-        <p className="nearby-permission-text">Location access is disabled. Enable location permission for 68T Italy and try again.</p>
+        <p className="nearby-permission-text">Location access is disabled. Enable location permission for 687 Italy and try again.</p>
         <button className="btn-secondary" style={{marginTop:12}} onClick={locate}>Try again</button>
       </div>
     );
@@ -6582,7 +6582,7 @@ function DashOffline({ data }) {
       <div className="field">
         <label>Offline essentials</label>
         <p className="park-hint">
-          This screen uses information already stored in 68T Italy. Live maps, weather, Nearby searches and live booking prices still need internet.
+          This screen uses information already stored in 687 Italy. Live maps, weather, Nearby searches and live booking prices still need internet.
         </p>
       </div>
 
@@ -6737,7 +6737,7 @@ function DashTools({ data, onDeleteLocalData }) {
 
       <div className="field">
         <label>Local data</label>
-        <p className="park-hint">68T Italy stores your trip and Travel Wallet documents on this device so you can return to them later.</p>
+        <p className="park-hint">687 Italy stores your trip and Travel Wallet documents on this device so you can return to them later.</p>
         <button className="btn-secondary" style={{borderColor:"#C0392B", color:"#A7352A"}} onClick={onDeleteLocalData}>
           Delete trip & local data
         </button>
@@ -6977,7 +6977,7 @@ function consumeResumeAnchor() {
   return anchor;
 }
 
-// Save where the user is before leaving 68T Italy, then open the
+// Save where the user is before leaving 687 Italy, then open the
 // destination normally in the current browser. No browser is forced.
 function openExternalWebsite(url, resumeState = {}) {
   saveUIState(resumeState);
@@ -7004,7 +7004,7 @@ function App() {
   });
   const [archives, setArchives] = useState(() => loadTripArchive());
   // Shared Trip Engine UI preferences. Country-specific apps can reuse these
-  // without duplicating Settings logic. Legacy 68T Italy keys are read once
+  // without duplicating Settings logic. Legacy 687 Italy keys are read once
   // for backward compatibility.
   const TRIP_ENGINE_UI_LANGUAGE_KEY = "tripengine_ui_language";
   const TRIP_ENGINE_THEME_KEY = "tripengine_theme";
@@ -7139,7 +7139,7 @@ function App() {
       <div className="app">
         <div className="topbar" style={{paddingBottom:20, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div className="dash-back-btn" onClick={() => { saveUIState({step:4, anchor:""}); setStep(4); }}>← Back</div>
-          <div className="brand">68T <span className="accent">Italy</span></div>
+          <div className="brand">687 <span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
         <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={restoreArchivedTrip} onDeleteArchive={deleteArchivedTrip} />
@@ -7150,7 +7150,7 @@ function App() {
   return (
     <div className="app">
       <div className="topbar">
-        <div className="brand">68T <span className="accent">Italy</span></div>
+        <div className="brand">687 <span className="accent">Italy</span></div>
         <div className="progress-track">
           <div className="progress-fill" style={{width: `${(step/totalSteps)*100}%`}}></div>
         </div>
