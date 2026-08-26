@@ -6981,15 +6981,13 @@ function consumeResumeAnchor() {
   return anchor;
 }
 
-// Save where the user is before leaving 687 Italy, then open the
-// destination normally in the current browser. No browser is forced.
+// Save where the user is before leaving 687 Italy.
 function openExternalWebsite(url, resumeState = {}) {
   saveUIState(resumeState);
 
-  // Booking.com has an Android App Link. If the Booking app is installed,
-  // Android may otherwise intercept the URL and open that app instead of the
-  // browser. For Booking accommodation/car URLs, explicitly launch Chrome so
-  // 687 Italy remains underneath and Back/Close can return to it.
+  // Booking.com links on Android are routed through our native helper Activity.
+  // That Activity explicitly opens Chrome, preventing the installed Booking app
+  // from intercepting the link.
   try {
     const parsed = new URL(url);
     const host = parsed.hostname.toLowerCase();
@@ -6997,11 +6995,7 @@ function openExternalWebsite(url, resumeState = {}) {
     const isAndroid = /Android/i.test(navigator.userAgent);
 
     if (isAndroid && isBooking) {
-      const scheme = parsed.protocol.replace(":", "") || "https";
-      const target = `${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`;
-      const fallback = encodeURIComponent(url);
-      const chromeIntent = `intent://${target}#Intent;scheme=${scheme};package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
-      window.location.href = chromeIntent;
+      window.location.href = `go687://external?url=${encodeURIComponent(url)}`;
       return;
     }
   } catch (e) {
