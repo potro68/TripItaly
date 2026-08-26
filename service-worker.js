@@ -1,14 +1,8 @@
 // 687 Italy Service Worker
-// Caches the "app shell" (the app itself, plus React/Babel and icons) so the
-// app can still OPEN without an internet connection. This is separate from
-// the in-app "Offline essentials" feature, which handles trip DATA offline —
-// this handles the app itself loading offline.
-//
-// Live data (flights, hotels, weather, translate, Nearby, maps) always needs
-// real internet and is intentionally NOT cached here — those already have
-// their own honest "couldn't reach..." messages built into the app.
+// Online: always loads the newest app version.
+// Offline: falls back to the last cached working version.
 
-const CACHE_NAME = "687-italy-shell-v1";
+const CACHE_NAME = "687-italy-shell-v2";
 
 const APP_SHELL_URLS = [
   "/app.html",
@@ -37,30 +31,52 @@ self.addEventListener("activate", (event) => {
       )
     )
   );
+
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
-  const isAppShellRequest = APP_SHELL_URLS.some((shellUrl) =>
-    event.request.url.endsWith(shellUrl) || event.request.url === shellUrl
-  );
+  const url = new URL(event.request.url);
 
-  // Only intervene for the app shell itself — everything else (API calls,
-  // fonts, maps, translations) goes straight to the network as normal.
-  if (!isAppShellRequest) return;
-
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request)
+  if (
+    url.origin === self.location.origin &&
+    (url.pathname === "/app.html" || url.pathname === "/manifest.json")
+  ) {
+    event.respondWith(
+      fetch(event.request)
         .then((response) => {
           if (response && response.ok) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, copy);
+            });
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
 
-      return cached || networkFetch;
+  const isStaticShell = APP_SHELL_URLS.some((shellUrl) =>
+    event.request.url.endsWith(shellUrl) || event.request.url === shellUrl
+  );
+
+  if (!isStaticShell) return;
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(event.request).then((response) => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, copy);
+          });
+        }
+        return response;
+      });
     })
   );
 });
