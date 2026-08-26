@@ -2496,16 +2496,12 @@ function buildVrboSearchLink(data, cityOverride) {
   }
 
   const adults = Math.max(1, Number(data.people) || 1);
-  const rooms = (data.hotelRooms && Number(data.hotelRooms) > 0)
-    ? Number(data.hotelRooms)
-    : 1;
 
   const params = new URLSearchParams({
     destination: `${city}, Italia`,
     startDate: data.startDate,
     endDate: data.endDate,
     adults: String(adults),
-    rooms: String(rooms),
     sort: "RECOMMENDED",
   });
   return `https://www.vrbo.com/it-it/search?${params.toString()}`;
@@ -2889,24 +2885,6 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           onChange={v => setData({...data, stayCity: v})}
         />
 
-        <div style={{marginTop:12}}>
-          <div className="date-mini-label">Rooms needed</div>
-          <div className="currency-from-row">
-            {[0,1,2,3,4].map(n => (
-              <div
-                key={n}
-                className={"currency-chip" + ((Number(data.hotelRooms || 0) === n) ? " active" : "")}
-                onClick={() => setData({...data, hotelRooms:n})}
-              >
-                {n === 0 ? "Auto" : `${n} room${n>1?"s":""}`}
-              </div>
-            ))}
-          </div>
-          <p className="park-hint" style={{marginTop:7}}>
-            Stay22 partners may allocate rooms differently based on guest count and room capacity.
-          </p>
-        </div>
-
         <a
           href={buildVrboSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
           onClick={(e) => {
@@ -2926,11 +2904,11 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
             <span className="blb-d">
               {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
             </span>
-            <span className="blb-d" style={{marginTop:2}}>Your travelers & room choice already filled in ↗</span>
+            <span className="blb-d" style={{marginTop:2}}>Your dates & travelers already filled in ↗</span>
           </span>
         </a>
         <p className="park-hint" style={{marginTop:7}}>
-          Compare available partners such as Expedia, Hotels.com and Agoda. Room allocation may vary by provider — please confirm travelers and rooms before booking.
+          Compare available partners such as Expedia, Hotels.com and Agoda.
         </p>
 
         <a
