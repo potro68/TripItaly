@@ -6985,51 +6985,13 @@ function consumeResumeAnchor() {
 function openExternalWebsite(url, resumeState = {}) {
   saveUIState(resumeState);
 
-  // Booking.com links on Android are forced to open in Chrome instead of the
-  // native Booking app. The Booking app doesn't reliably pre-fill search
-  // parameters passed via URL, and switching to it breaks the return flow
-  // back into 687 Italy.
-  //
-  // Android "App Links" only intercept http(s) navigation, so any attempt to
-  // force Chrome using an https-based mechanism (including an "intent://"
-  // URI targeting package=com.android.chrome) can still be caught by the
-  // Booking app if the user has it set as the default handler for
-  // booking.com — this is a per-device setting we can't control or rely on
-  // users to change, and it happened even with the intent:// approach.
-  //
-  // The reliable fix is Chrome's own custom, non-http(s) "googlechrome://"
-  // URL scheme. Because it isn't http/https, it is never a candidate for
-  // Android App Links resolution at all — only Chrome can handle it — so the
-  // Booking app is never in the running, regardless of the user's default-app
-  // preference. The URL is percent-encoded, since without that a "&" inside
-  // it breaks the "url=" parameter and the link silently does nothing.
-  //
-  // If Chrome isn't installed, "googlechrome://" fails silently (no visible
-  // change), so we fall back to a normal https navigation shortly after if
-  // the page hasn't been backgrounded — covering the rare case of a device
-  // without Chrome at all.
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-    const isBooking = host === "booking.com" || host.endsWith(".booking.com");
-    const isAndroid = /Android/i.test(navigator.userAgent);
-
-    if (isAndroid && isBooking) {
-      const chromeUrl = `googlechrome://navigate?url=${encodeURIComponent(url)}`;
-      window.location.href = chromeUrl;
-      setTimeout(() => {
-        if (!document.hidden) {
-          // Chrome never took over (likely not installed) — fall back.
-          window.location.href = url;
-        }
-      }, 800);
-      return;
-    }
-  } catch (e) {
-    // If URL parsing fails, fall through to the normal path below.
-  }
-
-  // Other external services keep the existing behavior.
+  // Booking.com and cars.booking.com are declared as "additionalTrustedOrigins"
+  // in twa-manifest.json, so on Android they open inside the same TWA session
+  // instead of triggering Android's App Links resolution — this is what keeps
+  // the user from being kicked out to the native Booking app (which doesn't
+  // reliably pre-fill search parameters and doesn't return to 687 Italy).
+  // No special client-side handling is needed for them anymore; a normal
+  // navigation is enough.
   window.location.href = url;
 }
 
