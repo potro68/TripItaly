@@ -2363,10 +2363,20 @@ function buildInternalFlightLink(fromCity, toCity, date, adults) {
   if (!fromCode || !toCode || !date) return null;
 
   const pax = Math.min(9, Math.max(1, adults || 1));
-  // Keep domestic searches on the international Aviasales .com flow.
-  // Explicit locale/currency are retained as a hint even if the provider
-  // later applies its own geo/language preferences.
-  return `https://www.aviasales.com/search/${fromCode}${ddmm(date)}${toCode}${pax}?marker=${encodeURIComponent(AVIASALES_MARKER)}&locale=en&currency=EUR`;
+  // Uses Travelpayouts' officially documented "pre-set search form" URL
+  // (search.aviasales.com with named query params), same as international
+  // flights — the older compact-path format on www.aviasales.com wasn't
+  // reliably crediting clicks to the marker in Travelpayouts' stats.
+  const params = new URLSearchParams({
+    origin_iata: fromCode,
+    destination_iata: toCode,
+    depart_date: date,
+    adults: String(pax),
+    marker: AVIASALES_MARKER,
+    locale: "en",
+    currency: "EUR",
+  });
+  return `https://search.aviasales.com/flights/?${params.toString()}`;
 }
 
 // Real tracked affiliate links.
@@ -2408,16 +2418,10 @@ function buildStay22HotelSearchLink(data, cityOverride) {
 const AVIASALES_MARKER = "763269";
 
 // Builds a real Aviasales search link with origin/destination/dates/passengers
-// already filled in. Format documented by Travelpayouts:
-// https://www.aviasales.com/search/{origin}{DDMM}{destination}{DDMM}{adults}?marker=...
-function ddmm(isoDate) {
-  if (!isoDate) return "";
-  const d = new Date(isoDate + "T00:00:00");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  return dd + mm;
-}
-
+// already filled in, using Travelpayouts' officially documented "pre-set
+// search form" URL (search.aviasales.com with named query params) instead
+// of the older compact-path format, which wasn't reliably crediting clicks
+// to the marker in Travelpayouts' stats.
 function buildAviasalesLink(data) {
   const originIATA = extractIATA(data.origin || "");
   const destIATA = data.airport;
@@ -2425,8 +2429,17 @@ function buildAviasalesLink(data) {
     return AFFILIATE_LINKS.flights; // fall back to the static link if we don't have enough info yet
   }
   const adults = Math.min(9, Math.max(1, data.people || 1));
-  const params = `${originIATA}${ddmm(data.startDate)}${destIATA}${ddmm(data.endDate)}${adults}`;
-  return `https://www.aviasales.com/search/${params}?marker=${AVIASALES_MARKER}`;
+  const params = new URLSearchParams({
+    origin_iata: originIATA,
+    destination_iata: destIATA,
+    depart_date: data.startDate,
+    return_date: data.endDate,
+    adults: String(adults),
+    marker: AVIASALES_MARKER,
+    locale: "en",
+    currency: "EUR",
+  });
+  return `https://search.aviasales.com/flights/?${params.toString()}`;
 }
 
 // Booking.com affiliate ID, found by unshortening the Stay22 Allez link.
