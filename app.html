@@ -2462,17 +2462,21 @@ function buildBookingLink(data) {
     return AFFILIATE_LINKS.hotel; // fall back to the static link if we don't have enough info yet
   }
 
+  const adults = Math.max(1, Number(data.people) || 1);
+  const rooms = (data.hotelRooms && Number(data.hotelRooms) > 0)
+    ? Number(data.hotelRooms)
+    : 1;
+
   const params = new URLSearchParams({
     aid: BOOKING_AID,
     label: BOOKING_LABEL,
     ss: `${city}, Italy`,
     checkin: data.startDate,
     checkout: data.endDate,
-    group_adults: String(Math.max(1, data.people || 1)),
+    group_adults: String(adults),
+    group_children: "0",
+    no_rooms: String(rooms),
   });
-  if (data.hotelRooms && Number(data.hotelRooms) > 0) {
-    params.set("no_rooms", String(Number(data.hotelRooms)));
-  }
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
@@ -6981,7 +6985,15 @@ function consumeResumeAnchor() {
 // destination normally in the current browser. No browser is forced.
 function openExternalWebsite(url, resumeState = {}) {
   saveUIState(resumeState);
-  window.location.href = url;
+
+  // Keep 687 Italy running underneath the external website. In the Android
+  // TWA this opens the destination in the browser as a separate activity, so
+  // closing/back from Booking.com returns to the app instead of replacing it.
+  const external = window.open(url, "_blank", "noopener,noreferrer");
+  if (!external) {
+    // Fallback for browsers that block a new window.
+    window.location.href = url;
+  }
 }
 
 function loadSavedTrip() {
