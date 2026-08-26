@@ -2496,37 +2496,27 @@ function buildBookingLink(data) {
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
-// RentalCars.com city landing pages use simple lowercase slugs
-// (/it/city/it/{slug}/) — no internal numeric IDs needed. Not yet
-// affiliate-tracked; sign up for the RentalCars.com Affiliate Programme
-// and add the marker param once approved.
-const RENTALCARS_CITY_SLUGS = {
-  "Roma": "roma",
-  "Milano": "milano",
-  "Napoli": "napoli",
-  "Torino": "torino",
-  "Palermo": "palermo",
-  "Bologna": "bologna",
-  "Firenze": "firenze",
-  "Venezia": "venezia",
-  "Verona": "verona",
-  "Genova": "genova",
-  "Bari": "bari",
-  "Catania": "catania",
-  "Cagliari": "cagliari",
-  "Bergamo": "bergamo",
-  "Pisa": "pisa",
-  "Olbia": "olbia",
-  "Alghero": "alghero",
-  "Treviso": "treviso",
+// DiscoverCars affiliate deeplinks by airport.
+// Extra airports are kept here as well so they are ready for internal-trip flows.
+const DISCOVERCARS_AID = "potro68";
+const DISCOVERCARS_AIRPORT_LINKS = {
+  MXP: "https://www.discovercars.com/italy-mainland/milan/mxp?a_aid=potro68",
+  LIN: "https://www.discovercars.com/italy-mainland/milan/lin?a_aid=potro68",
+  BGY: "https://www.discovercars.com/italy-mainland/bergamo/bgy?a_aid=potro68",
+  FCO: "https://www.discovercars.com/italy-mainland/rome/fco?a_aid=potro68",
+  CIA: "https://www.discovercars.com/italy-mainland/rome/cia?a_aid=potro68",
+  NAP: "https://www.discovercars.com/italy-mainland/naples/nap?a_aid=potro68",
+  VCE: "https://www.discovercars.com/italy-mainland/venice/vce?a_aid=potro68",
+  TRN: "https://www.discovercars.com/italy-mainland/turin/trn?a_aid=potro68",
+  SUF: "https://www.discovercars.com/italy-mainland/lamezia-terme/suf?a_aid=potro68",
+  REG: "https://www.discovercars.com/italy-mainland/reggio-di-calabria/reg?a_aid=potro68",
+  GOA: "https://www.discovercars.com/italy-mainland/genova/goa?a_aid=potro68",
 };
 
 function buildCarRentalLink(data) {
-  const city = (data.stayCity || guessedStayCity(data) || "").trim();
-  const slug = RENTALCARS_CITY_SLUGS[city];
-  return slug
-    ? `https://www.rentalcars.com/it/city/it/${slug}/`
-    : "https://www.rentalcars.com/it/";
+  const airportCode = String(data?.airport || "").toUpperCase();
+  return DISCOVERCARS_AIRPORT_LINKS[airportCode]
+    || `https://www.discovercars.com/?a_aid=${DISCOVERCARS_AID}`;
 }
 
 // Vrbo via Stay22 Allez (same STAY22_AID as the hotel comparator).
@@ -3014,7 +3004,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           >
             <span className="blb-icon">🚗</span>
             <span className="blb-text">
-              <span className="blb-h">Search rental cars on RentalCars.com</span>
+              <span className="blb-h">Search rental cars on DiscoverCars</span>
               <span className="blb-d">Compare rental car options for your trip ↗</span>
             </span>
           </a>
