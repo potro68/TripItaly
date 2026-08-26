@@ -7181,13 +7181,26 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 <script>
-  // Register the Service Worker so the app shell can load even offline.
-  // Plain vanilla JS (not Babel/JSX) — runs after the app itself has started.
+  // Register and actively refresh the Service Worker.
+  // updateViaCache:"none" prevents an old SW script from being reused from HTTP cache.
+  // controllerchange reloads once when a new SW takes control, so users receive
+  // the latest app version automatically without clearing app/browser data.
   if ("serviceWorker" in navigator) {
+    let reloadingForNewSW = false;
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloadingForNewSW) return;
+      reloadingForNewSW = true;
+      window.location.reload();
+    });
+
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/service-worker.js").catch(() => {
-        // Fails silently — the app still works fully online without it.
-      });
+      navigator.serviceWorker
+        .register("/service-worker.js", { updateViaCache: "none" })
+        .then((registration) => registration.update())
+        .catch(() => {
+          // Fails silently — the app still works fully online without it.
+        });
     });
   }
 </script>
