@@ -2395,7 +2395,6 @@ function buildStay22HotelSearchLink(data, cityOverride) {
     lang: "en",
     currency: "EUR",
     campaign: "tripitaly_app_hotel_search",
-    excludeproviders: "booking",
     roam: "true",
   });
   if (data.startDate) params.set("checkin", data.startDate);
@@ -2932,21 +2931,8 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           </span>
         </a>
         <p className="park-hint" style={{marginTop:7}}>
-          Compare available partners such as Expedia, Hotels.com, Agoda and Vrbo. Room allocation may vary by provider — please confirm travelers and rooms before booking.
+          Compare available partners such as Expedia, Hotels.com, Agoda, Vrbo and Booking.com. Room allocation may vary by provider — please confirm travelers and rooms before booking.
         </p>
-
-        <a
-          href={buildBookingLink(data)}
-          onClick={(e) => {
-            e.preventDefault();
-            openExternalWebsite(buildBookingLink(data), {step:4, anchor:"booking-stay"});
-          }}
-          rel="noopener noreferrer sponsored"
-          className="btn-secondary"
-          style={{display:"block", textAlign:"center", textDecoration:"none", marginTop:8}}
-        >
-          Search directly on Booking.com with your travelers & room choice ↗
-        </a>
         <div className="price-entry-row">
           <span className="price-entry-label">After booking, enter the accommodation total:</span>
           <div className="price-entry-input">
