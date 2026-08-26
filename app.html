@@ -6985,6 +6985,32 @@ function consumeResumeAnchor() {
 function openExternalWebsite(url, resumeState = {}) {
   saveUIState(resumeState);
 
+  // Booking.com links on Android are forced to open in Chrome instead of the
+  // native Booking app. The Booking app doesn't reliably pre-fill search
+  // parameters passed via URL, and switching to it breaks the return flow
+  // back into 687 Italy. We use an Android "intent://" URI targeting Chrome
+  // explicitly (package=com.android.chrome), which bypasses Android's normal
+  // App Links interception that would otherwise hand the link to the
+  // installed Booking app. The URL is percent-encoded for the fallback param
+  // so it survives intact even when it contains "&" and other characters.
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    const isBooking = host === "booking.com" || host.endsWith(".booking.com");
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
+    if (isAndroid && isBooking) {
+      const withoutScheme = url.replace(/^https?:\/\//, "");
+      const intentUrl =
+        `intent://${withoutScheme}#Intent;scheme=https;package=com.android.chrome;` +
+        `S.browser_fallback_url=${encodeURIComponent(url)};end`;
+      window.location.href = intentUrl;
+      return;
+    }
+  } catch (e) {
+    // If URL parsing fails, fall through to the normal path below.
+  }
+
   // Other external services keep the existing behavior.
   window.location.href = url;
 }
