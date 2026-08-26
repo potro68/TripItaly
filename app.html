@@ -2480,28 +2480,12 @@ function buildBookingLink(data) {
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
-// GetRentacar.com via Travelpayouts (marker matches Aviasales — same Travelpayouts account).
+// Temporary: plain link, no personalization, no affiliate tracking yet.
+// Swap for a monetized provider once one with clean, non-personalized-code
+// search parameters is approved (GetRentacar/QEEQ/KAYAK all required either
+// contact details or internal city IDs we can't map dynamically).
 function buildCarRentalLink(data) {
-  const airport = AIRPORTS.find(a => a.code === data.airport);
-  if (!airport || !data.startDate || !data.endDate) {
-    return AFFILIATE_LINKS.car; // fall back to the static QEEQ link if we don't have enough info yet
-  }
-
-  const pad = n => String(n).padStart(2, "0");
-  const fmt = d => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
-  const pickup = new Date(data.startDate + "T10:00:00");
-  const dropoff = new Date(data.endDate + "T10:00:00");
-  const cityName = airport.city.replace(" (", " ").replace(")", "");
-  const locationName = `${cityName} Airport, Italy`;
-
-  const params = new URLSearchParams({
-    vehicleSegment: "cars",
-    "pickup[location]": locationName,
-    "pickup[date]": fmt(pickup),
-    "return[date]": fmt(dropoff),
-    marker: AVIASALES_MARKER,
-  });
-  return `https://getrentacar.com/it/noleggio-auto/request?${params.toString()}`;
+  return "https://www.rentalcars.com/it/";
 }
 
 // Vrbo via Stay22 Allez (same STAY22_AID as the hotel comparator).
@@ -2924,6 +2908,32 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         </div>
 
         <a
+          href={buildVrboSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
+          onClick={(e) => {
+            e.preventDefault();
+            openExternalWebsite(
+              buildVrboSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)),
+              {step:4, anchor:"booking-stay"}
+            );
+          }}
+          rel="noopener noreferrer sponsored"
+          className="booking-link-btn"
+          style={{marginTop:10}}
+        >
+          <span className="blb-icon">🏨</span>
+          <span className="blb-text">
+            <span className="blb-h">Search on Vrbo</span>
+            <span className="blb-d">
+              {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
+            </span>
+            <span className="blb-d" style={{marginTop:2}}>Your travelers & room choice already filled in ↗</span>
+          </span>
+        </a>
+        <p className="park-hint" style={{marginTop:7}}>
+          Compare available partners such as Expedia, Hotels.com and Agoda. Room allocation may vary by provider — please confirm travelers and rooms before booking.
+        </p>
+
+        <a
           href={buildStay22HotelSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
           onClick={(e) => {
             e.preventDefault();
@@ -2938,31 +2948,12 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         >
           <span className="blb-icon">🏨</span>
           <span className="blb-text">
-            <span className="blb-h">Search accommodation</span>
+            <span className="blb-h">Compare more accommodation partners</span>
             <span className="blb-d">
               {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
             </span>
-            <span className="blb-d" style={{marginTop:2}}>Compare trusted booking partners ↗</span>
+            <span className="blb-d" style={{marginTop:2}}>Expedia, Hotels.com, Agoda ↗</span>
           </span>
-        </a>
-        <p className="park-hint" style={{marginTop:7}}>
-          Compare available partners such as Expedia, Hotels.com, Agoda and Vrbo. Room allocation may vary by provider — please confirm travelers and rooms before booking.
-        </p>
-
-        <a
-          href={buildVrboSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
-          onClick={(e) => {
-            e.preventDefault();
-            openExternalWebsite(
-              buildVrboSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)),
-              {step:4, anchor:"booking-stay"}
-            );
-          }}
-          rel="noopener noreferrer sponsored"
-          className="btn-secondary"
-          style={{display:"block", textAlign:"center", textDecoration:"none", marginTop:8}}
-        >
-          Search directly on Vrbo with your travelers & room choice ↗
         </a>
         <div className="price-entry-row">
           <span className="price-entry-label">After booking, enter the accommodation total:</span>
@@ -3004,8 +2995,8 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           >
             <span className="blb-icon">🚗</span>
             <span className="blb-text">
-              <span className="blb-h">Search rental cars on GetRentacar.com</span>
-              <span className="blb-d">Your dates & airport already filled in ↗</span>
+              <span className="blb-h">Search rental cars on RentalCars.com</span>
+              <span className="blb-d">Compare rental car options for your trip ↗</span>
             </span>
           </a>
           <div className="price-entry-row">
