@@ -2511,6 +2511,15 @@ const DISCOVERCARS_AIRPORT_LINKS = {
   SUF: "https://www.discovercars.com/italy-mainland/lamezia-terme/suf?a_aid=potro68",
   REG: "https://www.discovercars.com/italy-mainland/reggio-di-calabria/reg?a_aid=potro68",
   GOA: "https://www.discovercars.com/italy-mainland/genova/goa?a_aid=potro68",
+  BLQ: "https://www.discovercars.com/italy-mainland/bologna/blq?a_aid=potro68",
+  BRI: "https://www.discovercars.com/italy-mainland/bari/bri?a_aid=potro68",
+  PSA: "https://www.discovercars.com/italy-mainland/pisa/psa?a_aid=potro68",
+  VRN: "https://www.discovercars.com/italy-mainland/verona/vrn?a_aid=potro68",
+  TSF: "https://www.discovercars.com/italy-mainland/treviso/tsf?a_aid=potro68",
+  // PMO (Palermo) and CTA (Catania) not mapped: confirmed 404 under both
+  // the city-name and airport-name slug variants tried. Falls through to
+  // the homepage link below (still tracked via DISCOVERCARS_AID). CTA is
+  // in our arrivals list, so worth another look with fresh eyes later.
 };
 
 function buildCarRentalLink(data) {
