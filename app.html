@@ -6986,12 +6986,31 @@ function consumeResumeAnchor() {
 function openExternalWebsite(url, resumeState = {}) {
   saveUIState(resumeState);
 
-  // Keep 687 Italy running underneath the external website. In the Android
-  // TWA this opens the destination in the browser as a separate activity, so
-  // closing/back from Booking.com returns to the app instead of replacing it.
+  // Booking.com has an Android App Link. If the Booking app is installed,
+  // Android may otherwise intercept the URL and open that app instead of the
+  // browser. For Booking accommodation/car URLs, explicitly launch Chrome so
+  // 687 Italy remains underneath and Back/Close can return to it.
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    const isBooking = host === "booking.com" || host.endsWith(".booking.com");
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
+    if (isAndroid && isBooking) {
+      const scheme = parsed.protocol.replace(":", "") || "https";
+      const target = `${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`;
+      const fallback = encodeURIComponent(url);
+      const chromeIntent = `intent://${target}#Intent;scheme=${scheme};package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
+      window.location.href = chromeIntent;
+      return;
+    }
+  } catch (e) {
+    // If URL parsing fails, use the normal browser-opening path below.
+  }
+
+  // Other external services keep the existing behavior.
   const external = window.open(url, "_blank", "noopener,noreferrer");
   if (!external) {
-    // Fallback for browsers that block a new window.
     window.location.href = url;
   }
 }
