@@ -2508,7 +2508,7 @@ function buildCarRentalLink(data) {
 function buildVrboSearchLink(data, cityOverride) {
   const city = (cityOverride || data.stayCity || guessedStayCity(data) || "").trim();
   if (!city || !data.startDate || !data.endDate) {
-    return "https://www.vrbo.it/it-it/search";
+    return "https://www.vrbo.com/it-it/search";
   }
 
   const adults = Math.max(1, Number(data.people) || 1);
@@ -2524,7 +2524,7 @@ function buildVrboSearchLink(data, cityOverride) {
     rooms: String(rooms),
     sort: "RECOMMENDED",
   });
-  return `https://www.vrbo.it/it-it/search?${params.toString()}`;
+  return `https://www.vrbo.com/it-it/search?${params.toString()}`;
 }
 
 function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
