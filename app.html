@@ -6995,7 +6995,7 @@ function openExternalWebsite(url, resumeState = {}) {
     const isAndroid = /Android/i.test(navigator.userAgent);
 
     if (isAndroid && isBooking) {
-      window.location.href = `intent://external?url=${encodeURIComponent(url)}#Intent;scheme=go687;package=com.go687.italy;end`;
+      window.location.href = `googlechrome://navigate?url=${url}`;
       return;
     }
   } catch (e) {
