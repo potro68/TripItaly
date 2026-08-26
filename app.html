@@ -2395,6 +2395,7 @@ function buildStay22HotelSearchLink(data, cityOverride) {
     lang: "en",
     currency: "EUR",
     campaign: "tripitaly_app_hotel_search",
+    excludeproviders: "booking",
     roam: "true",
   });
   if (data.startDate) params.set("checkin", data.startDate);
@@ -2479,37 +2480,51 @@ function buildBookingLink(data) {
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
+// GetRentacar.com via Travelpayouts (marker matches Aviasales — same Travelpayouts account).
 function buildCarRentalLink(data) {
   const airport = AIRPORTS.find(a => a.code === data.airport);
   if (!airport || !data.startDate || !data.endDate) {
     return AFFILIATE_LINKS.car; // fall back to the static QEEQ link if we don't have enough info yet
   }
 
+  const pad = n => String(n).padStart(2, "0");
+  const fmt = d => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
   const pickup = new Date(data.startDate + "T10:00:00");
   const dropoff = new Date(data.endDate + "T10:00:00");
-  const locationName = airport.city.replace(" (", " ").replace(")", "") + " Airport";
+  const cityName = airport.city.replace(" (", " ").replace(")", "");
+  const locationName = `${cityName} Airport, Italy`;
 
   const params = new URLSearchParams({
-    aid: BOOKING_AID,
-    label: BOOKING_LABEL,
-    locationIata: airport.code,
-    locationName: locationName,
-    dropLocationIata: airport.code,
-    puDay: String(pickup.getDate()),
-    puMonth: String(pickup.getMonth() + 1),
-    puYear: String(pickup.getFullYear()),
-    puHour: "10",
-    puMinute: "0",
-    doDay: String(dropoff.getDate()),
-    doMonth: String(dropoff.getMonth() + 1),
-    doYear: String(dropoff.getFullYear()),
-    doHour: "10",
-    doMinute: "0",
-    driversAge: "30",
-    prefcurrency: "EUR",
-    preflang: "en",
+    vehicleSegment: "cars",
+    "pickup[location]": locationName,
+    "pickup[date]": fmt(pickup),
+    "return[date]": fmt(dropoff),
+    marker: AVIASALES_MARKER,
   });
-  return `https://cars.booking.com/search-results?${params.toString()}`;
+  return `https://getrentacar.com/it/noleggio-auto/request?${params.toString()}`;
+}
+
+// Vrbo via Stay22 Allez (same STAY22_AID as the hotel comparator).
+function buildVrboSearchLink(data, cityOverride) {
+  const city = (cityOverride || data.stayCity || guessedStayCity(data) || "").trim();
+  if (!city || !data.startDate || !data.endDate) {
+    return "https://www.vrbo.it/it-it/search";
+  }
+
+  const adults = Math.max(1, Number(data.people) || 1);
+  const rooms = (data.hotelRooms && Number(data.hotelRooms) > 0)
+    ? Number(data.hotelRooms)
+    : 1;
+
+  const params = new URLSearchParams({
+    destination: `${city}, Italia`,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    adults: String(adults),
+    rooms: String(rooms),
+    sort: "RECOMMENDED",
+  });
+  return `https://www.vrbo.it/it-it/search?${params.toString()}`;
 }
 
 function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
@@ -2931,8 +2946,24 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           </span>
         </a>
         <p className="park-hint" style={{marginTop:7}}>
-          Compare available partners such as Expedia, Hotels.com, Agoda, Vrbo and Booking.com. Room allocation may vary by provider — please confirm travelers and rooms before booking.
+          Compare available partners such as Expedia, Hotels.com, Agoda and Vrbo. Room allocation may vary by provider — please confirm travelers and rooms before booking.
         </p>
+
+        <a
+          href={buildVrboSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
+          onClick={(e) => {
+            e.preventDefault();
+            openExternalWebsite(
+              buildVrboSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)),
+              {step:4, anchor:"booking-stay"}
+            );
+          }}
+          rel="noopener noreferrer sponsored"
+          className="btn-secondary"
+          style={{display:"block", textAlign:"center", textDecoration:"none", marginTop:8}}
+        >
+          Search directly on Vrbo with your travelers & room choice ↗
+        </a>
         <div className="price-entry-row">
           <span className="price-entry-label">After booking, enter the accommodation total:</span>
           <div className="price-entry-input">
@@ -2973,7 +3004,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           >
             <span className="blb-icon">🚗</span>
             <span className="blb-text">
-              <span className="blb-h">Search rental cars on Booking.com</span>
+              <span className="blb-h">Search rental cars on GetRentacar.com</span>
               <span className="blb-d">Your dates & airport already filled in ↗</span>
             </span>
           </a>
