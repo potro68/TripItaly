@@ -2357,15 +2357,42 @@ const INTERNAL_FLIGHT_AIRPORTS = {
   "Bergamo": "BGY",
 };
 
+function ddmm(isoDate) {
+  if (!isoDate) return "";
+  const d = new Date(isoDate + "T00:00:00");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return dd + mm;
+}
+
+// Wraps a destination URL in Travelpayouts' actual click-tracking redirect
+// (tp.media/r). Just appending "?marker=..." to the destination URL directly
+// does NOT get credited as a click in Travelpayouts' stats — confirmed by
+// inspecting the redirect chain of a manually generated aviasales.tpo.li
+// link, which resolves through:
+//   https://tp.media/r?campaign_id=100&marker=763269&p=4114&trs=561189&u=<destination>
+// before landing on the destination with a dynamically-appended marker
+// suffix. These campaign_id/p/trs values are specific to the Aviasales
+// program under this Travelpayouts account.
+function buildTpMediaClickLink(destinationUrl) {
+  const params = new URLSearchParams({
+    campaign_id: "100",
+    marker: AVIASALES_MARKER,
+    p: "4114",
+    trs: "561189",
+    u: destinationUrl,
+  });
+  return `https://tp.media/r?${params.toString()}`;
+}
+
 function buildInternalFlightLink(fromCity, toCity, date, adults) {
   const fromCode = INTERNAL_FLIGHT_AIRPORTS[fromCity];
   const toCode = INTERNAL_FLIGHT_AIRPORTS[toCity];
   if (!fromCode || !toCode || !date) return null;
 
   const pax = Math.min(9, Math.max(1, adults || 1));
-  // Keep domestic searches on the international Aviasales .com flow
-  // (compact-path format keeps the marker intact — see note above buildAviasalesLink).
-  return `https://www.aviasales.com/search/${fromCode}${ddmm(date)}${toCode}${pax}?marker=${encodeURIComponent(AVIASALES_MARKER)}&locale=en&currency=EUR`;
+  const dest = `https://www.aviasales.com/search/${fromCode}${ddmm(date)}${toCode}${pax}`;
+  return buildTpMediaClickLink(dest);
 }
 
 // Real tracked affiliate links.
@@ -2406,12 +2433,6 @@ function buildStay22HotelSearchLink(data, cityOverride) {
 // Aviasales partner ID (marker), found via Tools > Create a link > unshorten.
 const AVIASALES_MARKER = "763269";
 
-// Builds a real Aviasales search link with origin/destination/dates/passengers
-// already filled in. Uses the compact-path format directly on
-// www.aviasales.com — the "pre-set search form" on search.aviasales.com
-// was tried instead, but it silently drops the marker param during its own
-// internal locale redirect (e.g. to aviasales.ru), losing tracking entirely.
-// This format keeps the marker intact end to end.
 function ddmm(isoDate) {
   if (!isoDate) return "";
   const d = new Date(isoDate + "T00:00:00");
@@ -2428,7 +2449,8 @@ function buildAviasalesLink(data) {
   }
   const adults = Math.min(9, Math.max(1, data.people || 1));
   const params = `${originIATA}${ddmm(data.startDate)}${destIATA}${ddmm(data.endDate)}${adults}`;
-  return `https://www.aviasales.com/search/${params}?marker=${AVIASALES_MARKER}&locale=en&currency=EUR`;
+  const dest = `https://www.aviasales.com/search/${params}`;
+  return buildTpMediaClickLink(dest);
 }
 
 // Booking.com affiliate ID, found by unshortening the Stay22 Allez link.
