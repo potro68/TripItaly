@@ -6985,23 +6985,6 @@ function consumeResumeAnchor() {
 function openExternalWebsite(url, resumeState = {}) {
   saveUIState(resumeState);
 
-  // Booking.com links on Android are routed through our native helper Activity.
-  // That Activity explicitly opens Chrome, preventing the installed Booking app
-  // from intercepting the link.
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-    const isBooking = host === "booking.com" || host.endsWith(".booking.com");
-    const isAndroid = /Android/i.test(navigator.userAgent);
-
-    if (isAndroid && isBooking) {
-      window.location.href = `googlechrome://navigate?url=${url}`;
-      return;
-    }
-  } catch (e) {
-    // If URL parsing fails, use the normal browser-opening path below.
-  }
-
   // Other external services keep the existing behavior.
   const external = window.open(url, "_blank", "noopener,noreferrer");
   if (!external) {
