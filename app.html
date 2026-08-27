@@ -1474,6 +1474,7 @@
     font-size:11px;
     color:rgba(19,42,58,0.55);
     margin-top:3px;
+    font-weight:600;
   }
 
   /* ---- Booking link button & price entry ---- */
@@ -1493,7 +1494,7 @@
   .blb-icon{ font-size:24px; }
   .blb-text{ display:flex; flex-direction:column; gap:2px; }
   .blb-h{ font-weight:700; font-size:15px; }
-  .blb-d{ font-size:12px; opacity:0.8; }
+  .blb-d{ font-size:12px; opacity:0.95; font-weight:600; }
   .price-entry-row{
     display:flex;
     align-items:center;
@@ -1738,7 +1739,7 @@
   }
   .choice-card.selected .choice-icon{ background:var(--sun); }
   .choice-text .h{ font-weight:600; font-size:15px; margin-bottom:3px; }
-  .choice-text .d{ font-size:13px; color:rgba(19,42,58,0.6); line-height:1.4; }
+  .choice-text .d{ font-size:13px; color:rgba(19,42,58,0.6); line-height:1.4; font-weight:600; }
 
   /* ---- Suggested airport banner ---- */
   .suggestion-banner{
@@ -2038,6 +2039,134 @@
   }
   body.theme-navy .dash-nav-item.active{
     background:rgba(244,200,74,.14) !important;
+  }
+
+
+  /* ---- Morning navy readability fixes ---- */
+  body.theme-navy .leg-chip{
+    color:#F4C84A !important;
+    border-color:rgba(244,200,74,.40) !important;
+    font-weight:700 !important;
+  }
+  body.theme-navy .leg-chip.active{
+    background:#F4C84A !important;
+    color:#071A2E !important;
+    border-color:#F4C84A !important;
+    font-weight:800 !important;
+  }
+
+  body.theme-navy .airport-clear-btn{
+    background:#F4C84A !important;
+    color:#071A2E !important;
+    font-weight:800 !important;
+  }
+
+  body.theme-navy .autocomplete-list{
+    background:#F3EFE7 !important;
+    border-color:rgba(24,50,71,.18) !important;
+  }
+  body.theme-navy .autocomplete-item{
+    color:#183247 !important;
+  }
+  body.theme-navy .autocomplete-item:hover{
+    background:rgba(24,50,71,.06) !important;
+  }
+  body.theme-navy .ac-code{
+    color:#183247 !important;
+    background:rgba(24,90,122,.12) !important;
+    font-weight:800 !important;
+  }
+  body.theme-navy .ac-name,
+  body.theme-navy .ac-name b,
+  body.theme-navy .ac-sub,
+  body.theme-navy .autocomplete-loading{
+    color:#183247 !important;
+    opacity:1 !important;
+  }
+
+  body.theme-navy .direct-airports-box{
+    background:#0A2138 !important;
+    border-color:rgba(244,200,74,.28) !important;
+  }
+  body.theme-navy .direct-airports-title{
+    color:#F4C84A !important;
+    font-weight:800 !important;
+  }
+  body.theme-navy .direct-airports-box > div:not(.direct-airports-list),
+  body.theme-navy .direct-airports-box > p{
+    color:#F4C84A !important;
+    opacity:1 !important;
+    font-weight:600 !important;
+  }
+  body.theme-navy .direct-airports-box .btn-secondary{
+    color:#F4C84A !important;
+    border-color:rgba(244,200,74,.50) !important;
+    background:rgba(244,200,74,.08) !important;
+    font-weight:800 !important;
+  }
+  body.theme-navy .direct-airport-chip{
+    background:#F3EFE7 !important;
+    color:#183247 !important;
+    border-color:rgba(24,50,71,.18) !important;
+    font-weight:700 !important;
+  }
+  body.theme-navy .direct-airport-chip.selected{
+    background:#F4C84A !important;
+    color:#071A2E !important;
+    border-color:#F4C84A !important;
+    font-weight:800 !important;
+  }
+
+  body.theme-navy .wallet-tab{
+    background:#0D2742 !important;
+    color:#F4C84A !important;
+    border-color:rgba(244,200,74,.35) !important;
+    font-weight:700 !important;
+  }
+  body.theme-navy .wallet-tab.active{
+    background:#F4C84A !important;
+    color:#071A2E !important;
+    border-color:#F4C84A !important;
+    font-weight:800 !important;
+  }
+
+  body.theme-navy .btn-text,
+  body.theme-navy .dash-back-btn{
+    color:#F4C84A !important;
+    opacity:1 !important;
+    font-weight:800 !important;
+  }
+
+  body.theme-navy .blb-d,
+  body.theme-navy .choice-text .d,
+  body.theme-navy .leg-transport-hint,
+  body.theme-navy .price-entry-label,
+  body.theme-navy .park-hint,
+  body.theme-navy .subtitle,
+  body.theme-navy .arrival-toggle-d,
+  body.theme-navy .wallet-summary-d{
+    color:#F7E8A3 !important;
+    opacity:1 !important;
+    font-weight:600 !important;
+  }
+
+  body.theme-navy .price-entry-input .pe-sym,
+  body.theme-navy .currency-sym{
+    color:#F4C84A !important;
+  }
+  body.theme-navy .price-entry-input input,
+  body.theme-navy input[type="number"],
+  body.theme-navy input[type="text"]{
+    color:#F4C84A !important;
+    border-bottom-color:rgba(244,200,74,.50) !important;
+  }
+  body.theme-navy input[type="number"]::placeholder,
+  body.theme-navy input[type="text"]::placeholder{
+    color:rgba(247,232,163,.55) !important;
+  }
+
+  body.theme-navy .dash-nav-item.active{
+    background:rgba(244,200,74,.16) !important;
   }
 
 </style>
@@ -2952,6 +3081,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
               {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
             </span>
             <span className="blb-d" style={{marginTop:2}}>Your dates & travelers already filled in ↗</span>
+            <span className="blb-d" style={{marginTop:2}}>Affiliate partner: Vrbo</span>
           </span>
         </a>
         <p className="park-hint" style={{marginTop:7}}>
@@ -2978,6 +3108,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
               {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
             </span>
             <span className="blb-d" style={{marginTop:2}}>Expedia, Hotels.com, Agoda ↗</span>
+            <span className="blb-d" style={{marginTop:2}}>Affiliate partners include Expedia, Hotels.com and Agoda</span>
           </span>
         </a>
         <div className="price-entry-row">
@@ -3000,10 +3131,6 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           <div className="choice-icon">🚗</div>
           <div className="choice-text"><div className="h">Yes, I'll drive</div></div>
         </div>
-        <div className={"choice-card" + (data.wantsCar === false ? " selected" : "")} onClick={() => setData({...data, wantsCar: false})}>
-          <div className="choice-icon">🚆</div>
-          <div className="choice-text"><div className="h">No rental car</div></div>
-        </div>
       </div>
 
       {data.wantsCar && (
@@ -3021,7 +3148,11 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
             <span className="blb-icon">🚗</span>
             <span className="blb-text">
               <span className="blb-h">Search rental cars on DiscoverCars</span>
-              <span className="blb-d">Compare rental car options for your trip ↗</span>
+              <span className="blb-d">
+                {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)}
+              </span>
+              <span className="blb-d" style={{marginTop:2}}>Compare rental car options for your trip ↗</span>
+              <span className="blb-d" style={{marginTop:2}}>Affiliate partner: DiscoverCars</span>
             </span>
           </a>
           <div className="price-entry-row">
@@ -3720,7 +3851,42 @@ function AirportAutocomplete({ value, onChange }) {
         onFocus={() => { if (!isAlreadySelected && matches.length > 0) setOpen(true); }}
         placeholder="City, airport or IATA code"
         autoComplete="off"
+        style={{paddingRight: value ? 42 : undefined}}
       />
+
+      {value && (
+        <button
+          type="button"
+          className="airport-clear-btn"
+          aria-label="Clear departure airport"
+          title="Clear airport"
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => {
+            onChange("");
+            setMatches([]);
+            setOpen(false);
+            setLoading(false);
+          }}
+          style={{
+            position:"absolute",
+            right:10,
+            top:"50%",
+            transform:"translateY(-50%)",
+            width:28,
+            height:28,
+            border:"none",
+            borderRadius:"50%",
+            background:"rgba(19,42,58,0.08)",
+            color:"rgba(19,42,58,0.72)",
+            fontSize:18,
+            lineHeight:"28px",
+            cursor:"pointer",
+            padding:0
+          }}
+        >
+          ×
+        </button>
+      )}
 
       {loading && (
         <div style={{fontSize:11.5, color:"rgba(19,42,58,0.5)", marginTop:6}}>
@@ -4044,6 +4210,7 @@ function ScreenFlights({ data, setData, onNext, onBack }) {
             <span className="blb-d">
               {originIATA} → {airport.code} · {data.people} traveler{data.people > 1 ? "s" : ""}, dates pre-filled ↗
             </span>
+            <span className="blb-d" style={{marginTop:2}}>Affiliate partner: Aviasales</span>
           </span>
         </a>
 
@@ -4110,7 +4277,6 @@ const DASH_SECTIONS_ITALY = [
   { id: "itinerary", icon: "🗺️", label: "Itinerary" },
   { id: "nearby", icon: "📍", label: "Nearby" },
   { id: "drive", icon: "🚗", label: "Drive" },
-  { id: "offline", icon: "📴", label: "Offline" },
   { id: "translate", icon: "🌐", label: "Translate" },
   { id: "tools", icon: "🧰", label: "Tools" },
 ];
@@ -6858,7 +7024,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
   const pctUsed = data.budget ? Math.min(100, Math.round(((lockedTotal + spent) / data.budget) * 100)) : 0;
   const dailyAmount = dailyBudget(data, (data.budget || 0) - lockedTotal);
 
-  const sections = data.mode === "onsite" ? DASH_SECTIONS.filter(s => ["overview","wallet","packing"].includes(s.id)) : DASH_SECTIONS;
+  const sections = data.mode === "onsite" ? DASH_SECTIONS.filter(s => ["overview","wallet","packing","settings"].includes(s.id)) : DASH_SECTIONS;
   const italySections = DASH_SECTIONS_ITALY.filter(s => s.id !== "drive" || data.wantsCar === true);
   const allLabels = [...DASH_SECTIONS, ...DASH_SECTIONS_ITALY];
 
@@ -6900,7 +7066,6 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "itinerary" && (italyAccess) && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && (italyAccess) && <DashNearby data={data} setData={setData} />}
         {section === "drive" && (italyAccess) && data.wantsCar && <DashDrive data={data} setData={setData} />}
-        {section === "offline" && (italyAccess) && <DashOffline data={data} />}
         {section === "translate" && (italyAccess) && <DashTranslate />}
         {section === "tools" && (italyAccess) && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
       </div>
