@@ -6458,6 +6458,10 @@ function hasNativeSpeechBridge() {
   return !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speech-start"]);
 }
 
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent || "");
+}
+
 window.onNativeSpeechResult = function (b64Text, isFinal) {
   if (!__nativeSpeechHandlers) return;
   const text = b64DecodeUnicode(b64Text);
@@ -6484,7 +6488,9 @@ function LiveTranslator() {
   const [speechLang, setSpeechLang] = useState("en-US");
 
   const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const micSupported = !!SpeechRecognitionClass || hasNativeSpeechBridge();
+  // On iOS/WKWebView do not fall back to Web Speech: it can immediately abort.
+  // iOS must use the native Swift SFSpeechRecognizer bridge.
+  const micSupported = isIOSDevice() ? hasNativeSpeechBridge() : (!!SpeechRecognitionClass || hasNativeSpeechBridge());
 
   const SPEECH_LANGUAGES = [
     { code:"en-US", label:"English" },
@@ -6568,6 +6574,13 @@ function LiveTranslator() {
     const deviceLang = navigator.language || navigator.userLanguage || "en-US";
     const lang = speechLang === "auto" ? deviceLang : speechLang;
 
+    // iPhone/iPad: force the native Swift bridge. Never use Web Speech fallback.
+    if (isIOSDevice() && !hasNativeSpeechBridge()) {
+      setListening(false);
+      setError("iOS native microphone bridge is not available in this app build.");
+      return;
+    }
+
     if (hasNativeSpeechBridge()) {
       __nativeSpeechHandlers = {
         onResult: (text, isFinal) => {
@@ -6579,7 +6592,7 @@ function LiveTranslator() {
         },
         onError: (code) => {
           setListening(false);
-          setError(`Couldn't hear you (${code}) — try another speaking language or type instead.`);
+          setError(`Native iOS speech error (${code}) — try again or type instead.`);
         },
         onEnd: () => setListening(false),
       };
