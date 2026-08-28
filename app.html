@@ -6490,7 +6490,10 @@ function LiveTranslator() {
   const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
   // On iOS/WKWebView do not fall back to Web Speech: it can immediately abort.
   // iOS must use the native Swift SFSpeechRecognizer bridge.
-  const micSupported = isIOSDevice() ? hasNativeSpeechBridge() : (!!SpeechRecognitionClass || hasNativeSpeechBridge());
+  // Keep the microphone UI and speaking-language selector visible on iPhone/iPad.
+  // On iOS, startListening() still requires the native Swift bridge and will show
+  // a clear error if that bridge is not available. Android/browser behavior is unchanged.
+  const micSupported = isIOSDevice() || !!SpeechRecognitionClass || hasNativeSpeechBridge();
 
   const SPEECH_LANGUAGES = [
     { code:"en-US", label:"English" },
