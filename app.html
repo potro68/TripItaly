@@ -2273,6 +2273,16 @@
     color:#F4C84A !important;
   }
 
+  body.theme-navy .translation-result{
+    background:rgba(244,200,74,.10) !important;
+  }
+  body.theme-navy .translation-text{
+    color:#F4C84A !important;
+  }
+  body.theme-navy .translation-meta{
+    color:rgba(255,240,185,.72) !important;
+  }
+
   /* Amount input inside the light day-budget-card needs light-theme colors,
      not the app-wide dark-box/yellow-text input style, plus a less oversized figure. */
   body.theme-navy .day-budget-card input[type="number"],
@@ -5914,7 +5924,7 @@ function printTripItinerary(data) {
 function buildNavLinks(destination) {
   const q = encodeURIComponent(destination + ", Italy");
   return {
-    apple: `https://maps.apple.com/?daddr=${q}`,
+    apple: `https://maps.apple.com/?daddr=${q}&dirflg=d`,
     google: `https://www.google.com/maps/dir/?api=1&destination=${q}`,
     waze: `https://waze.com/ul?q=${q}&navigate=yes`,
   };
@@ -6430,6 +6440,39 @@ function DashNearby({ data, setData }) {
 }
 
 
+// ---- Native speech recognition bridge (iOS) ----
+// Web Speech API is unreliable inside our custom WKWebView on iOS, so the
+// native Swift side runs real SFSpeechRecognizer and calls back into these
+// globals with base64-encoded text (avoids any quote/escaping issues).
+let __nativeSpeechHandlers = null;
+
+function b64DecodeUnicode(str) {
+  return decodeURIComponent(
+    Array.prototype.map.call(atob(str), c =>
+      "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join("")
+  );
+}
+
+function hasNativeSpeechBridge() {
+  return !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speech-start"]);
+}
+
+window.onNativeSpeechResult = function (b64Text, isFinal) {
+  if (!__nativeSpeechHandlers) return;
+  const text = b64DecodeUnicode(b64Text);
+  __nativeSpeechHandlers.onResult(text, isFinal);
+};
+window.onNativeSpeechError = function (b64Code) {
+  if (!__nativeSpeechHandlers) return;
+  const code = b64DecodeUnicode(b64Code);
+  __nativeSpeechHandlers.onError(code);
+};
+window.onNativeSpeechEnd = function () {
+  if (!__nativeSpeechHandlers) return;
+  __nativeSpeechHandlers.onEnd();
+};
+
 function LiveTranslator() {
   const [inputText, setInputText] = useState("");
   const [translated, setTranslated] = useState("");
@@ -6441,7 +6484,7 @@ function LiveTranslator() {
   const [speechLang, setSpeechLang] = useState("en-US");
 
   const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const micSupported = !!SpeechRecognitionClass;
+  const micSupported = !!SpeechRecognitionClass || hasNativeSpeechBridge();
 
   const SPEECH_LANGUAGES = [
     { code:"en-US", label:"English" },
@@ -6522,6 +6565,30 @@ function LiveTranslator() {
   };
 
   const startListening = () => {
+    const deviceLang = navigator.language || navigator.userLanguage || "en-US";
+    const lang = speechLang === "auto" ? deviceLang : speechLang;
+
+    if (hasNativeSpeechBridge()) {
+      __nativeSpeechHandlers = {
+        onResult: (text, isFinal) => {
+          if (isFinal && text) {
+            setInputText(text);
+            translate(text);
+          }
+          if (isFinal) setListening(false);
+        },
+        onError: (code) => {
+          setListening(false);
+          setError(`Couldn't hear you (${code}) — try another speaking language or type instead.`);
+        },
+        onEnd: () => setListening(false),
+      };
+      setListening(true);
+      setError("");
+      window.webkit.messageHandlers["speech-start"].postMessage({ lang });
+      return;
+    }
+
     if (!micSupported) return;
     const recognition = new SpeechRecognitionClass();
     recognition.continuous = false;
@@ -6530,8 +6597,7 @@ function LiveTranslator() {
     // Web Speech does not provide reliable automatic spoken-language detection.
     // "Auto" therefore uses the device/browser language. Other options explicitly
     // tell the recognizer which language the traveler is speaking.
-    const deviceLang = navigator.language || navigator.userLanguage || "en-US";
-    recognition.lang = speechLang === "auto" ? deviceLang : speechLang;
+    recognition.lang = lang;
 
     recognition.onstart = () => { setListening(true); setError(""); };
     recognition.onend = () => setListening(false);
