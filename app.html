@@ -1068,6 +1068,9 @@
     padding:7px 10px;
     margin-right:6px;
     white-space:nowrap;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
   }
 
   /* ---- Phrasebook ---- */
@@ -1313,6 +1316,7 @@
   }
   .hotel-directions-btn{
     display:block;
+    width:100%;
     text-align:center;
     margin:12px 0;
     padding:12px;
@@ -1321,7 +1325,44 @@
     color:#fff;
     background:linear-gradient(135deg, var(--amalfi-deep), var(--amalfi));
     border-radius:12px;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
   }
+
+  .navigate-btn-wrap{
+    position:relative;
+    flex-shrink:0;
+  }
+  .navigate-menu-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:40;
+  }
+  .navigate-menu{
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    z-index:41;
+    background:#fff;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    box-shadow:0 8px 24px rgba(19,42,58,0.18);
+    overflow:hidden;
+    min-width:170px;
+  }
+  .navigate-menu-item{
+    display:block;
+    padding:12px 16px;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    text-decoration:none;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  .navigate-menu-item:last-child{ border-bottom:none; }
+  .navigate-menu-item:hover{ background:rgba(28,90,122,0.06); }
 
   /* ---- Day strip calendar ---- */
   .day-strip{
@@ -5870,6 +5911,41 @@ function printTripItinerary(data) {
   popup.document.close();
 }
 
+function buildNavLinks(destination) {
+  const q = encodeURIComponent(destination + ", Italy");
+  return {
+    apple: `https://maps.apple.com/?daddr=${q}`,
+    google: `https://www.google.com/maps/dir/?api=1&destination=${q}`,
+    waze: `https://waze.com/ul?q=${q}&navigate=yes`,
+  };
+}
+
+function NavigateButton({ destination, label, className }) {
+  const [open, setOpen] = useState(false);
+  const links = buildNavLinks(destination);
+  return (
+    <div className="navigate-btn-wrap" onClick={e => e.stopPropagation()}>
+      <button
+        type="button"
+        className={className}
+        onClick={() => setOpen(o => !o)}
+      >
+        {label}
+      </button>
+      {open && (
+        <>
+          <div className="navigate-menu-backdrop" onClick={() => setOpen(false)}></div>
+          <div className="navigate-menu">
+            <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🗺️ Apple Maps</a>
+            <a href={links.google} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>📍 Google Maps</a>
+            <a href={links.waze} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🚗 Waze</a>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedStops, onAddStop, onRemoveStop, onCityChange, onGoTo, dailyAmount, transfer }) {
   const dateLabel = date ? date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : `Day ${dayNum}`;
   const [editingCity, setEditingCity] = useState(false);
@@ -5937,13 +6013,11 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
       }
 
       {data.hotel && (
-        <a
-          href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(data.hotel + ", Italy")}`}
-          target="_blank" rel="noopener noreferrer"
+        <NavigateButton
+          destination={data.hotel}
+          label={`🏨 Directions to ${data.hotel} ↗`}
           className="hotel-directions-btn"
-        >
-          🏨 Directions to {data.hotel} ↗
-        </a>
+        />
       )}
 
       <div className="field">
@@ -5958,14 +6032,11 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
           <div key={i} className="choice-card selected">
             <div className="choice-icon">📍</div>
             <div className="choice-text"><div className="h">{s}</div></div>
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s + ", Italy")}`}
-              target="_blank" rel="noopener noreferrer"
+            <NavigateButton
+              destination={s}
+              label="Go ↗"
               className="stop-go-btn"
-              onClick={e => e.stopPropagation()}
-            >
-              Go ↗
-            </a>
+            />
             <div className="remove-stop" onClick={() => onRemoveStop(i)}>✕</div>
           </div>
         ))}
