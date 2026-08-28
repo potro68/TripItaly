@@ -2232,6 +2232,36 @@
     color:#F4C84A !important;
   }
 
+  /* Amount input inside the light day-budget-card needs light-theme colors,
+     not the app-wide dark-box/yellow-text input style, plus a less oversized figure. */
+  body.theme-navy .day-budget-card input[type="number"],
+  body.theme-navy .day-budget-card input[type="text"],
+  body.theme-navy .day-budget-card .currency-sym{
+    color:#183247 !important;
+  }
+  body.theme-navy .day-budget-card input[type="number"],
+  body.theme-navy .day-budget-card input[type="text"]{
+    background:transparent !important;
+    border-bottom-color:rgba(24,50,71,.35) !important;
+    font-size:24px !important;
+  }
+  body.theme-navy .day-budget-card input::placeholder{
+    color:rgba(24,50,71,.4) !important;
+  }
+
+  @media (max-width: 400px){
+    .traveler-chip{
+      padding:12px 8px;
+      gap:7px;
+    }
+    .tc-label{
+      font-size:12.5px;
+    }
+    .tc-icon{
+      font-size:17px;
+    }
+  }
+
   body.theme-navy .wallet-tab{
     background:#0D2742 !important;
     color:#F4C84A !important;
