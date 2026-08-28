@@ -6637,6 +6637,9 @@ function LiveTranslator() {
     <div className="field">
       <label>Translate anything to Italian</label>
       <p className="park-hint">Type in any language — or choose the language you're speaking before using the microphone.</p>
+      <p style={{fontSize:11, color:"#999", marginTop:2}}>
+        Debug: native bridge = {hasNativeSpeechBridge() ? "YES" : "no"}, webkit = {typeof window.webkit !== "undefined" ? "yes" : "no"}, handlers = {(window.webkit && window.webkit.messageHandlers) ? Object.keys(window.webkit.messageHandlers).join(", ") : "none"}
+      </p>
 
       {micSupported && (
         <div style={{marginBottom:10}}>
