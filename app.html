@@ -6455,7 +6455,11 @@ function b64DecodeUnicode(str) {
 }
 
 function hasNativeSpeechBridge() {
-  return !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speech-start"]);
+  return !!(
+    window.__687NativeSpeechBridge ||
+    typeof window.nativeSpeechStart === "function" ||
+    (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speech-start"])
+  );
 }
 
 function isIOSDevice() {
@@ -6601,7 +6605,15 @@ function LiveTranslator() {
       };
       setListening(true);
       setError("");
-      window.webkit.messageHandlers["speech-start"].postMessage({ lang });
+      if (typeof window.nativeSpeechStart === "function") {
+        const started = window.nativeSpeechStart(lang);
+        if (!started) {
+          setListening(false);
+          setError("iOS native microphone bridge could not start.");
+        }
+      } else {
+        window.webkit.messageHandlers["speech-start"].postMessage({ lang });
+      }
       return;
     }
 
