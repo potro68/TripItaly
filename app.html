@@ -2762,6 +2762,33 @@ function buildStay22HotelSearchLink(data, cityOverride) {
   return `https://www.stay22.com/allez/searchbar?${params.toString()}`;
 }
 
+// Provider-specific Stay22 Allez links.
+// These keep Expedia and Hotels.com completely separate for clear attribution.
+function buildStay22ProviderLink(provider, campaign, data, cityOverride) {
+  const city = (cityOverride || data.stayCity || guessedStayCity(data) || "").trim();
+  const params = new URLSearchParams({
+    aid: STAY22_AID,
+    campaign,
+    address: city ? `${city}, Italy` : "Italy",
+    adults: String(Math.max(1, data.people || 1)),
+    children: "0",
+    lang: "en",
+    currency: "EUR",
+  });
+  if (data.startDate) params.set("checkin", data.startDate);
+  if (data.endDate) params.set("checkout", data.endDate);
+
+  return `https://www.stay22.com/allez/${provider}?${params.toString()}`;
+}
+
+function buildExpediaSearchLink(data, cityOverride) {
+  return buildStay22ProviderLink("expedia", "687italy-expedia", data, cityOverride);
+}
+
+function buildHotelsComSearchLink(data, cityOverride) {
+  return buildStay22ProviderLink("hotelscom", "687italy-hotelscom", data, cityOverride);
+}
+
 // Aviasales partner ID (marker), found via Tools > Create a link > unshorten.
 const AVIASALES_MARKER = "763269";
 
@@ -3276,24 +3303,20 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         >
           <span className="blb-icon">🏨</span>
           <span className="blb-text">
+            <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Vrbo</span>
             <span className="blb-h">Search on Vrbo</span>
             <span className="blb-d">
               {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
             </span>
             <span className="blb-d" style={{marginTop:2}}>Your dates & travelers already filled in ↗</span>
-            <span className="blb-d" style={{marginTop:2}}>Affiliate partner: Vrbo</span>
           </span>
         </a>
-        <p className="park-hint" style={{marginTop:7}}>
-          Compare available partners such as Expedia, Hotels.com and Agoda.
-        </p>
-
         <a
-          href={buildStay22HotelSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
+          href={buildExpediaSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
           onClick={(e) => {
             e.preventDefault();
             openExternalWebsite(
-              buildStay22HotelSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)),
+              buildExpediaSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)),
               {step:4, anchor:"booking-stay"}
             );
           }}
@@ -3303,12 +3326,36 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         >
           <span className="blb-icon">🏨</span>
           <span className="blb-text">
-            <span className="blb-h">Compare more accommodation partners</span>
+            <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Expedia via Stay22</span>
+            <span className="blb-h">Search on Expedia</span>
             <span className="blb-d">
               {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
             </span>
-            <span className="blb-d" style={{marginTop:2}}>Expedia, Hotels.com, Agoda ↗</span>
-            <span className="blb-d" style={{marginTop:2}}>Affiliate partners include Expedia, Hotels.com and Agoda</span>
+            <span className="blb-d" style={{marginTop:2}}>Your dates & travelers already filled in ↗</span>
+          </span>
+        </a>
+
+        <a
+          href={buildHotelsComSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data))}
+          onClick={(e) => {
+            e.preventDefault();
+            openExternalWebsite(
+              buildHotelsComSearchLink(data, data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)),
+              {step:4, anchor:"booking-stay"}
+            );
+          }}
+          rel="noopener noreferrer sponsored"
+          className="booking-link-btn"
+          style={{marginTop:10}}
+        >
+          <span className="blb-icon">🏨</span>
+          <span className="blb-text">
+            <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Hotels.com via Stay22</span>
+            <span className="blb-h">Search on Hotels.com</span>
+            <span className="blb-d">
+              {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
+            </span>
+            <span className="blb-d" style={{marginTop:2}}>Your dates & travelers already filled in ↗</span>
           </span>
         </a>
         <div className="price-entry-row">
