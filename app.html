@@ -6588,8 +6588,11 @@ function LiveTranslator() {
     if (isIOSDevice()) {
       __nativeSpeechHandlers = {
         onResult: (text, isFinal) => {
-          if (isFinal && text) {
+          if (text) {
+            // Show partial recognition immediately in the Translate input.
             setInputText(text);
+          }
+          if (isFinal && text) {
             translate(text);
           }
           if (isFinal) setListening(false);
@@ -6636,8 +6639,11 @@ function LiveTranslator() {
     if (hasNativeSpeechBridge()) {
       __nativeSpeechHandlers = {
         onResult: (text, isFinal) => {
-          if (isFinal && text) {
+          if (text) {
+            // Show partial recognition immediately in the Translate input.
             setInputText(text);
+          }
+          if (isFinal && text) {
             translate(text);
           }
           if (isFinal) setListening(false);
