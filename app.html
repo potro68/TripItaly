@@ -6579,6 +6579,36 @@ function LiveTranslator() {
     setLoading(false);
   };
 
+
+  const playMicStartBeep = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.value = 880;
+
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.16, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.10);
+
+      osc.onended = () => {
+        try { ctx.close(); } catch (_) {}
+      };
+    } catch (_) {}
+  };
+
   const startListening = () => {
     const deviceLang = navigator.language || navigator.userLanguage || "en-US";
     const lang = speechLang === "auto" ? deviceLang : speechLang;
@@ -6586,6 +6616,8 @@ function LiveTranslator() {
     // iPhone/iPad: use a JavaScript prompt intercepted by WKUIDelegate.
     // This avoids window.webkit.messageHandlers and does not navigate/reload the page.
     if (isIOSDevice()) {
+      playMicStartBeep();
+
       __nativeSpeechHandlers = {
         onResult: (text, isFinal) => {
           if (text) {
