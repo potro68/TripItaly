@@ -3326,7 +3326,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         >
           <span className="blb-icon">🏨</span>
           <span className="blb-text">
-            <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Expedia via Stay22</span>
+            <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Expedia</span>
             <span className="blb-h">Search on Expedia</span>
             <span className="blb-d">
               {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
@@ -3350,7 +3350,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         >
           <span className="blb-icon">🏨</span>
           <span className="blb-text">
-            <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Hotels.com via Stay22</span>
+            <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Hotels.com</span>
             <span className="blb-h">Search on Hotels.com</span>
             <span className="blb-d">
               {(data.stayCity !== undefined ? data.stayCity : guessedStayCity(data)) || "Italy"} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people || 1} guest{(data.people || 1) > 1 ? "s" : ""}
