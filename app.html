@@ -6557,23 +6557,7 @@ function LiveTranslator() {
   }, [inputText]);
 
   const speakItalianText = (text) => {
-    if (!text) return;
-
-    // iPhone/iPad: use native AVSpeechSynthesizer through the prompt bridge.
-    // Automatic Web Speech can be blocked by iOS after an async translation response.
-    if (isIOSDevice()) {
-      try {
-        setSpeaking(true);
-        const reply = window.prompt("go687tts:speak", text);
-        if (reply !== "OK") setSpeaking(false);
-      } catch (_) {
-        setSpeaking(false);
-      }
-      return;
-    }
-
-    // Android/web: keep the existing browser speech synthesis.
-    if (!("speechSynthesis" in window)) return;
+    if (!text || !("speechSynthesis" in window)) return;
 
     try {
       window.speechSynthesis.cancel();
