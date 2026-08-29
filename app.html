@@ -6665,6 +6665,26 @@ function LiveTranslator() {
     <div className="field">
       <label>Translate anything to Italian</label>
       <p className="park-hint">Type in any language — or choose the language you're speaking before using the microphone.</p>
+
+      <div style={{
+        margin:"8px 0 12px",
+        padding:"10px 12px",
+        border:"1px solid rgba(244,185,62,.45)",
+        borderRadius:10,
+        background:"rgba(14,59,82,.08)",
+        fontSize:11,
+        lineHeight:1.5,
+        color:"#132A3A",
+        wordBreak:"break-word"
+      }}>
+        <div style={{fontWeight:800, marginBottom:4}}>iOS bridge diagnostic</div>
+        <div>webkit: {typeof window.webkit !== "undefined" ? "YES" : "no"}</div>
+        <div>messageHandlers: {(window.webkit && window.webkit.messageHandlers) ? "YES" : "no"}</div>
+        <div>speech-start: {(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speech-start"]) ? "YES" : "no"}</div>
+        <div>nativeSpeechStart: {typeof window.nativeSpeechStart === "function" ? "YES" : "no"}</div>
+        <div>__687NativeSpeechBridge: {window.__687NativeSpeechBridge ? "YES" : "no"}</div>
+        <div>userAgent: {navigator.userAgent}</div>
+      </div>
       <p style={{fontSize:11, color:"#999", marginTop:2}}>
         Debug: native bridge = {hasNativeSpeechBridge() ? "YES" : "no"}, webkit = {typeof window.webkit !== "undefined" ? "yes" : "no"}, handlers = {(window.webkit && window.webkit.messageHandlers) ? Object.keys(window.webkit.messageHandlers).join(", ") : "none"}
       </p>
