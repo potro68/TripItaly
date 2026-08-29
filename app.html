@@ -6607,18 +6607,16 @@ function LiveTranslator() {
       setError("");
 
       try {
-        setError("JS CHECK 1: calling native prompt...");
         const reply = window.prompt("go687speech:start", lang);
 
         if (reply === "OK") {
-          setError("JS CHECK 2: native prompt answered OK");
+          setError("");
 
           let checks = 0;
           const statusTimer = setInterval(() => {
             checks++;
             try {
               const status = window.prompt("go687speech:status", "");
-              if (status) setError("SWIFT STATUS: " + status);
 
               if (status && status.startsWith("HEARING:")) {
                 const spoken = status.slice("HEARING:".length).trim();
@@ -6629,14 +6627,22 @@ function LiveTranslator() {
                 const spoken = status.slice("RESULT:".length).trim();
                 if (spoken) {
                   setInputText(spoken);
+                  setError("");
                   translate(spoken);
                 }
                 setListening(false);
                 clearInterval(statusTimer);
               }
 
-              if (status && (status.startsWith("ERROR:") || status.startsWith("TIMEOUT:"))) {
+              if (status && status.startsWith("ERROR:")) {
                 setListening(false);
+                setError("Microphone problem. Please try again.");
+                clearInterval(statusTimer);
+              }
+
+              if (status && status.startsWith("TIMEOUT:")) {
+                setListening(false);
+                setError("I couldn't hear you. Please try again.");
                 clearInterval(statusTimer);
               }
             } catch (_) {}
@@ -6729,9 +6735,6 @@ function LiveTranslator() {
     <div className="field">
       <label>Translate anything to Italian</label>
       <p className="park-hint">Type in any language — or choose the language you're speaking before using the microphone.</p>
-      <p style={{fontSize:11, color:"#999", marginTop:2}}>
-        Debug: native bridge = {hasNativeSpeechBridge() ? "YES" : "no"}, webkit = {typeof window.webkit !== "undefined" ? "yes" : "no"}, handlers = {(window.webkit && window.webkit.messageHandlers) ? Object.keys(window.webkit.messageHandlers).join(", ") : "none"}
-      </p>
 
       {micSupported && (
         <div style={{marginBottom:10}}>
