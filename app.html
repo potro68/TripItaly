@@ -6602,7 +6602,12 @@ function LiveTranslator() {
       };
       setListening(true);
       setError("");
-      window.location.href = `go687speech://start?lang=${encodeURIComponent(lang)}`;
+      // Send the native command without navigating the main page.
+      const bridgeFrame = document.createElement("iframe");
+      bridgeFrame.style.display = "none";
+      bridgeFrame.src = `go687speech://start?lang=${encodeURIComponent(lang)}`;
+      document.body.appendChild(bridgeFrame);
+      setTimeout(() => bridgeFrame.remove(), 1000);
       return;
     }
 
