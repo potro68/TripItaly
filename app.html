@@ -2861,22 +2861,26 @@ function buildCarRentalLink(data) {
 }
 
 // Vrbo via Stay22 Allez (same STAY22_AID as the hotel comparator).
+// Uses Stay22's dedicated /allez/vrbo endpoint so clicks/bookings are
+// attributed to our Stay22 AID while preserving destination, dates and guests.
 function buildVrboSearchLink(data, cityOverride) {
   const city = (cityOverride || data.stayCity || guessedStayCity(data) || "").trim();
-  if (!city || !data.startDate || !data.endDate) {
-    return "https://www.vrbo.com/it-it/search";
-  }
-
   const adults = Math.max(1, Number(data.people) || 1);
 
   const params = new URLSearchParams({
-    destination: `${city}, Italia`,
-    startDate: data.startDate,
-    endDate: data.endDate,
+    aid: STAY22_AID,
+    campaign: "687italy-vrbo",
+    address: city ? `${city}, Italy` : "Italy",
     adults: String(adults),
-    sort: "RECOMMENDED",
+    children: "0",
+    lang: "en",
+    currency: "EUR",
   });
-  return `https://www.vrbo.com/it-it/search?${params.toString()}`;
+
+  if (data.startDate) params.set("checkin", data.startDate);
+  if (data.endDate) params.set("checkout", data.endDate);
+
+  return `https://www.stay22.com/allez/vrbo?${params.toString()}`;
 }
 
 function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
