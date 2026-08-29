@@ -6609,6 +6609,19 @@ function LiveTranslator() {
 
         if (reply === "OK") {
           setError("JS CHECK 2: native prompt answered OK");
+
+          let checks = 0;
+          const statusTimer = setInterval(() => {
+            checks++;
+            try {
+              const status = window.prompt("go687speech:status", "");
+              if (status) setError("SWIFT STATUS: " + status);
+              if (status && (status.startsWith("RESULT:") || status.startsWith("ERROR:") || status.startsWith("TIMEOUT:"))) {
+                clearInterval(statusTimer);
+              }
+            } catch (_) {}
+            if (checks >= 15) clearInterval(statusTimer);
+          }, 1000);
         } else {
           setListening(false);
           setError("JS CHECK 2: native prompt reply = " + String(reply));
