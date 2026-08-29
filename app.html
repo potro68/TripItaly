@@ -6604,14 +6604,18 @@ function LiveTranslator() {
       setError("");
 
       try {
+        setError("JS CHECK 1: calling native prompt...");
         const reply = window.prompt("go687speech:start", lang);
-        if (reply !== "OK") {
+
+        if (reply === "OK") {
+          setError("JS CHECK 2: native prompt answered OK");
+        } else {
           setListening(false);
-          setError("iOS native microphone bridge did not answer.");
+          setError("JS CHECK 2: native prompt reply = " + String(reply));
         }
       } catch (e) {
         setListening(false);
-        setError("iOS native microphone bridge could not start.");
+        setError("JS CHECK ERROR: " + String(e && e.message ? e.message : e));
       }
       return;
     }
