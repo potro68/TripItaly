@@ -6619,7 +6619,24 @@ function LiveTranslator() {
             try {
               const status = window.prompt("go687speech:status", "");
               if (status) setError("SWIFT STATUS: " + status);
-              if (status && (status.startsWith("RESULT:") || status.startsWith("ERROR:") || status.startsWith("TIMEOUT:"))) {
+
+              if (status && status.startsWith("HEARING:")) {
+                const spoken = status.slice("HEARING:".length).trim();
+                if (spoken) setInputText(spoken);
+              }
+
+              if (status && status.startsWith("RESULT:")) {
+                const spoken = status.slice("RESULT:".length).trim();
+                if (spoken) {
+                  setInputText(spoken);
+                  translate(spoken);
+                }
+                setListening(false);
+                clearInterval(statusTimer);
+              }
+
+              if (status && (status.startsWith("ERROR:") || status.startsWith("TIMEOUT:"))) {
+                setListening(false);
                 clearInterval(statusTimer);
               }
             } catch (_) {}
