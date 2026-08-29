@@ -6455,7 +6455,7 @@ function b64DecodeUnicode(str) {
 }
 
 function hasNativeSpeechBridge() {
-  // iOS uses the private go687speech:// bridge intercepted by WKWebView.
+  // iOS uses window.prompt(), intercepted directly by WKUIDelegate.
   if (isIOSDevice()) return true;
   return !!(
     window.__687NativeSpeechBridge ||
@@ -6583,8 +6583,8 @@ function LiveTranslator() {
     const deviceLang = navigator.language || navigator.userLanguage || "en-US";
     const lang = speechLang === "auto" ? deviceLang : speechLang;
 
-    // iPhone/iPad: bypass Web Speech and window.webkit.messageHandlers.
-    // WKWebView intercepts this URL and calls SFSpeechRecognizer directly.
+    // iPhone/iPad: use a JavaScript prompt intercepted by WKUIDelegate.
+    // This avoids window.webkit.messageHandlers and does not navigate/reload the page.
     if (isIOSDevice()) {
       __nativeSpeechHandlers = {
         onResult: (text, isFinal) => {
@@ -6602,12 +6602,17 @@ function LiveTranslator() {
       };
       setListening(true);
       setError("");
-      // Send the native command without navigating the main page.
-      const bridgeFrame = document.createElement("iframe");
-      bridgeFrame.style.display = "none";
-      bridgeFrame.src = `go687speech://start?lang=${encodeURIComponent(lang)}`;
-      document.body.appendChild(bridgeFrame);
-      setTimeout(() => bridgeFrame.remove(), 1000);
+
+      try {
+        const reply = window.prompt("go687speech:start", lang);
+        if (reply !== "OK") {
+          setListening(false);
+          setError("iOS native microphone bridge did not answer.");
+        }
+      } catch (e) {
+        setListening(false);
+        setError("iOS native microphone bridge could not start.");
+      }
       return;
     }
 
