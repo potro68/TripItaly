@@ -3427,6 +3427,18 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
             <span className="blb-d" style={{marginTop:2}}>Your dates & travelers already filled in ↗</span>
           </span>
         </a>
+        <div style={{marginTop:16}}>
+          <label style={{display:"block", marginBottom:6}}>Your accommodation</label>
+          <p className="park-hint" style={{marginBottom:8}}>After booking, enter the hotel, B&amp;B, apartment name or full address. 687 Italy will use it for directions when you are in Italy.</p>
+          <input
+            type="text"
+            className="route-city-input"
+            placeholder="e.g. Hotel Artemide, Rome or Via Nazionale 22, Rome"
+            value={data.hotel || ""}
+            onChange={e => setData({...data, hotel: e.target.value})}
+          />
+        </div>
+
         <div className="price-entry-row">
           <span className="price-entry-label">After booking, enter the accommodation total:</span>
           <div className="price-entry-input">
@@ -3435,7 +3447,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
               type="number"
               placeholder="0"
               value={data.hotelPrice || ""}
-              onChange={e => setData({...data, hotelPrice: Number(e.target.value) || 0, hotel: data.hotel || "My accommodation"})}
+              onChange={e => setData({...data, hotelPrice: Number(e.target.value) || 0})}
             />
           </div>
         </div>
