@@ -3432,12 +3432,12 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           >
             <span className="blb-icon">🚗</span>
             <span className="blb-text">
-              <span className="blb-h">Compare rental cars on Kayak</span>
+              <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Kayak</span>
+              <span className="blb-h">Search on Kayak</span>
               <span className="blb-d">
                 {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)}
               </span>
-              <span className="blb-d" style={{marginTop:2}}>Compare rental car options for your trip ↗</span>
-              <span className="blb-d" style={{marginTop:2}}>Affiliate partner: Kayak</span>
+              <span className="blb-d" style={{marginTop:2}}>Your trip details already filled in ↗</span>
             </span>
           </a>
           <div className="price-entry-row">
@@ -4491,11 +4491,11 @@ function ScreenFlights({ data, setData, onNext, onBack }) {
         >
           <span className="blb-icon">✈️</span>
           <span className="blb-text">
-            <span className="blb-h">Search real fares on Aviasales</span>
+            <span className="blb-d" style={{marginBottom:2}}>Affiliate partner: Aviasales</span>
+            <span className="blb-h">Search on Aviasales</span>
             <span className="blb-d">
               {originIATA} → {airport.code} · {data.people} traveler{data.people > 1 ? "s" : ""}, dates pre-filled ↗
             </span>
-            <span className="blb-d" style={{marginTop:2}}>Affiliate partner: Aviasales</span>
           </span>
         </a>
 
