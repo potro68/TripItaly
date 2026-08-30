@@ -2946,6 +2946,9 @@ function buildCarRentalLink(data) {
     address: location
   });
 
+  if (data?.startDate) params.set("checkin", data.startDate);
+  if (data?.endDate) params.set("checkout", data.endDate);
+
   return `https://www.stay22.com/allez/kayak?${params.toString()}`;
 }
 
