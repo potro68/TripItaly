@@ -7553,7 +7553,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
     return () => clearInterval(timer);
   }, []);
   const trialState = getTrialState(trialNow);
-  const italyAccess = Boolean(data.arrived || trialState.active);
+  const italyAccess = Boolean(data.arrived);
 
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
