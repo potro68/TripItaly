@@ -2887,12 +2887,33 @@ function buildBookingLink(data) {
 // Keep this separate from hotel campaigns so Stay22 reporting clearly shows car traffic.
 const KAYAK_CAR_STAY22_AID = "tripitaly";
 
+const KAYAK_CAR_AIRPORT_LOCATIONS = {
+  MXP: "Milan Malpensa Airport",
+  LIN: "Milan Linate Airport",
+  BGY: "Bergamo Orio al Serio Airport",
+  FCO: "Rome Fiumicino Airport",
+  CIA: "Rome Ciampino Airport",
+  NAP: "Naples International Airport",
+  VCE: "Venice Marco Polo Airport",
+  TSF: "Treviso Airport",
+  TRN: "Turin Airport",
+  GOA: "Genoa Airport",
+  BLQ: "Bologna Airport",
+  BRI: "Bari Airport",
+  PSA: "Pisa Airport",
+  VRN: "Verona Airport",
+  CTA: "Catania Airport",
+  PMO: "Palermo Airport",
+  SUF: "Lamezia Terme Airport",
+  REG: "Reggio Calabria Airport"
+};
+
 function buildCarRentalLink(data) {
   const airportCode = String(data?.airport || "").toUpperCase();
   const airport = AIRPORTS.find(a => a.code === airportCode);
-  const location = airport
-    ? `${airport.city} Airport ${airport.code}, Italy`
-    : (data?.stayCity ? `${data.stayCity}, Italy` : "Italy");
+  const location = KAYAK_CAR_AIRPORT_LOCATIONS[airportCode]
+    || (airport ? `${airport.city} Airport` : null)
+    || (data?.stayCity ? `${data.stayCity}, Italy` : "Italy");
 
   const params = new URLSearchParams({
     aid: KAYAK_CAR_STAY22_AID,
