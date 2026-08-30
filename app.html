@@ -252,6 +252,48 @@
     opacity:0.85;
     font-weight:500;
   }
+  .intro-language-row{
+    margin-top:14px;
+    display:flex;
+    justify-content:center;
+  }
+  .intro-language-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 9px;
+    border:1px solid rgba(255,255,255,0.22);
+    border-radius:999px;
+    background:rgba(255,255,255,0.08);
+    color:rgba(255,255,255,0.86);
+    font-size:11px;
+    font-weight:600;
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+  }
+  .intro-language-pill select{
+    appearance:none;
+    -webkit-appearance:none;
+    border:0;
+    outline:0;
+    background:transparent;
+    color:var(--sun);
+    font-family:'Sora',sans-serif;
+    font-size:11px !important;
+    font-weight:700;
+    padding:0 12px 0 0;
+    cursor:pointer;
+  }
+  .intro-language-pill select option{
+    color:var(--ink);
+    background:#fff;
+  }
+  .intro-language-chevron{
+    margin-left:-11px;
+    color:var(--sun);
+    pointer-events:none;
+    font-size:9px;
+  }
   .intro-lead{
     padding:28px 24px 4px;
     font-family:'Fraunces', serif;
@@ -3674,7 +3716,7 @@ const CUISINE = [
   { icon: "🍅", label: "Bruschetta al Pomodoro", region: "Tuscany", grad: "linear-gradient(135deg, #C0523B, #8E3A28)", photo: IMG_BRUSCHETTA },
 ];
 
-function ScreenIntro({ onNext }) {
+function ScreenIntro({ onNext, uiLanguage, setUiLanguage }) {
   const [expanded, setExpanded] = useState(null);
   return (
     <div className="screen intro-screen">
@@ -3683,6 +3725,15 @@ function ScreenIntro({ onNext }) {
         <div className="intro-eyebrow">Welcome to</div>
         <h1 className="intro-title">687 <span className="accent-ink">Italy</span></h1>
         <p className="intro-tagline">Plan your trip, control your budget.</p>
+        <div className="intro-language-row">
+          <div className="intro-language-pill" title="Changes the navigation menu language">
+            <span>🌐 Menu</span>
+            <select value={uiLanguage} onChange={e=>setUiLanguage(e.target.value)} aria-label="Menu language">
+              {MENU_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.label}</option>)}
+            </select>
+            <span className="intro-language-chevron">▾</span>
+          </div>
+        </div>
       </div>
 
       <p className="intro-lead">Italy is never just one trip. What pulls you in?</p>
@@ -8058,7 +8109,7 @@ function App() {
   if (step === 0) {
     return (
       <div className="app">
-        <ScreenIntro onNext={() => setStep(1)} />
+        <ScreenIntro onNext={() => setStep(1)} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} />
       </div>
     );
   }
