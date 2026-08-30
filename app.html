@@ -6057,7 +6057,7 @@ function NavigateButton({ destination, label, className }) {
   );
 }
 
-function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedStops, onAddStop, onRemoveStop, onCityChange, onGoTo, dailyAmount, transfer }) {
+function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedStops, onAddStop, onRemoveStop, onCityChange, onGoTo, dailyAmount, transfer, liveItalyAccess }) {
   const dateLabel = date ? date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : `Day ${dayNum}`;
   const [editingCity, setEditingCity] = useState(false);
   const [cityDraft, setCityDraft] = useState(city || "");
@@ -6118,17 +6118,29 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
         </div>
       )}
 
-      {isToday
-        ? <LiveLocationMap data={data} compact />
-        : <CityMap city={city} />
-      }
+      {liveItalyAccess ? (
+        <>
+          {isToday
+            ? <LiveLocationMap data={data} compact />
+            : <CityMap city={city} />
+          }
 
-      {data.hotel && (
-        <NavigateButton
-          destination={data.hotel}
-          label={`🏨 Directions to ${data.hotel} ↗`}
-          className="hotel-directions-btn"
-        />
+          {data.hotel && (
+            <NavigateButton
+              destination={data.hotel}
+              label={`🏨 Directions to ${data.hotel} ↗`}
+              className="hotel-directions-btn"
+            />
+          )}
+        </>
+      ) : (
+        <div className="nearby-permission-card" style={{marginTop:14}}>
+          <div className="nearby-permission-icon">🗺️</div>
+          <div className="nearby-permission-title">Live maps will be available when you are in Italy</div>
+          <p className="nearby-permission-text">
+            You can still plan every day now and search trains, flights and transfers before your trip.
+          </p>
+        </div>
       )}
 
       <div className="field">
@@ -6162,24 +6174,26 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
           <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { if(stopInput.trim()){ onAddStop(stopInput.trim()); setStopInput(""); } }}>+ Add</button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onGoTo("nearby")}
-          className="booking-link-btn"
-          style={{width:"100%", border:"none", cursor:"pointer", textAlign:"left", marginTop:12}}
-        >
-          <span className="blb-icon">📍</span>
-          <span className="blb-text">
-            <span className="blb-h">Find real places with Nearby</span>
-            <span className="blb-d">Restaurants, cafés, attractions and useful places around you →</span>
-          </span>
-        </button>
+        {liveItalyAccess && (
+          <button
+            type="button"
+            onClick={() => onGoTo("nearby")}
+            className="booking-link-btn"
+            style={{width:"100%", border:"none", cursor:"pointer", textAlign:"left", marginTop:12}}
+          >
+            <span className="blb-icon">📍</span>
+            <span className="blb-text">
+              <span className="blb-h">Find real places with Nearby</span>
+              <span className="blb-d">Restaurants, cafés, attractions and useful places around you →</span>
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
+function DashItinerary({ data, setData, onGoTo, dailyAmount, liveItalyAccess }) {
   const days = (data.routeBlocks && data.routeBlocks.length)
     ? data.routeBlocks
     : [{
@@ -6328,6 +6342,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
         onGoTo={onGoTo}
         dailyAmount={dailyAmount}
         transfer={transfer}
+        liveItalyAccess={liveItalyAccess}
       />
     </div>
   );
@@ -7623,16 +7638,19 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
           </div>
         ))}
         <div className="dash-nav-divider"></div>
-        {italySections.map(s => (
-          <div
-            key={s.id}
-            className={"dash-nav-item" + (section === s.id ? " active" : "") + (!(italyAccess) ? " locked" : "")}
-            onClick={() => (italyAccess) && goSection(s.id)}
-          >
-            <div className="dash-nav-icon">{(italyAccess) ? s.icon : "🔒"}</div>
-            <div className="dash-nav-label">{menuLabel(s.id, uiLanguage)}</div>
-          </div>
-        ))}
+        {italySections.map(s => {
+          const sectionAccess = s.id === "itinerary" || italyAccess;
+          return (
+            <div
+              key={s.id}
+              className={"dash-nav-item" + (section === s.id ? " active" : "") + (!sectionAccess ? " locked" : "")}
+              onClick={() => sectionAccess && goSection(s.id)}
+            >
+              <div className="dash-nav-icon">{sectionAccess ? s.icon : "🔒"}</div>
+              <div className="dash-nav-label">{menuLabel(s.id, uiLanguage)}</div>
+            </div>
+          );
+        })}
       </div>
       <div className="dash-content">
         <h1 className="title" style={{fontSize:22, marginBottom:4}}>
@@ -7644,7 +7662,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
-        {section === "itinerary" && (italyAccess) && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
+        {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} liveItalyAccess={Boolean(data.arrived)} />}
         {section === "nearby" && (italyAccess) && <DashNearby data={data} setData={setData} />}
         {section === "drive" && (italyAccess) && data.wantsCar && <DashDrive data={data} setData={setData} />}
         {section === "translate" && (italyAccess) && <DashTranslate />}
