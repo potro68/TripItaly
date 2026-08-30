@@ -2883,36 +2883,25 @@ function buildBookingLink(data) {
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
-// DiscoverCars affiliate deeplinks by airport.
-// Extra airports are kept here as well so they are ready for internal-trip flows.
-const DISCOVERCARS_AID = "potro68";
-const DISCOVERCARS_AIRPORT_LINKS = {
-  MXP: "https://www.discovercars.com/italy-mainland/milan/mxp?a_aid=potro68",
-  LIN: "https://www.discovercars.com/italy-mainland/milan/lin?a_aid=potro68",
-  BGY: "https://www.discovercars.com/italy-mainland/bergamo/bgy?a_aid=potro68",
-  FCO: "https://www.discovercars.com/italy-mainland/rome/fco?a_aid=potro68",
-  CIA: "https://www.discovercars.com/italy-mainland/rome/cia?a_aid=potro68",
-  NAP: "https://www.discovercars.com/italy-mainland/naples/nap?a_aid=potro68",
-  VCE: "https://www.discovercars.com/italy-mainland/venice/vce?a_aid=potro68",
-  TRN: "https://www.discovercars.com/italy-mainland/turin/trn?a_aid=potro68",
-  SUF: "https://www.discovercars.com/italy-mainland/lamezia-terme/suf?a_aid=potro68",
-  REG: "https://www.discovercars.com/italy-mainland/reggio-di-calabria/reg?a_aid=potro68",
-  GOA: "https://www.discovercars.com/italy-mainland/genova/goa?a_aid=potro68",
-  BLQ: "https://www.discovercars.com/italy-mainland/bologna/blq?a_aid=potro68",
-  BRI: "https://www.discovercars.com/italy-mainland/bari/bri?a_aid=potro68",
-  PSA: "https://www.discovercars.com/italy-mainland/pisa/psa?a_aid=potro68",
-  VRN: "https://www.discovercars.com/italy-mainland/verona/vrn?a_aid=potro68",
-  TSF: "https://www.discovercars.com/italy-mainland/treviso/tsf?a_aid=potro68",
-  // PMO (Palermo) and CTA (Catania) not mapped: confirmed 404 under both
-  // the city-name and airport-name slug variants tried. Falls through to
-  // the homepage link below (still tracked via DISCOVERCARS_AID). CTA is
-  // in our arrivals list, so worth another look with fresh eyes later.
-};
+// Rental cars via Stay22 Allez → Kayak.
+// Keep this separate from hotel campaigns so Stay22 reporting clearly shows car traffic.
+const KAYAK_CAR_STAY22_AID = "tripitaly";
 
 function buildCarRentalLink(data) {
   const airportCode = String(data?.airport || "").toUpperCase();
-  return DISCOVERCARS_AIRPORT_LINKS[airportCode]
-    || `https://www.discovercars.com/?a_aid=${DISCOVERCARS_AID}`;
+  const airport = AIRPORTS.find(a => a.code === airportCode);
+  const location = airport
+    ? `${airport.city} Airport ${airport.code}, Italy`
+    : (data?.stayCity ? `${data.stayCity}, Italy` : "Italy");
+
+  const params = new URLSearchParams({
+    aid: KAYAK_CAR_STAY22_AID,
+    campaign: "687italy-kayak-car",
+    category: "car",
+    address: location
+  });
+
+  return `https://www.stay22.com/allez/kayak?${params.toString()}`;
 }
 
 // Vrbo via Stay22 Allez (same STAY22_AID as the hotel comparator).
@@ -3422,12 +3411,12 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           >
             <span className="blb-icon">🚗</span>
             <span className="blb-text">
-              <span className="blb-h">Search rental cars on DiscoverCars</span>
+              <span className="blb-h">Compare rental cars on Kayak</span>
               <span className="blb-d">
                 {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)}
               </span>
               <span className="blb-d" style={{marginTop:2}}>Compare rental car options for your trip ↗</span>
-              <span className="blb-d" style={{marginTop:2}}>Affiliate partner: DiscoverCars</span>
+              <span className="blb-d" style={{marginTop:2}}>Affiliate partner: Kayak</span>
             </span>
           </a>
           <div className="price-entry-row">
