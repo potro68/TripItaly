@@ -2301,6 +2301,20 @@
     color:#F4C84A !important;
   }
 
+  body.theme-navy .offline-card-d{
+    color:rgba(255,240,185,.72) !important;
+  }
+  body.theme-navy .wallet-mini-btn{
+    background:rgba(244,200,74,.10) !important;
+    color:#F4C84A !important;
+    border-color:rgba(244,200,74,.3) !important;
+  }
+  body.theme-navy .wallet-mini-btn.danger{
+    background:rgba(192,57,43,.14) !important;
+    color:#FF8A75 !important;
+    border-color:rgba(192,57,43,.35) !important;
+  }
+
   body.theme-navy .translation-result{
     background:rgba(244,200,74,.10) !important;
   }
@@ -2428,6 +2442,10 @@ const AIRPORTS = [
   { code: "VRN", city: "Verona (Villafranca)", tags: ["History & Art", "Lakes"], mapX: 43, mapY: 24, lat: 45.3957, lng: 10.8885 },
   { code: "BLQ", city: "Bologna (Marconi)", tags: ["City", "History & Art"], mapX: 45, mapY: 29, lat: 44.5354, lng: 11.2887 },
   { code: "TSF", city: "Treviso (Sant'Angelo)", tags: ["City", "History & Art"], mapX: 50, mapY: 22, lat: 45.6484, lng: 12.1944 },
+  { code: "OLB", city: "Olbia (Costa Smeralda)", tags: ["Sea"], mapX: 15, mapY: 50, lat: 40.8987, lng: 9.5175 },
+  { code: "CAG", city: "Cagliari (Elmas)", tags: ["Sea", "History & Art"], mapX: 13, mapY: 63, lat: 39.2515, lng: 9.0543 },
+  { code: "AHO", city: "Alghero", tags: ["Sea", "History & Art"], mapX: 10, mapY: 47, lat: 40.6321, lng: 8.2908 },
+  { code: "SUF", city: "Lamezia Terme", tags: ["Sea", "Mountains"], mapX: 73, mapY: 67, lat: 38.9053, lng: 16.2423 },
 ];
 
 // ---- Travelpayouts Data API integration, via a Cloudflare Worker proxy ----
@@ -2888,24 +2906,27 @@ function buildBookingLink(data) {
 const KAYAK_CAR_STAY22_AID = "tripitaly";
 
 const KAYAK_CAR_AIRPORT_LOCATIONS = {
-  MXP: "Milan Malpensa Airport",
-  LIN: "Milan Linate Airport",
-  BGY: "Bergamo Orio al Serio Airport",
-  FCO: "Rome Fiumicino Airport",
-  CIA: "Rome Ciampino Airport",
-  NAP: "Naples International Airport",
-  VCE: "Venice Marco Polo Airport",
-  TSF: "Treviso Airport",
-  TRN: "Turin Airport",
-  GOA: "Genoa Airport",
-  BLQ: "Bologna Airport",
-  BRI: "Bari Airport",
-  PSA: "Pisa Airport",
-  VRN: "Verona Airport",
-  CTA: "Catania Airport",
-  PMO: "Palermo Airport",
-  SUF: "Lamezia Terme Airport",
-  REG: "Reggio Calabria Airport"
+  MXP: "MXP",
+  LIN: "LIN",
+  BGY: "BGY",
+  FCO: "FCO",
+  CIA: "CIA",
+  NAP: "NAP",
+  VCE: "VCE",
+  TSF: "TSF",
+  TRN: "TRN",
+  GOA: "GOA",
+  BLQ: "BLQ",
+  BRI: "BRI",
+  PSA: "PSA",
+  VRN: "VRN",
+  CTA: "CTA",
+  PMO: "PMO",
+  SUF: "SUF",
+  REG: "REG",
+  OLB: "OLB",
+  CAG: "CAG",
+  AHO: "AHO"
 };
 
 function buildCarRentalLink(data) {
