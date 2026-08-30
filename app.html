@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>687 Italy</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1C5A7A">
@@ -1030,6 +1030,15 @@
     background:var(--amalfi-deep);
     color:#fff;
   }
+  button.nearby-add-btn-full{
+    appearance:none;
+    -webkit-appearance:none;
+    border:none;
+    font-family:inherit;
+    width:100%;
+  }
+  button.nearby-add-btn-full:disabled{ opacity:1; }
+
   .nearby-result-card{
     border:1.5px solid var(--line);
     border-radius:14px;
@@ -1182,6 +1191,25 @@
     background:var(--amalfi-deep);
     border-color:var(--amalfi-deep);
     color:#fff;
+  }
+  /* iOS/WKWebView: prevent focus zoom on form fields. */
+  @supports (-webkit-touch-callout: none) {
+    input, select, textarea {
+      font-size:16px !important;
+    }
+  }
+
+  .weather-city{
+    font-family:'Fraunces', serif;
+    font-size:21px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:2px;
+  }
+  .weather-location-note{
+    font-size:11px;
+    color:rgba(19,42,58,0.5);
+    margin-bottom:10px;
   }
   .weather-now-card{
     text-align:center;
@@ -5165,7 +5193,12 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           <div className="budget-recalc-value">€{suggestedDaily.toFixed(0)} / day</div>
           <div className="budget-recalc-copy">
             Suggested average for the remaining {remainingDays} day{remainingDays !== 1 ? "s" : ""}.
-            Every expense you add updates this amount and the total trip budget automatically.
+            {todayDiff > 0
+              ? ` Today's €${todayDiff.toFixed(0)} overspend is automatically spread across the remaining days.`
+              : todayDiff < 0
+                ? ` Today's €${Math.abs(todayDiff).toFixed(0)} saving is automatically added back across the remaining days.`
+                : ""}
+            Every expense you add recalculates this amount automatically.
           </div>
         </div>
       )}
@@ -5997,9 +6030,16 @@ function NavigateButton({ destination, label, className }) {
         <>
           <div className="navigate-menu-backdrop" onClick={() => setOpen(false)}></div>
           <div className="navigate-menu">
-            <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🗺️ Apple Maps</a>
+            {isIOSDevice() && (
+              <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🗺️ Apple Maps</a>
+            )}
             <a href={links.google} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>📍 Google Maps</a>
             <a href={links.waze} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🚗 Waze</a>
+            {isIOSDevice() && (
+              <div className="park-hint" style={{padding:"8px 12px 2px",margin:0}}>
+                To return after navigation, tap “687 Italy” at the top-left of your iPhone.
+              </div>
+            )}
           </div>
         </>
       )}
@@ -6234,6 +6274,13 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
 
       <div className="field">
         <label>Trip calendar</label>
+        <div className="choice-card selected" style={{marginBottom:10,cursor:"default"}}>
+          <div className="choice-icon">💡</div>
+          <div className="choice-text">
+            <div className="h">Tap any day to open its plan</div>
+            <div className="d">When you move to another city, tap that day to see train, flight and driving options for the transfer.</div>
+          </div>
+        </div>
         <div className="day-strip">
           {Array.from({length: totalDays}, (_, i) => i + 1).map(dayNum => {
             const date = tripDateForDay(data, dayNum);
@@ -6322,10 +6369,13 @@ function DashNearby({ data, setData }) {
 
   const addToItinerary = (place) => {
     if (!todayDayNum) return;
-    const dayPlans = data.dayPlans || {};
-    const current = dayPlans[todayDayNum] || [];
-    setData({...data, dayPlans: {...dayPlans, [todayDayNum]: [...current, place.name]}});
-    setAddedIds({...addedIds, [place.id]: true});
+    setData(prev => {
+      const dayPlans = prev.dayPlans || {};
+      const current = dayPlans[todayDayNum] || [];
+      if (current.includes(place.name)) return prev;
+      return {...prev, dayPlans: {...dayPlans, [todayDayNum]: [...current, place.name]}};
+    });
+    setAddedIds(prev => ({...prev, [place.id]: true}));
   };
 
   const locate = () => {
@@ -6469,12 +6519,19 @@ function DashNearby({ data, setData }) {
                 </div>
               </div>
               {todayDayNum && (
-                <div
+                <button
+                  type="button"
                   className={"nearby-add-btn-full" + (addedIds[p.id] ? " added" : "")}
-                  onClick={() => !addedIds[p.id] && addToItinerary(p)}
+                  disabled={!!addedIds[p.id]}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!addedIds[p.id]) addToItinerary(p);
+                  }}
+                  style={{touchAction:"manipulation"}}
                 >
                   {addedIds[p.id] ? "✓ Added to itinerary" : "+ Add to itinerary"}
-                </div>
+                </button>
               )}
             </div>
           ))}
@@ -6991,6 +7048,7 @@ function DashWeather({ data }) {
   const [error, setError] = useState("");
   const [coords, setCoords] = useState(null);
   const [locStatus, setLocStatus] = useState("idle");
+  const [locationName, setLocationName] = useState("");
 
   const locate = () => {
     if (!("geolocation" in navigator)) { setLocStatus("unsupported"); return; }
@@ -7009,6 +7067,13 @@ function DashWeather({ data }) {
     if (!coords) return;
     setLoading(true);
     setError("");
+
+    // Resolve the current city from GPS. Weather still loads if this lookup fails.
+    fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coords.lat}&longitude=${coords.lng}&localityLanguage=en`)
+      .then(r => r.json())
+      .then(j => setLocationName(j.city || j.locality || j.principalSubdivision || ""))
+      .catch(() => setLocationName(""));
+
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=4`;
     fetch(url)
       .then(r => r.json())
@@ -7074,6 +7139,8 @@ function DashWeather({ data }) {
     <div className="field">
       <label>Weather right now</label>
       <div className="weather-now-card">
+        <div className="weather-city">{locationName || "Your current location"}</div>
+        <div className="weather-location-note">Live weather from your current GPS position</div>
         <div className="weather-now-icon">{current.icon}</div>
         <div className="weather-now-temp">{Math.round(weather.current.temperature_2m)}°C</div>
         <div className="weather-now-label">{current.label}</div>
