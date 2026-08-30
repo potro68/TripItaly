@@ -3687,6 +3687,11 @@ function ScreenIntro({ onNext }) {
             )}
             {expanded === i && (
               <div className="showcase-highlights">
+                {s.highlights.some(h => h.url) && (
+                  <div className="park-hint" style={{margin:"4px 2px 10px",fontWeight:600}}>
+                    👆 Tap a place below to open its booking or official information page. Red “Book ahead” labels mark attractions worth reserving in advance.
+                  </div>
+                )}
                 {s.photos && s.photos.length > 1 && (
                   <div className="showcase-thumb-strip">
                     {s.photos.map((p, pi) => (
@@ -3696,7 +3701,16 @@ function ScreenIntro({ onNext }) {
                 )}
                 {s.highlights.map(h => (
                   h.url ? (
-                    <a key={h.name} href={h.url} target="_blank" rel="noopener noreferrer" className="highlight-pill highlight-pill-link">
+                    <a
+                      key={h.name}
+                      href={h.url}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openExternalWebsite(h.url, {step:0});
+                      }}
+                      rel="noopener noreferrer"
+                      className="highlight-pill highlight-pill-link"
+                    >
                       📍 {h.name}
                       {h.booking && <span className="booking-badge">Book ahead ↗</span>}
                     </a>
@@ -3708,7 +3722,15 @@ function ScreenIntro({ onNext }) {
                   )
                 ))}
                 {s.highlights.some(h => h.booking) && (
-                  <a href={AFFILIATE_LINKS.attractions} target="_blank" rel="noopener noreferrer" className="tiqets-cta">
+                  <a
+                    href={AFFILIATE_LINKS.attractions}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openExternalWebsite(AFFILIATE_LINKS.attractions, {step:0});
+                    }}
+                    rel="noopener noreferrer sponsored"
+                    className="tiqets-cta"
+                  >
                     🎟️ Browse skip-the-line tickets on Tiqets ↗
                   </a>
                 )}
@@ -7556,9 +7578,24 @@ function DashTools({ data, onDeleteLocalData }) {
       <div className="field">
         <label>Privacy & support</label>
         <div className="legal-links">
-          <a className="legal-link" href="https://www.tripitaly.app/privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a>
-          <a className="legal-link" href="https://www.tripitaly.app/terms.html" target="_blank" rel="noopener noreferrer">Terms</a>
-          <a className="legal-link" href="https://www.tripitaly.app/support.html" target="_blank" rel="noopener noreferrer">Support</a>
+          <a
+            className="legal-link"
+            href="https://go687.com/italy/privacy.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/italy/privacy.html", {step:9, section:"tools"}); }}
+            rel="noopener noreferrer"
+          >Privacy</a>
+          <a
+            className="legal-link"
+            href="https://go687.com/italy/terms.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/italy/terms.html", {step:9, section:"tools"}); }}
+            rel="noopener noreferrer"
+          >Terms</a>
+          <a
+            className="legal-link"
+            href="https://go687.com/italy/support.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/italy/support.html", {step:9, section:"tools"}); }}
+            rel="noopener noreferrer"
+          >Support</a>
         </div>
       </div>
 
