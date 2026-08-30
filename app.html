@@ -5057,8 +5057,15 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
         setData({...data, arrived:true, gpsVerifiedCountry:"IT", gpsVerifiedAt:Date.now()});
         setGpsCheck({status:"ok", message:`GPS verified: ${loc.country}. Italy tools unlocked.`});
       } else {
+        startTrialIfNeeded();
+        const trial = getTrialState(Date.now());
         setData({...data, arrived:false, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
-        setGpsCheck({status:"blocked", message:`GPS verified: ${loc.country}. Italy tools stay locked until the phone is physically in Italy.`});
+        setGpsCheck({
+          status:trial.active ? "ok" : "blocked",
+          message:trial.active
+            ? `GPS verified: ${loc.country}. Your 2-hour pre-trip preview is active.`
+            : `GPS verified: ${loc.country}. Your preview has ended; live Italy tools will unlock when you arrive in Italy.`
+        });
       }
     } catch (e) {
       setData({...data, arrived:false});
@@ -5113,7 +5120,11 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
             <div className="arrival-toggle-d">
               {data.arrived
                 ? "GPS verified · Itinerary, Nearby, Drive, Translate & Tools are unlocked"
-                : (gpsCheck.status === "loading" ? "Checking real phone location…" : "Tap to verify your GPS location and unlock Italy tools")}
+                : (gpsCheck.status === "loading"
+                    ? "Checking real phone location…"
+                    : (data.gpsVerifiedCountry && data.gpsVerifiedCountry !== "IT" && trialState?.active)
+                      ? "Outside Italy · 2-hour preview is active"
+                      : "Tap to verify your GPS location")}
             </div>
           </div>
           <div className={"switch" + (data.arrived ? " on" : "")}><div className="switch-knob"></div></div>
@@ -5131,10 +5142,23 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
             setGpsCheck({status:"loading",message:"Checking GPS location and country…"});
             try {
               const loc = await detectCurrentCountry();
-              setGpsCheck({
-                status:loc.countryCode==="IT"?"ok":"blocked",
-                message:`GPS · ${loc.country} (${loc.countryCode || "?"}) · ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
-              });
+              if (loc.countryCode === "IT") {
+                setData({...data, gpsVerifiedCountry:"IT", gpsVerifiedAt:Date.now()});
+                setGpsCheck({
+                  status:"ok",
+                  message:`GPS · ${loc.country} (${loc.countryCode || "?"}) · ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
+                });
+              } else {
+                startTrialIfNeeded();
+                const trial = getTrialState(Date.now());
+                setData({...data, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
+                setGpsCheck({
+                  status:trial.active ? "ok" : "blocked",
+                  message:trial.active
+                    ? `GPS · ${loc.country}. 2-hour pre-trip preview active.`
+                    : `GPS · ${loc.country}. Preview ended; live tools unlock in Italy.`
+                });
+              }
             } catch(e) {
               setGpsCheck({status:"error",message:`GPS · ${e?.message || "failed"}`});
             }
@@ -5153,16 +5177,20 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           <div style={{fontWeight:800,fontSize:12.5}}>
             {data.arrived
               ? "🇮🇹 Italy access active"
-              : trialState?.active
-                ? `🎁 Pre-trip access active · ${formatTrialRemaining(trialState.remainingMs)} left`
-                : "🔒 Pre-trip access ended"}
+              : (data.gpsVerifiedCountry && data.gpsVerifiedCountry !== "IT")
+                ? (trialState?.active
+                    ? `🎁 Pre-trip preview active · ${formatTrialRemaining(trialState.remainingMs)} left`
+                    : "🔒 Pre-trip preview ended")
+                : "🗺️ Pre-trip planning"}
           </div>
           <div className="park-hint" style={{marginTop:4}}>
             {data.arrived
               ? "GPS verified in Italy. Live trip tools stay unlocked."
-              : trialState?.active
-                ? "All Italy tools are available outside Italy for 12 hours after first activation. The timer continues even if you close and reopen the app."
-                : "Your 12-hour pre-trip access has ended. Italy tools are locked outside Italy and will unlock again when GPS verifies that the phone is physically in Italy."}
+              : (data.gpsVerifiedCountry && data.gpsVerifiedCountry !== "IT")
+                ? (trialState?.active
+                    ? "All app tools are available for 2 hours so you can explore 687 Italy before your trip. The timer continues even if you close and reopen the app."
+                    : "Your 2-hour preview has ended. Itinerary remains available for planning; live Italy tools will unlock again when GPS verifies that you are in Italy.")
+                : "Itinerary is always available before your trip. Verify your GPS location to unlock Italy tools or start the 2-hour preview when you are outside Italy."}
           </div>
         </div>
       </div>
@@ -7548,12 +7576,13 @@ function DashTools({ data, onDeleteLocalData }) {
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
   const [trialNow, setTrialNow] = useState(Date.now());
   React.useEffect(() => {
-    ensureTrialStarted();
     const timer = setInterval(() => setTrialNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
   const trialState = getTrialState(trialNow);
-  const italyAccess = Boolean(data.arrived);
+  const outsideItalyVerified = Boolean(data.gpsVerifiedCountry && data.gpsVerifiedCountry !== "IT");
+  const preTripAccess = Boolean(outsideItalyVerified && trialState.active);
+  const italyAccess = Boolean(data.arrived || preTripAccess);
 
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
@@ -7662,7 +7691,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
-        {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} liveItalyAccess={Boolean(data.arrived)} />}
+        {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} liveItalyAccess={italyAccess} />}
         {section === "nearby" && (italyAccess) && <DashNearby data={data} setData={setData} />}
         {section === "drive" && (italyAccess) && data.wantsCar && <DashDrive data={data} setData={setData} />}
         {section === "translate" && (italyAccess) && <DashTranslate />}
@@ -7681,12 +7710,20 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
 const TRIPITALY_UI_KEY = "tripitaly_ui_state";
 const TRIP_ENGINE_ARCHIVE_KEY = "tripengine_trip_archive";
 const TRIP_ENGINE_RECOVERY_DAYS = 7;
-const TRIP_ENGINE_TRIAL_KEY = "tripengine_trial_started_at_v1";
-const TRIP_ENGINE_TRIAL_DURATION_MS = 12 * 60 * 60 * 1000; // 12-hour pre-trip access
+const TRIP_ENGINE_TRIAL_KEY = "tripengine_trial_started_at_v2";
+const TRIP_ENGINE_TRIAL_DURATION_MS = 2 * 60 * 60 * 1000; // 2-hour pre-trip preview outside Italy
 
-function ensureTrialStarted() {
+function getTrialStartedAt() {
   try {
-    let started = Number(localStorage.getItem(TRIP_ENGINE_TRIAL_KEY) || 0);
+    return Number(localStorage.getItem(TRIP_ENGINE_TRIAL_KEY) || 0);
+  } catch (e) {
+    return 0;
+  }
+}
+
+function startTrialIfNeeded() {
+  try {
+    let started = getTrialStartedAt();
     if (!started) {
       started = Date.now();
       localStorage.setItem(TRIP_ENGINE_TRIAL_KEY, String(started));
@@ -7698,7 +7735,8 @@ function ensureTrialStarted() {
 }
 
 function getTrialState(now = Date.now()) {
-  const started = ensureTrialStarted();
+  const started = getTrialStartedAt();
+  if (!started) return {started:0, endsAt:0, active:false, remainingMs:0};
   const endsAt = started + TRIP_ENGINE_TRIAL_DURATION_MS;
   const remainingMs = Math.max(0, endsAt - now);
   return {
