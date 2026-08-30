@@ -4671,6 +4671,21 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
         </div>
       </div>
 
+
+      <div className="field">
+        <label>User Guide</label>
+        <button
+          className="btn-secondary"
+          style={{width:"100%", textAlign:"left", padding:"14px 16px"}}
+          onClick={() => openExternalWebsite("https://go687.com/687-italy-user-guide.pdf", {step:9, section:"settings"})}
+        >
+          📖 User Guide
+          <span style={{display:"block", fontSize:12, fontWeight:500, opacity:.72, marginTop:4}}>
+            Learn how to plan and use 687 Italy
+          </span>
+        </button>
+      </div>
+
       {adminOpen && (
         <div className="field">
           <label>🔧 Admin diagnostics</label>
@@ -7586,14 +7601,14 @@ function DashTools({ data, onDeleteLocalData }) {
           >Privacy</a>
           <a
             className="legal-link"
-            href="https://potro68.github.io/TripItaly/terms.html"
-            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://potro68.github.io/TripItaly/terms.html", {step:9, section:"tools"}); }}
+            href="https://go687.com/terms.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/terms.html", {step:9, section:"tools"}); }}
             rel="noopener noreferrer"
           >Terms</a>
           <a
             className="legal-link"
-            href="https://potro68.github.io/TripItaly/support.html"
-            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://potro68.github.io/TripItaly/support.html", {step:9, section:"tools"}); }}
+            href="https://go687.com/support.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/support.html", {step:9, section:"tools"}); }}
             rel="noopener noreferrer"
           >Support</a>
         </div>
