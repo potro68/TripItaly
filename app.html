@@ -1449,6 +1449,16 @@
   }
   input.route-city-input:focus{ border-color:var(--sun); }
   input.route-city-input::placeholder{ color:#C4BEB0; }
+  .clearable-field{position:relative;flex:1;min-width:0;}
+  .clearable-field input.route-city-input{width:100%;padding-right:38px;}
+  .field-clear-btn{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    width:26px;height:26px;border:none;border-radius:50%;
+    background:rgba(19,42,58,0.10);color:var(--amalfi-deep);
+    font-family:'Sora',sans-serif;font-size:16px;font-weight:800;line-height:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  }
+  .field-clear-btn:active{background:rgba(19,42,58,0.18);}
   input.route-day-input{
     width:56px;
     border:1.5px solid var(--line);
@@ -3245,7 +3255,7 @@ function CityAutocomplete({ value, onChange }) {
   }, [value, userEditing]);
 
   return (
-    <div className="autocomplete-wrap">
+    <div className="autocomplete-wrap clearable-field">
       <input
         type="text"
         className="route-city-input"
@@ -3258,6 +3268,15 @@ function CityAutocomplete({ value, onChange }) {
         onFocus={() => userEditing && matches.length > 0 && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
+      {!!value && (
+        <button
+          type="button"
+          className="field-clear-btn"
+          aria-label="Clear city"
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => { onChange(""); setMatches([]); setOpen(false); setUserEditing(false); }}
+        >×</button>
+      )}
       {loading && <div className="autocomplete-loading">Searching…</div>}
       {open && matches.length > 0 && (
         <div className="autocomplete-list">
@@ -3430,13 +3449,18 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         <div style={{marginTop:16}}>
           <label style={{display:"block", marginBottom:6}}>Your accommodation</label>
           <p className="park-hint" style={{marginBottom:8}}>After booking, enter the hotel, B&amp;B, apartment name or full address. 687 Italy will use it for directions when you are in Italy.</p>
-          <input
-            type="text"
-            className="route-city-input"
-            placeholder="e.g. Hotel Artemide, Rome or Via Nazionale 22, Rome"
-            value={data.hotel || ""}
-            onChange={e => setData({...data, hotel: e.target.value})}
-          />
+          <div className="clearable-field">
+            <input
+              type="text"
+              className="route-city-input"
+              placeholder="e.g. Hotel Artemide, Rome or Via Nazionale 22, Rome"
+              value={data.hotel || ""}
+              onChange={e => setData({...data, hotel: e.target.value})}
+            />
+            {!!data.hotel && (
+              <button type="button" className="field-clear-btn" aria-label="Clear accommodation" onClick={() => setData({...data, hotel:""})}>×</button>
+            )}
+          </div>
         </div>
 
         <div className="price-entry-row">
@@ -5121,7 +5145,7 @@ async function detectCurrentCountry() {
   return {lat, lng, countryCode, country:json?.address?.country || countryCode || "Unknown"};
 }
 
-function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip, trialState }) {
+function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip }) {
   const [gpsCheck, setGpsCheck] = useState({status:"idle", message:""});
 
   const verifyItalyArrival = async () => {
@@ -5137,14 +5161,10 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
         setData({...data, arrived:true, gpsVerifiedCountry:"IT", gpsVerifiedAt:Date.now()});
         setGpsCheck({status:"ok", message:`GPS verified: ${loc.country}. Italy tools unlocked.`});
       } else {
-        startTrialIfNeeded();
-        const trial = getTrialState(Date.now());
         setData({...data, arrived:false, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
         setGpsCheck({
-          status:trial.active ? "ok" : "blocked",
-          message:trial.active
-            ? `GPS verified: ${loc.country}. Your 2-hour pre-trip preview is active.`
-            : `GPS verified: ${loc.country}. Your preview has ended; live Italy tools will unlock when you arrive in Italy.`
+          status:"ok",
+          message:`GPS verified: ${loc.country}. Nearby and live itinerary maps will unlock when you arrive in Italy.`
         });
       }
     } catch (e) {
@@ -5199,12 +5219,10 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
             <div className="arrival-toggle-h">{data.arrived ? "🇮🇹 You're in Italy" : "You are in Italy?"}</div>
             <div className="arrival-toggle-d">
               {data.arrived
-                ? "GPS verified · Itinerary, Nearby, Drive, Translate & Tools are unlocked"
+                ? "GPS verified · Nearby and live itinerary maps are unlocked"
                 : (gpsCheck.status === "loading"
                     ? "Checking real phone location…"
-                    : (data.gpsVerifiedCountry && data.gpsVerifiedCountry !== "IT" && trialState?.active)
-                      ? "Outside Italy · 2-hour preview is active"
-                      : "Tap to verify your GPS location")}
+                    : "Tap to verify your GPS location")}
             </div>
           </div>
           <div className={"switch" + (data.arrived ? " on" : "")}><div className="switch-knob"></div></div>
@@ -5229,14 +5247,10 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
                   message:`GPS · ${loc.country} (${loc.countryCode || "?"}) · ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
                 });
               } else {
-                startTrialIfNeeded();
-                const trial = getTrialState(Date.now());
                 setData({...data, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
                 setGpsCheck({
-                  status:trial.active ? "ok" : "blocked",
-                  message:trial.active
-                    ? `GPS · ${loc.country}. 2-hour pre-trip preview active.`
-                    : `GPS · ${loc.country}. Preview ended; live tools unlock in Italy.`
+                  status:"ok",
+                  message:`GPS · ${loc.country}. Nearby and live itinerary maps unlock in Italy.`
                 });
               }
             } catch(e) {
@@ -5251,26 +5265,16 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           marginTop:10,
           padding:"11px 12px",
           borderRadius:11,
-          border: trialState?.active ? "1px solid rgba(28,90,122,.2)" : "1px solid rgba(120,120,120,.18)",
-          background: trialState?.active ? "rgba(28,90,122,.07)" : "rgba(120,120,120,.06)"
+          border:"1px solid rgba(28,90,122,.2)",
+          background:"rgba(28,90,122,.07)"
         }}>
           <div style={{fontWeight:800,fontSize:12.5}}>
-            {data.arrived
-              ? "🇮🇹 Italy access active"
-              : (data.gpsVerifiedCountry && data.gpsVerifiedCountry !== "IT")
-                ? (trialState?.active
-                    ? `🎁 Pre-trip preview active · ${formatTrialRemaining(trialState.remainingMs)} left`
-                    : "🔒 Pre-trip preview ended")
-                : "🗺️ Pre-trip planning"}
+            {data.arrived ? "🇮🇹 Italy access active" : "🗺️ Pre-trip planning"}
           </div>
           <div className="park-hint" style={{marginTop:4}}>
             {data.arrived
-              ? "GPS verified in Italy. Live trip tools stay unlocked."
-              : (data.gpsVerifiedCountry && data.gpsVerifiedCountry !== "IT")
-                ? (trialState?.active
-                    ? "All app tools are available for 2 hours so you can explore 687 Italy before your trip. The timer continues even if you close and reopen the app."
-                    : "Your 2-hour preview has ended. Itinerary remains available for planning; live Italy tools will unlock again when GPS verifies that you are in Italy.")
-                : "Itinerary is always available before your trip. Verify your GPS location to unlock Italy tools or start the 2-hour preview when you are outside Italy."}
+              ? "GPS verified in Italy. Nearby and live itinerary maps are available."
+              : "Menu, Tools and Translate are available before your trip. Nearby and live itinerary maps unlock after GPS verifies that you are in Italy."}
           </div>
         </div>
       </div>
@@ -6213,13 +6217,16 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
             </div>
           ) : (
             <div className="route-add-row">
-              <input
-                type="text"
-                className="route-city-input"
-                placeholder="e.g. Turin"
-                value={cityDraft}
-                onChange={e => setCityDraft(e.target.value)}
-              />
+              <div className="clearable-field">
+                <input
+                  type="text"
+                  className="route-city-input"
+                  placeholder="e.g. Turin"
+                  value={cityDraft}
+                  onChange={e => setCityDraft(e.target.value)}
+                />
+                {!!cityDraft && <button type="button" className="field-clear-btn" aria-label="Clear city" onClick={() => setCityDraft("")}>×</button>}
+              </div>
               <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { onCityChange(cityDraft); setEditingCity(false); }}>Save</button>
             </div>
           )}
@@ -6479,7 +6486,7 @@ const PLACE_TYPE_ICON = {
   gas_station: "⛽", atm: "🏧", hospital: "🏥", train_station: "🚉", bus_station: "🚌",
 };
 
-function DashNearby({ data, setData }) {
+function DashNearby({ data, setData, liveItalyAccess }) {
   const [mode, setMode] = useState(data.wantsCar === true ? "car" : "walk");
   const [filter, setFilter] = useState("food");
   const [coords, setCoords] = useState(null);
@@ -6488,6 +6495,16 @@ function DashNearby({ data, setData }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [addedIds, setAddedIds] = useState({});
+
+  if (!liveItalyAccess) {
+    return (
+      <div className="nearby-permission-card">
+        <div className="nearby-permission-icon">📍</div>
+        <div className="nearby-permission-title">Nearby will be available when you are in Italy</div>
+        <p className="nearby-permission-text">The Nearby menu stays visible for everyone, but live place searches start only after GPS verifies that you are in Italy.</p>
+      </div>
+    );
+  }
 
   // Same "which day counts as today" logic used in the Itinerary tab —
   // real calendar date match, or Day 1 once the user has marked arrival.
@@ -7669,15 +7686,7 @@ function DashTools({ data, onDeleteLocalData }) {
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
-  const [trialNow, setTrialNow] = useState(Date.now());
-  React.useEffect(() => {
-    const timer = setInterval(() => setTrialNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-  const trialState = getTrialState(trialNow);
-  const outsideItalyVerified = Boolean(data.gpsVerifiedCountry && data.gpsVerifiedCountry !== "IT");
-  const preTripAccess = Boolean(outsideItalyVerified && trialState.active);
-  const italyAccess = Boolean(data.arrived || preTripAccess);
+  const italyAccess = Boolean(data.arrived);
 
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
@@ -7732,7 +7741,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
       goSection("itinerary");
     }
     prevArrived.current = accessNow;
-  }, [data.arrived, trialState.active]);
+  }, [data.arrived]);
 
   const nights = tripLengthDays(data) - 1;
   const flightTotal = data.mode === "onsite" ? 0 : (data.flightPrice || 0);
@@ -7762,19 +7771,16 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
           </div>
         ))}
         <div className="dash-nav-divider"></div>
-        {italySections.map(s => {
-          const sectionAccess = s.id === "itinerary" || italyAccess;
-          return (
-            <div
-              key={s.id}
-              className={"dash-nav-item" + (section === s.id ? " active" : "") + (!sectionAccess ? " locked" : "")}
-              onClick={() => sectionAccess && goSection(s.id)}
-            >
-              <div className="dash-nav-icon">{sectionAccess ? s.icon : "🔒"}</div>
-              <div className="dash-nav-label">{menuLabel(s.id, uiLanguage)}</div>
-            </div>
-          );
-        })}
+        {italySections.map(s => (
+          <div
+            key={s.id}
+            className={"dash-nav-item" + (section === s.id ? " active" : "")}
+            onClick={() => goSection(s.id)}
+          >
+            <div className="dash-nav-icon">{s.icon}</div>
+            <div className="dash-nav-label">{menuLabel(s.id, uiLanguage)}</div>
+          </div>
+        ))}
       </div>
       <div className="dash-content">
         <h1 className="title" style={{fontSize:22, marginBottom:4}}>
@@ -7782,15 +7788,15 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         </h1>
         <p className="subtitle" style={{marginBottom:20}}>{data.itinerary}</p>
 
-        {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} trialState={trialState} />}
+        {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
         {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} liveItalyAccess={italyAccess} />}
-        {section === "nearby" && (italyAccess) && <DashNearby data={data} setData={setData} />}
-        {section === "drive" && (italyAccess) && data.wantsCar && <DashDrive data={data} setData={setData} />}
-        {section === "translate" && (italyAccess) && <DashTranslate />}
-        {section === "tools" && (italyAccess) && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
+        {section === "nearby" && <DashNearby data={data} setData={setData} liveItalyAccess={italyAccess} />}
+        {section === "drive" && data.wantsCar && <DashDrive data={data} setData={setData} />}
+        {section === "translate" && <DashTranslate />}
+        {section === "tools" && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
       </div>
     </div>
   );
@@ -7805,51 +7811,6 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
 const TRIPITALY_UI_KEY = "tripitaly_ui_state";
 const TRIP_ENGINE_ARCHIVE_KEY = "tripengine_trip_archive";
 const TRIP_ENGINE_RECOVERY_DAYS = 7;
-const TRIP_ENGINE_TRIAL_KEY = "tripengine_trial_started_at_v2";
-const TRIP_ENGINE_TRIAL_DURATION_MS = 2 * 60 * 60 * 1000; // 2-hour pre-trip preview outside Italy
-
-function getTrialStartedAt() {
-  try {
-    return Number(localStorage.getItem(TRIP_ENGINE_TRIAL_KEY) || 0);
-  } catch (e) {
-    return 0;
-  }
-}
-
-function startTrialIfNeeded() {
-  try {
-    let started = getTrialStartedAt();
-    if (!started) {
-      started = Date.now();
-      localStorage.setItem(TRIP_ENGINE_TRIAL_KEY, String(started));
-    }
-    return started;
-  } catch (e) {
-    return Date.now();
-  }
-}
-
-function getTrialState(now = Date.now()) {
-  const started = getTrialStartedAt();
-  if (!started) return {started:0, endsAt:0, active:false, remainingMs:0};
-  const endsAt = started + TRIP_ENGINE_TRIAL_DURATION_MS;
-  const remainingMs = Math.max(0, endsAt - now);
-  return {
-    started,
-    endsAt,
-    active: remainingMs > 0,
-    remainingMs
-  };
-}
-
-function formatTrialRemaining(ms) {
-  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${String(seconds).padStart(2,"0")}`;
-}
-
-
 function loadTripArchive() {
   try {
     const raw = localStorage.getItem(TRIP_ENGINE_ARCHIVE_KEY);
