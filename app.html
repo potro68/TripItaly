@@ -5261,22 +5261,20 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           📍 Check my GPS location
         </button>
 
-        <div style={{
-          marginTop:10,
-          padding:"11px 12px",
-          borderRadius:11,
-          border:"1px solid rgba(28,90,122,.2)",
-          background:"rgba(28,90,122,.07)"
-        }}>
-          <div style={{fontWeight:800,fontSize:12.5}}>
-            {data.arrived ? "🇮🇹 Italy access active" : "🗺️ Pre-trip planning"}
+        {data.arrived && (
+          <div style={{
+            marginTop:10,
+            padding:"11px 12px",
+            borderRadius:11,
+            border:"1px solid rgba(28,90,122,.2)",
+            background:"rgba(28,90,122,.07)"
+          }}>
+            <div style={{fontWeight:800,fontSize:12.5}}>🇮🇹 Italy access active</div>
+            <div className="park-hint" style={{marginTop:4}}>
+              GPS verified in Italy. Nearby and live itinerary maps are available.
+            </div>
           </div>
-          <div className="park-hint" style={{marginTop:4}}>
-            {data.arrived
-              ? "GPS verified in Italy. Nearby and live itinerary maps are available."
-              : "Menu, Tools and Translate are available before your trip. Nearby and live itinerary maps unlock after GPS verifies that you are in Italy."}
-          </div>
-        </div>
+        )}
       </div>
 
       {todayDayNum && todaySpent > 0 && (
