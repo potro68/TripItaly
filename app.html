@@ -6547,54 +6547,74 @@ function DashNearby({ data, setData, liveItalyAccess }) {
     const searchRadius = mode === "car"
       ? (filter === "attractions" ? "30000" : "8000")
       : "2000";
+
+    // Nearby cost protection:
+    // - one Google request per visible category (multiple includedTypes in one request)
+    // - cache same category/mode/rough location for 10 minutes
+    const CACHE_TTL = 10 * 60 * 1000;
+    const latBucket = Number(coords.lat).toFixed(3);
+    const lngBucket = Number(coords.lng).toFixed(3);
+    const cacheKey = `687_nearby_v2_${latBucket}_${lngBucket}_${filter}_${mode}`;
+    try {
+      const cachedRaw = localStorage.getItem(cacheKey);
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw);
+        if (cached && Array.isArray(cached.data) && (Date.now() - Number(cached.time || 0)) < CACHE_TTL) {
+          setResults(cached.data);
+          setError(cached.data.length ? "" : "No results found nearby for this category.");
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (_) {}
+
+    const params = new URLSearchParams({
+      action: "places",
+      lat: coords.lat,
+      lng: coords.lng,
+      types: types.join(","),
+      radius: searchRadius,
+      device_id: getTripDeviceId(),
+    });
+    const guard = checkApiRate("places");
+    if (!guard.ok) {
+      setError(apiRateMessage(guard));
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError("");
-    Promise.all(types.map(t => {
-      const params = new URLSearchParams({
-        action: "places",
-        lat: coords.lat,
-        lng: coords.lng,
-        type: t,
-        radius: searchRadius,
-        device_id: getTripDeviceId(),
-      });
-      const guard = checkApiRate("places");
-      if (!guard.ok) return Promise.resolve({success:false, data:[], _type:t, _rateLimited:true, _rateMessage:apiRateMessage(guard)});
-      recordApiUsage("places", 1);
-      return fetch(`${PROXY_URL}?${params.toString()}`)
-        .then(async r => {
-          const json = await r.json();
-          if (r.status === 429 || json.rateLimited) {
-            return {...json, success:false, data:[], _type:t, _rateLimited:true,
-              _rateMessage: json.error || "Too many requests in a short time. Please wait a moment and try again."};
-          }
-          return {...json, _type:t};
-        });
-    })).then(responses => {
-      const combined = [];
-      const limited = responses.find(r => r._rateLimited);
-      if (limited) {
-        setError(limited._rateMessage || "Nearby is temporarily paused because of unusually high request volume.");
-      }
-      responses.forEach(r => {
-        if (r.success && Array.isArray(r.data)) {
-          r.data.forEach(place => combined.push({...place, _type: r._type}));
+    recordApiUsage("places", 1);
+    fetch(`${PROXY_URL}?${params.toString()}`)
+      .then(async r => {
+        const json = await r.json();
+        if (r.status === 429 || json.rateLimited) {
+          return {...json, success:false, data:[], _rateLimited:true,
+            _rateMessage: json.error || "Too many requests in a short time. Please wait a moment and try again."};
         }
+        return json;
+      })
+      .then(response => {
+        if (response._rateLimited) {
+          setError(response._rateMessage || "Nearby is temporarily paused because of unusually high request volume.");
+          setResults([]);
+          setLoading(false);
+          return;
+        }
+        const unique = (response.success && Array.isArray(response.data) ? response.data : [])
+          .map(place => ({...place, _type: place.matchedType || types[0] || "restaurant"}))
+          .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i)
+          .sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        setResults(unique);
+        if (unique.length === 0) setError("No results found nearby for this category.");
+        try { localStorage.setItem(cacheKey, JSON.stringify({time: Date.now(), data: unique})); } catch (_) {}
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Couldn't reach nearby search right now.");
+        setLoading(false);
       });
-      // De-dupe by place id, sort by rating (highest first, unrated last)
-      const seen = new Set();
-      const unique = combined.filter(p => {
-        if (seen.has(p.id)) return false;
-        seen.add(p.id);
-        return true;
-      }).sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      setResults(unique);
-      if (unique.length === 0) setError("No results found nearby for this category.");
-      setLoading(false);
-    }).catch(() => {
-      setError("Couldn't reach nearby search right now.");
-      setLoading(false);
-    });
   }, [coords, filter, mode]);
 
   if (locStatus === "idle") {
