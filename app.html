@@ -4694,29 +4694,6 @@ function menuLabel(id, lang) {
 }
 
 function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
-  const [adminTaps, setAdminTaps] = useState(0);
-  const [adminOpen, setAdminOpen] = useState(false);
-  const [adminTick, setAdminTick] = useState(0);
-
-  React.useEffect(() => {
-    const h = () => setAdminTick(x => x + 1);
-    window.addEventListener("tripitaly-api-usage-updated", h);
-    return () => window.removeEventListener("tripitaly-api-usage-updated", h);
-  }, []);
-
-  const placesUsage = apiUsageThisMonth("places");
-  const translateUsage = apiUsageThisMonth("translate");
-
-  const handleVersionTap = () => {
-    const next = adminTaps + 1;
-    if (next >= 7) {
-      setAdminOpen(true);
-      setAdminTaps(0);
-    } else {
-      setAdminTaps(next);
-    }
-  };
-
   return (
     <div>
       <div className="field">
@@ -4753,38 +4730,6 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
         </button>
       </div>
 
-      {adminOpen && (
-        <div className="field">
-          <label>🔧 Admin diagnostics</label>
-          <p className="park-hint">Hidden owner view · counters below are from this device only.</p>
-
-          <div className="offline-card">
-            <div className="offline-card-h">📍 Nearby / Places</div>
-            <div className="offline-card-d">
-              {(placesUsage.calls || 0).toLocaleString()} calls this month on this device · Google Pro free-cap reference: 5,000/month
-            </div>
-          </div>
-
-          <div className="offline-card">
-            <div className="offline-card-h">🌐 Translate</div>
-            <div className="offline-card-d">
-              {(translateUsage.units || 0).toLocaleString()} characters this month on this device · NMT free allowance reference: 500,000 characters/month
-            </div>
-          </div>
-
-          <div className="offline-card">
-            <div className="offline-card-h">🛡️ Server protection</div>
-            <div className="offline-card-d">
-              Worker rate limits active: 120 requests/60s per service & installation · 240 requests/60s network backstop.
-            </div>
-          </div>
-
-          <button className="btn-secondary" style={{marginTop:10}} onClick={() => setAdminOpen(false)}>
-            Close diagnostics
-          </button>
-        </div>
-      )}
-
       <div className="field">
         <label>Past trips & recovery</label>
         <p className="park-hint">
@@ -4814,7 +4759,6 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
       </div>
 
       <div
-        onClick={handleVersionTap}
         style={{
           textAlign:"center",
           fontSize:10.5,
@@ -5151,7 +5095,7 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
   const verifyItalyArrival = async () => {
     if (data.arrived) {
       setData({...data, arrived:false});
-      setGpsCheck({status:"idle", message:"Italy live tools locked again."});
+      setGpsCheck({status:"idle", message:"Italy arrival status cleared. All app features remain available."});
       return;
     }
     setGpsCheck({status:"loading", message:"Checking your real GPS location…"});
@@ -5159,12 +5103,12 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
       const loc = await detectCurrentCountry();
       if (loc.countryCode === "IT") {
         setData({...data, arrived:true, gpsVerifiedCountry:"IT", gpsVerifiedAt:Date.now()});
-        setGpsCheck({status:"ok", message:`GPS verified: ${loc.country}. Italy tools unlocked.`});
+        setGpsCheck({status:"ok", message:`GPS verified: ${loc.country}. Italy location confirmed. All app features remain available.`});
       } else {
         setData({...data, arrived:false, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
         setGpsCheck({
           status:"ok",
-          message:`GPS verified: ${loc.country}. Nearby and live itinerary maps will unlock when you arrive in Italy.`
+          message:`GPS verified: ${loc.country}. Location confirmed outside Italy. You can still test and use all app features; Nearby uses your current GPS position.`
         });
       }
     } catch (e) {
@@ -5219,7 +5163,7 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
             <div className="arrival-toggle-h">{data.arrived ? "🇮🇹 You're in Italy" : "You are in Italy?"}</div>
             <div className="arrival-toggle-d">
               {data.arrived
-                ? "GPS verified · Nearby and live itinerary maps are unlocked"
+                ? "GPS verified · location confirmed for your trip"
                 : (gpsCheck.status === "loading"
                     ? "Checking real phone location…"
                     : "Tap to verify your GPS location")}
@@ -5250,7 +5194,7 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
                 setData({...data, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
                 setGpsCheck({
                   status:"ok",
-                  message:`GPS · ${loc.country}. Nearby and live itinerary maps unlock in Italy.`
+                  message:`GPS · ${loc.country}. All app features remain available. Nearby uses your current GPS position.`
                 });
               }
             } catch(e) {
@@ -5271,7 +5215,7 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           }}>
             <div style={{fontWeight:800,fontSize:12.5}}>🇮🇹 Italy access active</div>
             <div className="park-hint" style={{marginTop:4}}>
-              GPS verified in Italy. Nearby and live itinerary maps are available.
+              GPS verified in Italy. Your current location can be used by Nearby, maps and weather.
             </div>
           </div>
         )}
@@ -5779,7 +5723,7 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc, onRemoveDoc }) {
           <div className="choice-icon">⚠️</div>
           <div className="choice-text">
             <div className="h">ZTL zones ahead</div>
-            <div className="d">City-centre restrictions apply — details unlock per city on arrival</div>
+            <div className="d">City-centre restrictions may apply — always check local signs and official ZTL information</div>
           </div>
         </div>
       </div>
@@ -6231,30 +6175,20 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
         </div>
       )}
 
-      {liveItalyAccess ? (
-        <>
-          {isToday
-            ? <LiveLocationMap data={data} compact />
-            : <CityMap city={city} />
-          }
+      <>
+        {isToday
+          ? <LiveLocationMap data={data} compact />
+          : <CityMap city={city} />
+        }
 
-          {data.hotel && (
-            <NavigateButton
-              destination={data.hotel}
-              label={`🏨 Directions to ${data.hotel} ↗`}
-              className="hotel-directions-btn"
-            />
-          )}
-        </>
-      ) : (
-        <div className="nearby-permission-card" style={{marginTop:14}}>
-          <div className="nearby-permission-icon">🗺️</div>
-          <div className="nearby-permission-title">Live maps will be available when you are in Italy</div>
-          <p className="nearby-permission-text">
-            You can still plan every day now and search trains, flights and transfers before your trip.
-          </p>
-        </div>
-      )}
+        {data.hotel && (
+          <NavigateButton
+            destination={data.hotel}
+            label={`🏨 Directions to ${data.hotel} ↗`}
+            className="hotel-directions-btn"
+          />
+        )}
+      </>
 
       <div className="field">
         <label>Your plan for this day</label>
@@ -6287,8 +6221,7 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
           <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { if(stopInput.trim()){ onAddStop(stopInput.trim()); setStopInput(""); } }}>+ Add</button>
         </div>
 
-        {liveItalyAccess && (
-          <button
+        <button
             type="button"
             onClick={() => onGoTo("nearby")}
             className="booking-link-btn"
@@ -6300,7 +6233,6 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
               <span className="blb-d">Restaurants, cafés, attractions and useful places around you →</span>
             </span>
           </button>
-        )}
       </div>
     </div>
   );
@@ -6493,16 +6425,6 @@ function DashNearby({ data, setData, liveItalyAccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [addedIds, setAddedIds] = useState({});
-
-  if (!liveItalyAccess) {
-    return (
-      <div className="nearby-permission-card">
-        <div className="nearby-permission-icon">📍</div>
-        <div className="nearby-permission-title">Nearby will be available when you are in Italy</div>
-        <p className="nearby-permission-text">The Nearby menu stays visible for everyone, but live place searches start only after GPS verifies that you are in Italy.</p>
-      </div>
-    );
-  }
 
   // Same "which day counts as today" logic used in the Itinerary tab —
   // real calendar date match, or Day 1 once the user has marked arrival.
@@ -6731,8 +6653,6 @@ function b64DecodeUnicode(str) {
 }
 
 function hasNativeSpeechBridge() {
-  // iOS uses window.prompt(), intercepted directly by WKUIDelegate.
-  if (isIOSDevice()) return true;
   return !!(
     window.__687NativeSpeechBridge ||
     typeof window.nativeSpeechStart === "function" ||
@@ -6925,15 +6845,14 @@ function LiveTranslator() {
     const deviceLang = navigator.language || navigator.userLanguage || "en-US";
     const lang = speechLang === "auto" ? deviceLang : speechLang;
 
-    // iPhone/iPad: use a JavaScript prompt intercepted by WKUIDelegate.
-    // This avoids window.webkit.messageHandlers and does not navigate/reload the page.
+    // iPhone/iPad: use the explicit WKScriptMessageHandler bridge exposed by the native app.
+    // No hidden prompts or private URL schemes are used.
     if (isIOSDevice()) {
       playMicStartBeep();
 
       __nativeSpeechHandlers = {
         onResult: (text, isFinal) => {
           if (text) {
-            // Voice input is already handled automatically; do not start the typing timer.
             manualTypingRef.current = false;
             setInputText(text);
           }
@@ -6944,67 +6863,21 @@ function LiveTranslator() {
         },
         onError: (code) => {
           setListening(false);
-          setError(`Native iOS speech error (${code}) — try again or type instead.`);
+          setError(`Microphone problem (${code}). Please try again or type instead.`);
         },
         onEnd: () => setListening(false),
       };
+
+      const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speech-start"];
+      if (!bridge) {
+        setListening(false);
+        setError("Microphone is not available in this app version. You can still type a phrase.");
+        return;
+      }
+
       setListening(true);
       setError("");
-
-      try {
-        const reply = window.prompt("go687speech:start", lang);
-
-        if (reply === "OK") {
-          setError("");
-
-          let checks = 0;
-          const statusTimer = setInterval(() => {
-            checks++;
-            try {
-              const status = window.prompt("go687speech:status", "");
-
-              if (status && status.startsWith("HEARING:")) {
-                const spoken = status.slice("HEARING:".length).trim();
-                if (spoken) {
-                  manualTypingRef.current = false;
-                  setInputText(spoken);
-                }
-              }
-
-              if (status && status.startsWith("RESULT:")) {
-                const spoken = status.slice("RESULT:".length).trim();
-                if (spoken) {
-                  manualTypingRef.current = false;
-                  setInputText(spoken);
-                  setError("");
-                  translate(spoken);
-                }
-                setListening(false);
-                clearInterval(statusTimer);
-              }
-
-              if (status && status.startsWith("ERROR:")) {
-                setListening(false);
-                setError("Microphone problem. Please try again.");
-                clearInterval(statusTimer);
-              }
-
-              if (status && status.startsWith("TIMEOUT:")) {
-                setListening(false);
-                setError("I couldn't hear you. Please try again.");
-                clearInterval(statusTimer);
-              }
-            } catch (_) {}
-            if (checks >= 15) clearInterval(statusTimer);
-          }, 1000);
-        } else {
-          setListening(false);
-          setError("JS CHECK 2: native prompt reply = " + String(reply));
-        }
-      } catch (e) {
-        setListening(false);
-        setError("JS CHECK ERROR: " + String(e && e.message ? e.message : e));
-      }
+      bridge.postMessage({ lang });
       return;
     }
 
@@ -7704,7 +7577,9 @@ function DashTools({ data, onDeleteLocalData }) {
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
-  const italyAccess = Boolean(data.arrived);
+  // Live tools are available to all users. GPS is used only to provide location-based results,
+  // not to hide or unlock app functionality.
+  const italyAccess = true;
 
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
