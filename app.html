@@ -6684,6 +6684,12 @@ window.onNativeSpeechEnd = function () {
   if (!__nativeSpeechHandlers) return;
   __nativeSpeechHandlers.onEnd();
 };
+window.onNativeSpeechDebug = function (b64Text) {
+  if (!__nativeSpeechHandlers || typeof __nativeSpeechHandlers.onDebug !== "function") return;
+  try {
+    __nativeSpeechHandlers.onDebug(b64DecodeUnicode(b64Text));
+  } catch (_) {}
+};
 
 function LiveTranslator() {
   const [inputText, setInputText] = useState("");
@@ -6694,6 +6700,7 @@ function LiveTranslator() {
   const [speaking, setSpeaking] = useState(false);
   const [listening, setListening] = useState(false);
   const [speechLang, setSpeechLang] = useState("en-US");
+  const [micDebug, setMicDebug] = useState("");
   const manualTypingRef = React.useRef(false);
 
   const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -6858,6 +6865,7 @@ function LiveTranslator() {
 
       __nativeSpeechHandlers = {
         onResult: (text, isFinal) => {
+          setMicDebug(`NATIVE RESULT · final=${isFinal ? "yes" : "no"} · ${text || "(empty)"}`);
           if (text) {
             manualTypingRef.current = false;
             setInputText(text);
@@ -6869,31 +6877,64 @@ function LiveTranslator() {
         },
         onError: (code) => {
           setListening(false);
+          setMicDebug(`NATIVE ERROR · ${code}`);
           setError(`Microphone problem (${code}). Please try again or type instead.`);
         },
-        onEnd: () => setListening(false),
+        onEnd: () => {
+          setListening(false);
+          setMicDebug(prev => prev ? `${prev} · NATIVE END` : "NATIVE END");
+        },
+        onDebug: (msg) => {
+          setMicDebug(`NATIVE · ${msg}`);
+        },
       };
 
+      const hasNativeFn = typeof window.nativeSpeechStart === "function";
+      const hasWebkit = !!window.webkit;
+      const hasHandlers = !!(window.webkit && window.webkit.messageHandlers);
+      const hasSpeechHandler = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speechStart"]);
+      const bridgeFlag = !!window.__687NativeSpeechBridge;
+
+      setMicDebug(
+        `JS CHECK · ios=yes · nativeFn=${hasNativeFn ? "yes" : "no"} · webkit=${hasWebkit ? "yes" : "no"} · handlers=${hasHandlers ? "yes" : "no"} · speechStart=${hasSpeechHandler ? "yes" : "no"} · flag=${bridgeFlag ? "yes" : "no"}`
+      );
+
       // Prefer the explicit bridge injected by the native iOS wrapper.
-      // Fall back to the direct WKScriptMessageHandler only if needed.
-      if (typeof window.nativeSpeechStart === "function") {
+      if (hasNativeFn) {
         setListening(true);
         setError("");
-        const started = window.nativeSpeechStart(lang);
-        if (started !== false) return;
+        let started = false;
+        try {
+          started = window.nativeSpeechStart(lang);
+        } catch (e) {
+          setMicDebug(`JS EXCEPTION nativeSpeechStart · ${String(e)}`);
+        }
+        if (started !== false) {
+          setMicDebug(prev => `${prev} · POSTED via nativeSpeechStart`);
+          return;
+        }
         setListening(false);
+        setMicDebug(prev => `${prev} · nativeSpeechStart returned false`);
       }
 
       const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speechStart"];
       if (!bridge) {
         setListening(false);
-        setError("Microphone is not available in this app version. You can still type a phrase.");
+        const detail = `ios=yes nativeFn=${hasNativeFn ? 1 : 0} webkit=${hasWebkit ? 1 : 0} handlers=${hasHandlers ? 1 : 0} speechStart=${hasSpeechHandler ? 1 : 0} flag=${bridgeFlag ? 1 : 0}`;
+        setError(`MIC DEBUG: bridge unavailable · ${detail}`);
         return;
       }
 
       setListening(true);
       setError("");
-      bridge.postMessage({ lang });
+      try {
+        bridge.postMessage({ lang });
+        setMicDebug(prev => `${prev} · POSTED direct handler`);
+      } catch (e) {
+        setListening(false);
+        setMicDebug(`JS EXCEPTION direct handler · ${String(e)}`);
+        setError(`MIC DEBUG: postMessage failed · ${String(e)}`);
+      }
       return;
     }
 
@@ -7263,6 +7304,11 @@ function DashCurrency() {
         <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} />
       </div>
       {loading && <p className="park-hint">Loading live rate…</p>}
+      {micDebug && (
+        <div style={{marginTop:10,padding:"10px 11px",border:"1px dashed rgba(19,42,58,.35)",borderRadius:10,fontSize:10.5,lineHeight:1.45,overflowWrap:"anywhere"}}>
+          <strong>MIC TEST:</strong> {micDebug}
+        </div>
+      )}
       {error && <p className="park-hint">{error}</p>}
       {!loading && rate && (
         <>
