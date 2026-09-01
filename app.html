@@ -5840,61 +5840,57 @@ function CityMap({ city }) {
     setMessage("");
   }, [city]);
 
-  const openPlannedCityMap = async () => {
-    if (!city) return;
+  const showMyCurrentLocation = async () => {
     setStatus("loading");
     setMessage("");
     try {
       const loc = await detectCurrentCountry();
+
+      // The itinerary live map is intentionally available only while
+      // the traveller is physically in Italy.
       if (loc.countryCode !== "IT") {
+        setCoords(null);
         setStatus("outsideItaly");
         return;
       }
-      const cityCoords = await geocodeAddress(`${city}, Italy`);
-      if (!cityCoords) {
-        setMessage(`Map unavailable for ${city}`);
-        setStatus("error");
-        return;
-      }
-      setCoords(cityCoords);
+
+      // IMPORTANT: use the phone's REAL GPS position.
+      // Do not geocode the planned/arrival city.
+      setCoords({ lat: loc.lat, lng: loc.lng });
       setStatus("ok");
     } catch (e) {
       if (e && Number(e.code) === 1) setStatus("denied");
       else {
-        setMessage(e?.message || "Couldn't verify your location.");
+        setMessage(e?.message || "Couldn't get your current location.");
         setStatus("error");
       }
     }
   };
 
-  if (!city) {
-    return <div className="map-placeholder" style={{height:140}}><div className="map-placeholder-text">Set a city for this day to see its map.</div></div>;
-  }
-
   if (status === "idle") {
     return (
       <div className="nearby-permission-card" style={{padding:16}}>
-        <div className="nearby-permission-icon">🏙️</div>
-        <div className="nearby-permission-title">Planned city: {city}</div>
+        <div className="nearby-permission-icon">📍</div>
+        <div className="nearby-permission-title">Your current location</div>
         <p className="nearby-permission-text">
-          The embedded online map preview is available while you are physically in Italy.
+          Use your phone's GPS to show where you are right now. The live map is available while you are physically in Italy.
         </p>
-        <button className="btn-secondary" style={{marginTop:10}} onClick={openPlannedCityMap}>Check location & show map</button>
+        <button className="btn-secondary" style={{marginTop:10}} onClick={showMyCurrentLocation}>Use my current location</button>
       </div>
     );
   }
 
   if (status === "loading") {
-    return <div className="map-placeholder" style={{height:140}}><div className="map-placeholder-text">Checking location…</div></div>;
+    return <div className="map-placeholder" style={{height:140}}><div className="map-placeholder-text">Getting your current location…</div></div>;
   }
 
   if (status === "outsideItaly") {
     return (
       <div className="nearby-permission-card" style={{padding:16}}>
         <div className="nearby-permission-icon">🇮🇹</div>
-        <div className="nearby-permission-title">Map preview available in Italy</div>
+        <div className="nearby-permission-title">Live map available in Italy</div>
         <p className="nearby-permission-text">
-          Planned city: {city}. Your GPS confirms that you are currently outside Italy, so no embedded map request has been sent.
+          Your GPS confirms that you are currently outside Italy, so no online map request has been sent.
         </p>
       </div>
     );
@@ -5903,8 +5899,8 @@ function CityMap({ city }) {
   if (status === "denied" || status === "error" || !coords) {
     return (
       <div className="map-placeholder" style={{height:140}}>
-        <div className="map-placeholder-text">{status === "denied" ? "Location permission is required to verify Italy access." : (message || `Map unavailable for ${city}`)}</div>
-        <button className="btn-secondary" style={{marginTop:10, width:"auto", padding:"9px 16px"}} onClick={openPlannedCityMap}>Try again</button>
+        <div className="map-placeholder-text">{status === "denied" ? "Location permission is required to show your current position." : (message || "Current location unavailable.")}</div>
+        <button className="btn-secondary" style={{marginTop:10, width:"auto", padding:"9px 16px"}} onClick={showMyCurrentLocation}>Try again</button>
       </div>
     );
   }
@@ -5912,19 +5908,20 @@ function CityMap({ city }) {
   const src = `${PROXY_URL}?${new URLSearchParams({
     action: "staticmap",
     center: `${coords.lat},${coords.lng}`,
-    zoom: "13",
+    zoom: "15",
     size: "440x160",
-    markers: `color:blue|${coords.lat},${coords.lng}`,
+    markers: `color:red|${coords.lat},${coords.lng}`,
     device_id: getTripDeviceId(),
   }).toString()}`;
+
   return (
     <a
       href={`https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`}
       target="_blank" rel="noopener noreferrer"
       className="map-frame-wrap"
     >
-      <img className="map-frame" style={{height:160}} src={src} alt={`Map of ${city}`} />
-      <div className="map-you-badge">🏙️ Planned city: {city}</div>
+      <img className="map-frame" style={{height:160}} src={src} alt="Your current location" />
+      <div className="map-you-badge">📍 You are here</div>
       <div className="map-tap-hint">Tap to open in Google Maps ↗</div>
     </a>
   );
