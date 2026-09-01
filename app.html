@@ -948,7 +948,7 @@
   }
   .dash-nav-item.locked{ opacity:0.35; cursor:default; }
 
-  /* ---- Arrival toggle ---- */
+  /* ---- Generic toggle card (multi-city) ---- */
   .arrival-toggle{
     display:flex;
     align-items:center;
@@ -1897,24 +1897,7 @@
     .print-transport{ font-size:12px; font-weight:600; color:#1C5A7A; margin-bottom:6px; }
     .dash-content > *:not(.print-only){ display:none !important; }
   }
-  .debug-panel{
-    margin-top:14px;
-    background:#111;
-    color:#7CFC7C;
-    border-radius:10px;
-    padding:12px;
-    max-height:260px;
-    overflow:auto;
-  }
-  .debug-panel pre{
-    font-size:10px;
-    white-space:pre-wrap;
-    word-break:break-word;
-    margin:0;
-    font-family:monospace;
-  }
-
-  .map-pin-drop.one-stop{ fill:#E08A2E; }
+.map-pin-drop.one-stop{ fill:#E08A2E; }
   .map-pin-glow.one-stop{ fill:#E08A2E; opacity:0.28; }
   .map-pin-label.one-stop{ color:#B86612; font-weight:700; }
   .direct-airports-box{
@@ -2572,9 +2555,8 @@ function extractIATA(originText) {
   return match ? match[1] : null;
 }
 
-async function fetchLitAirports(originIATA, mode = "direct", onDebug) {
+async function fetchLitAirports(originIATA, mode = "direct") {
   if (!originIATA || !PROXY_URL) {
-    if (onDebug) onDebug({ step: "No proxy URL set." });
     return null;
   }
   try {
@@ -2587,10 +2569,8 @@ async function fetchLitAirports(originIATA, mode = "direct", onDebug) {
     }));
     const litCodes = results.filter(r => r.hasData).map(r => r.airportCode);
     const lit = AIRPORTS.filter(a => litCodes.includes(a.code));
-    if (onDebug) onDebug({ step: "Done", mode, results, litCodes });
     return lit;
   } catch (e) {
-    if (onDebug) onDebug({ step: "Error", mode, error: String(e) });
     return null;
   }
 }
@@ -4352,7 +4332,6 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
   const [checking, setChecking] = useState(false);
   const [usingRealData, setUsingRealData] = useState(false);
   const [routeMode, setRouteMode] = useState("direct");
-  const [debugInfo, setDebugInfo] = useState(null);
   const litCodes = litAirports.map(a => a.code);
   const selected = (data.airport && litCodes.includes(data.airport)) ? data.airport : (litCodes[0] || null);
   const [error, setError] = useState("");
@@ -4371,7 +4350,7 @@ function ScreenOrigin({ data, setData, onNext, onBack }) {
     setError("");
     setRouteMode(mode);
 
-    const real = await fetchLitAirports(iata, mode, setDebugInfo);
+    const real = await fetchLitAirports(iata, mode);
     setChecking(false);
 
     if (real !== null) {
@@ -5090,33 +5069,6 @@ async function detectCurrentCountry() {
 }
 
 function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip }) {
-  const [gpsCheck, setGpsCheck] = useState({status:"idle", message:""});
-
-  const verifyItalyArrival = async () => {
-    if (data.arrived) {
-      setData({...data, arrived:false});
-      setGpsCheck({status:"idle", message:"Italy arrival status cleared. All app features remain available."});
-      return;
-    }
-    setGpsCheck({status:"loading", message:"Checking your real GPS location…"});
-    try {
-      const loc = await detectCurrentCountry();
-      if (loc.countryCode === "IT") {
-        setData({...data, arrived:true, gpsVerifiedCountry:"IT", gpsVerifiedAt:Date.now()});
-        setGpsCheck({status:"ok", message:`GPS verified: ${loc.country}. Italy location confirmed. All app features remain available.`});
-      } else {
-        setData({...data, arrived:false, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
-        setGpsCheck({
-          status:"ok",
-          message:`GPS verified: ${loc.country}. Location confirmed outside Italy. You can still test and use all app features; Nearby uses your current GPS position.`
-        });
-      }
-    } catch (e) {
-      setData({...data, arrived:false});
-      setGpsCheck({status:"error", message:e?.message || "Couldn't verify your location."});
-    }
-  };
-
   const isOnsite = data.mode === "onsite";
   const spent = totalSpent(data);
   const tripEnded = data.endDate && new Date(data.endDate + "T23:59:59") < new Date();
@@ -5128,7 +5080,6 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
     const d = tripDateForDay(data, i);
     if (d && isSameDate(d, today)) { todayDayNum = i; break; }
   }
-  if (todayDayNum === null && data.arrived) todayDayNum = 1;
 
   const todaySpent = (data.expenses || [])
     .filter(e => Number(e.dayNum || e.day || 0) === todayDayNum)
@@ -5157,70 +5108,6 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
 
   return (
     <div>
-      <div className="field" style={{marginBottom:16}}>
-        <div className="arrival-toggle" onClick={verifyItalyArrival}>
-          <div>
-            <div className="arrival-toggle-h">{data.arrived ? "🇮🇹 You're in Italy" : "You are in Italy?"}</div>
-            <div className="arrival-toggle-d">
-              {data.arrived
-                ? "GPS verified · location confirmed for your trip"
-                : (gpsCheck.status === "loading"
-                    ? "Checking real phone location…"
-                    : "Tap to verify your GPS location")}
-            </div>
-          </div>
-          <div className={"switch" + (data.arrived ? " on" : "")}><div className="switch-knob"></div></div>
-        </div>
-        {gpsCheck.message && (
-          <p className="park-hint" style={{marginTop:8,fontWeight:700}}>
-            {gpsCheck.status === "ok" ? "✅ " : gpsCheck.status === "blocked" ? "🔒 " : gpsCheck.status === "error" ? "⚠️ " : "📍 "}
-            {gpsCheck.message}
-          </p>
-        )}
-        <button
-          className="btn-secondary"
-          style={{marginTop:9,borderStyle:"dashed"}}
-          onClick={async () => {
-            setGpsCheck({status:"loading",message:"Checking GPS location and country…"});
-            try {
-              const loc = await detectCurrentCountry();
-              if (loc.countryCode === "IT") {
-                setData({...data, gpsVerifiedCountry:"IT", gpsVerifiedAt:Date.now()});
-                setGpsCheck({
-                  status:"ok",
-                  message:`GPS · ${loc.country} (${loc.countryCode || "?"}) · ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
-                });
-              } else {
-                setData({...data, gpsVerifiedCountry:loc.countryCode || "UNKNOWN", gpsVerifiedAt:Date.now()});
-                setGpsCheck({
-                  status:"ok",
-                  message:`GPS · ${loc.country}. All app features remain available. Nearby uses your current GPS position.`
-                });
-              }
-            } catch(e) {
-              setGpsCheck({status:"error",message:`GPS · ${e?.message || "failed"}`});
-            }
-          }}
-        >
-          📍 Check my GPS location
-        </button>
-
-        {data.arrived && (
-          <div style={{
-            marginTop:10,
-            padding:"11px 12px",
-            borderRadius:11,
-            border:"1px solid rgba(28,90,122,.2)",
-            background:"rgba(28,90,122,.07)"
-          }}>
-            <div style={{fontWeight:800,fontSize:12.5}}>🇮🇹 Italy access active</div>
-            <div className="park-hint" style={{marginTop:4}}>
-              GPS verified in Italy. Your current location can be used by Nearby, maps and weather.
-            </div>
-          </div>
-        )}
-      </div>
-
       {todayDayNum && todaySpent > 0 && (
         <div className={"today-budget-alert " + (todayDiff > 0 ? "over" : "ok")}>
           <span>{todayDiff > 0 ? "⚠️" : "✅"}</span>
@@ -5764,48 +5651,61 @@ async function geocodeAddress(query) {
 
 function LiveLocationMap({ data, compact }) {
   const [coords, setCoords] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle | loading | ok | denied | unsupported
+  const [status, setStatus] = useState("idle"); // idle | loading | ok | outsideItaly | denied | error | unsupported
   const [imgError, setImgError] = useState(false);
   const [hotelCoords, setHotelCoords] = useState(null);
   const [carCoords, setCarCoords] = useState(null);
+  const [locationError, setLocationError] = useState("");
 
-  const locate = () => {
+  const locate = async () => {
     setImgError(false);
+    setLocationError("");
+    setCoords(null);
     if (!("geolocation" in navigator)) { setStatus("unsupported"); return; }
     setStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setStatus("ok");
-      },
-      (err) => setStatus("denied"),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+    try {
+      const loc = await detectCurrentCountry();
+      if (loc.countryCode !== "IT") {
+        setStatus("outsideItaly");
+        return;
+      }
+      setCoords({ lat: loc.lat, lng: loc.lng });
+      setStatus("ok");
+    } catch (e) {
+      if (e && Number(e.code) === 1) setStatus("denied");
+      else {
+        setLocationError(e?.message || "Couldn't verify your location.");
+        setStatus("error");
+      }
+    }
   };
 
-  // Location requested only on button tap — never automatically.
-
   React.useEffect(() => {
+    if (status !== "ok") {
+      setHotelCoords(null);
+      setCarCoords(null);
+      return;
+    }
     if (data.hotel) {
       geocodeAddress(`${data.hotel}, Italy`).then(setHotelCoords);
     }
     if (data.wantsCar && !compact) {
-      // Pickup is always at the arrival airport in our current booking flow —
-      // use its real coordinates directly instead of a vague text search.
       const airport = AIRPORTS.find(a => a.code === data.airport);
       if (airport?.lat && airport?.lng) {
         setCarCoords({ lat: airport.lat, lng: airport.lng });
       }
     }
-  }, [data.hotel, data.wantsCar, data.airport, compact]);
+  }, [status, data.hotel, data.wantsCar, data.airport, compact]);
 
   if (status === "idle") {
     return (
       <div className="nearby-permission-card" style={compact ? {padding:16} : {}}>
-        <div className="nearby-permission-icon">📍</div>
-        <div className="nearby-permission-title">See your live location</div>
-        <p className="nearby-permission-text">687 Italy uses your location to show you on the map and give directions.</p>
-        <button className="btn-primary" style={{marginTop:12}} onClick={locate}>Use my location</button>
+        <div className="nearby-permission-icon">🗺️</div>
+        <div className="nearby-permission-title">Live map in Italy</div>
+        <p className="nearby-permission-text">
+          The embedded live map uses your current location and is available when you are physically in Italy.
+        </p>
+        <button className="btn-primary" style={{marginTop:12}} onClick={locate}>Check location & open live map</button>
       </div>
     );
   }
@@ -5813,28 +5713,42 @@ function LiveLocationMap({ data, compact }) {
   if (status === "loading") {
     return (
       <div className="map-placeholder" style={compact ? {height:140} : {}}>
-        <div className="map-placeholder-text">📍 Locating you…</div>
+        <div className="map-placeholder-text">📍 Checking your location…</div>
       </div>
     );
   }
 
-  if (status === "unsupported" || status === "denied" || (status === "ok" && imgError)) {
+  if (status === "outsideItaly") {
+    return (
+      <div className="nearby-permission-card" style={compact ? {padding:16} : {}}>
+        <div className="nearby-permission-icon">🇮🇹</div>
+        <div className="nearby-permission-title">Live map is available in Italy</div>
+        <p className="nearby-permission-text">
+          Your GPS confirms that you are currently outside Italy, so no embedded live-map request has been sent.
+        </p>
+        <button className="btn-secondary" style={{marginTop:10}} onClick={locate}>Check location again</button>
+      </div>
+    );
+  }
+
+  if (status === "unsupported" || status === "denied" || status === "error" || (status === "ok" && imgError)) {
     const isImageFailure = status === "ok" && imgError;
     return (
       <div className="map-placeholder" style={compact ? {height:140} : {}}>
         <div className="map-placeholder-text">
           {status === "unsupported" ? "Location not supported here"
+            : status === "error" ? (locationError || "Couldn't verify your location")
             : isImageFailure ? "Got your location, but the map image didn't load"
             : "Couldn't access your location"}
         </div>
-        {!compact && !isImageFailure && (
+        {!compact && status === "denied" && (
           <div className="map-placeholder-hint">
             Location access is disabled. Enable location permission for 687 Italy and try again.
           </div>
         )}
         {!compact && isImageFailure && (
           <div className="map-placeholder-hint">
-            The map image service may be temporarily down — your location itself was found fine.
+            The map image service may be temporarily down - your location itself was found fine.
           </div>
         )}
         <button className="btn-secondary" style={{marginTop:10, width:"auto", padding:"9px 16px"}} onClick={locate}>Try again</button>
@@ -5869,7 +5783,7 @@ function LiveLocationMap({ data, compact }) {
           style={compact ? {height:160} : {}}
           src={staticMapSrc}
           onError={() => setImgError(true)}
-          alt="Map with your location and nearby points"
+          alt="Map with your current location and trip points"
         />
         <div className="map-you-badge">📍 You are here</div>
         <div className="map-tap-hint">Tap to open in Google Maps ↗</div>
@@ -5905,33 +5819,86 @@ function LiveLocationMap({ data, compact }) {
   );
 }
 
-
-function isSameDate(d1, d2) {
-  return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
-}
-
-function cityForDay(days, dayNum) {
-  const block = days.find(b => b.days.includes(dayNum));
-  return block ? block.city : null;
-}
-
 function CityMap({ city }) {
   const [coords, setCoords] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("idle"); // idle | loading | ok | outsideItaly | denied | error
+  const [message, setMessage] = useState("");
 
   React.useEffect(() => {
-    setLoading(true);
     setCoords(null);
-    if (!city) { setLoading(false); return; }
-    geocodeAddress(`${city}, Italy`).then(c => { setCoords(c); setLoading(false); });
+    setStatus("idle");
+    setMessage("");
   }, [city]);
 
-  if (loading) {
-    return <div className="map-placeholder" style={{height:140}}><div className="map-placeholder-text">Locating {city}…</div></div>;
+  const openPlannedCityMap = async () => {
+    if (!city) return;
+    setStatus("loading");
+    setMessage("");
+    try {
+      const loc = await detectCurrentCountry();
+      if (loc.countryCode !== "IT") {
+        setStatus("outsideItaly");
+        return;
+      }
+      const cityCoords = await geocodeAddress(`${city}, Italy`);
+      if (!cityCoords) {
+        setMessage(`Map unavailable for ${city}`);
+        setStatus("error");
+        return;
+      }
+      setCoords(cityCoords);
+      setStatus("ok");
+    } catch (e) {
+      if (e && Number(e.code) === 1) setStatus("denied");
+      else {
+        setMessage(e?.message || "Couldn't verify your location.");
+        setStatus("error");
+      }
+    }
+  };
+
+  if (!city) {
+    return <div className="map-placeholder" style={{height:140}}><div className="map-placeholder-text">Set a city for this day to see its map.</div></div>;
   }
-  if (!coords) {
-    return <div className="map-placeholder" style={{height:140}}><div className="map-placeholder-text">Map unavailable for {city}</div></div>;
+
+  if (status === "idle") {
+    return (
+      <div className="nearby-permission-card" style={{padding:16}}>
+        <div className="nearby-permission-icon">🏙️</div>
+        <div className="nearby-permission-title">Planned city: {city}</div>
+        <p className="nearby-permission-text">
+          The embedded online map preview is available while you are physically in Italy.
+        </p>
+        <button className="btn-secondary" style={{marginTop:10}} onClick={openPlannedCityMap}>Check location & show map</button>
+      </div>
+    );
   }
+
+  if (status === "loading") {
+    return <div className="map-placeholder" style={{height:140}}><div className="map-placeholder-text">Checking location…</div></div>;
+  }
+
+  if (status === "outsideItaly") {
+    return (
+      <div className="nearby-permission-card" style={{padding:16}}>
+        <div className="nearby-permission-icon">🇮🇹</div>
+        <div className="nearby-permission-title">Map preview available in Italy</div>
+        <p className="nearby-permission-text">
+          Planned city: {city}. Your GPS confirms that you are currently outside Italy, so no embedded map request has been sent.
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "denied" || status === "error" || !coords) {
+    return (
+      <div className="map-placeholder" style={{height:140}}>
+        <div className="map-placeholder-text">{status === "denied" ? "Location permission is required to verify Italy access." : (message || `Map unavailable for ${city}`)}</div>
+        <button className="btn-secondary" style={{marginTop:10, width:"auto", padding:"9px 16px"}} onClick={openPlannedCityMap}>Try again</button>
+      </div>
+    );
+  }
+
   const src = `${PROXY_URL}?${new URLSearchParams({
     action: "staticmap",
     center: `${coords.lat},${coords.lng}`,
@@ -5947,12 +5914,11 @@ function CityMap({ city }) {
       className="map-frame-wrap"
     >
       <img className="map-frame" style={{height:160}} src={src} alt={`Map of ${city}`} />
-      <div className="map-you-badge">🏙️ {city}</div>
+      <div className="map-you-badge">🏙️ Planned city: {city}</div>
       <div className="map-tap-hint">Tap to open in Google Maps ↗</div>
     </a>
   );
 }
-
 
 function itineraryDaysFromData(data) {
   const routeBlocks = (data.routeBlocks && data.routeBlocks.length)
@@ -6111,7 +6077,7 @@ function NavigateButton({ destination, label, className }) {
   );
 }
 
-function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedStops, onAddStop, onRemoveStop, onCityChange, onGoTo, dailyAmount, transfer, liveItalyAccess }) {
+function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedStops, onAddStop, onRemoveStop, onCityChange, onGoTo, dailyAmount, transfer }) {
   const dateLabel = date ? date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : `Day ${dayNum}`;
   const [editingCity, setEditingCity] = useState(false);
   const [cityDraft, setCityDraft] = useState(city || "");
@@ -6230,7 +6196,7 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
             <span className="blb-icon">📍</span>
             <span className="blb-text">
               <span className="blb-h">Find real places with Nearby</span>
-              <span className="blb-d">Restaurants, cafés, attractions and useful places around you →</span>
+              <span className="blb-d">Live search around you when your GPS confirms you are in Italy →</span>
             </span>
           </button>
       </div>
@@ -6238,7 +6204,7 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
   );
 }
 
-function DashItinerary({ data, setData, onGoTo, dailyAmount, liveItalyAccess }) {
+function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
   const days = (data.routeBlocks && data.routeBlocks.length)
     ? data.routeBlocks
     : [{
@@ -6259,7 +6225,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount, liveItalyAccess }) 
     savedItineraryDay >= 1 && savedItineraryDay <= totalDays ? savedItineraryDay : defaultDay
   );
   const activeDate = tripDateForDay(data, activeDay);
-  const isTodayActive = (activeDate && isSameDate(activeDate, today)) || (activeDay === 1 && data.arrived);
+  const isTodayActive = !!(activeDate && isSameDate(activeDate, today));
 
   const dayOverrides = data.dayCityOverrides || {};
   const dayPlans = data.dayPlans || {};
@@ -6354,7 +6320,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount, liveItalyAccess }) 
           {Array.from({length: totalDays}, (_, i) => i + 1).map(dayNum => {
             const date = tripDateForDay(data, dayNum);
             const f = date ? formatDayStrip(date) : { weekday: "", dayNum: dayNum, month: "" };
-            const isToday = (date && isSameDate(date, today)) || (dayNum === 1 && data.arrived);
+            const isToday = !!(date && isSameDate(date, today));
             const city = dayOverrides[dayNum] || cityForDay(days, dayNum);
             return (
               <div
@@ -6387,7 +6353,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount, liveItalyAccess }) 
         onGoTo={onGoTo}
         dailyAmount={dailyAmount}
         transfer={transfer}
-        liveItalyAccess={liveItalyAccess}
+       
       />
     </div>
   );
@@ -6416,11 +6382,11 @@ const PLACE_TYPE_ICON = {
   gas_station: "⛽", atm: "🏧", hospital: "🏥", train_station: "🚉", bus_station: "🚌",
 };
 
-function DashNearby({ data, setData, liveItalyAccess }) {
+function DashNearby({ data, setData }) {
   const [mode, setMode] = useState(data.wantsCar === true ? "car" : "walk");
   const [filter, setFilter] = useState("food");
   const [coords, setCoords] = useState(null);
-  const [locStatus, setLocStatus] = useState("idle"); // idle | loading | ok | denied | unsupported
+  const [locStatus, setLocStatus] = useState("idle"); // idle | loading | ok | outsideItaly | denied | error | unsupported
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -6435,7 +6401,6 @@ function DashNearby({ data, setData, liveItalyAccess }) {
     const d = tripDateForDay(data, i);
     if (d && isSameDate(d, today)) { todayDayNum = i; break; }
   }
-  if (todayDayNum === null && data.arrived) todayDayNum = 1;
 
   const addToItinerary = (place) => {
     if (!todayDayNum) return;
@@ -6448,20 +6413,31 @@ function DashNearby({ data, setData, liveItalyAccess }) {
     setAddedIds(prev => ({...prev, [place.id]: true}));
   };
 
-  const locate = () => {
+  const locate = async () => {
     if (!("geolocation" in navigator)) { setLocStatus("unsupported"); return; }
     setLocStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocStatus("ok");
-      },
-      () => setLocStatus("denied"),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+    setCoords(null);
+    setResults([]);
+    setError("");
+    try {
+      const loc = await detectCurrentCountry();
+      if (loc.countryCode !== "IT") {
+        setLocStatus("outsideItaly");
+        return;
+      }
+      setCoords({ lat: loc.lat, lng: loc.lng });
+      setLocStatus("ok");
+    } catch (e) {
+      if (e && Number(e.code) === 1) setLocStatus("denied");
+      else {
+        setLocStatus("error");
+        setError(e?.message || "Couldn't verify your location.");
+      }
+    }
   };
 
-  // Location requested only on button tap — see the 'Use my location' button below.
+  // Live Nearby is available only when real GPS confirms Italy.
+  // Outside Italy no Google Places request is sent.
 
   React.useEffect(() => {
     if (!coords) return;
@@ -6543,9 +6519,26 @@ function DashNearby({ data, setData, liveItalyAccess }) {
     return (
       <div className="nearby-permission-card">
         <div className="nearby-permission-icon">📍</div>
-        <div className="nearby-permission-title">Find places near me</div>
-        <p className="nearby-permission-text">687 Italy uses your location to show useful places around you.</p>
-        <button className="btn-primary" style={{marginTop:14}} onClick={locate}>Use my location</button>
+        <div className="nearby-permission-title">Live Nearby in Italy</div>
+        <p className="nearby-permission-text">
+          Nearby live search is available when you are physically in Italy. Tap below to verify your real GPS location.
+          Planning, bookings, itinerary, wallet, packing and translation remain available everywhere.
+        </p>
+        <button className="btn-primary" style={{marginTop:14}} onClick={locate}>Check location & use Nearby</button>
+      </div>
+    );
+  }
+
+  if (locStatus === "outsideItaly") {
+    return (
+      <div className="nearby-permission-card">
+        <div className="nearby-permission-icon">🇮🇹</div>
+        <div className="nearby-permission-title">Live Nearby is available in Italy</div>
+        <p className="nearby-permission-text">
+          Your GPS confirms that you are currently outside Italy, so no live Nearby search has been sent.
+          When you arrive in Italy, tap again to find restaurants, cafés, attractions, pharmacies, parking, stations and more around you.
+        </p>
+        <button className="btn-secondary" style={{marginTop:12}} onClick={locate}>Check location again</button>
       </div>
     );
   }
@@ -6581,6 +6574,12 @@ function DashNearby({ data, setData, liveItalyAccess }) {
       )}
       {locStatus === "unsupported" && (
         <p className="park-hint">Location isn't supported on this device/browser.</p>
+      )}
+      {locStatus === "error" && (
+        <div className="nearby-permission-card">
+          <p className="nearby-permission-text">{error || "Couldn't verify your location."}</p>
+          <button className="btn-secondary" style={{marginTop:12}} onClick={locate}>Try again</button>
+        </div>
       )}
       {locStatus === "loading" && (
         <p className="park-hint">Finding your location…</p>
@@ -6656,7 +6655,7 @@ function hasNativeSpeechBridge() {
   return !!(
     window.__687NativeSpeechBridge ||
     typeof window.nativeSpeechStart === "function" ||
-    (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speech-start"])
+    (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speechStart"])
   );
 }
 
@@ -6868,7 +6867,7 @@ function LiveTranslator() {
         onEnd: () => setListening(false),
       };
 
-      const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speech-start"];
+      const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speechStart"];
       if (!bridge) {
         setListening(false);
         setError("Microphone is not available in this app version. You can still type a phrase.");
@@ -6905,7 +6904,7 @@ function LiveTranslator() {
       if (typeof window.nativeSpeechStart === "function") {
         window.nativeSpeechStart(lang);
       } else {
-        window.webkit.messageHandlers["speech-start"].postMessage({ lang });
+        window.webkit.messageHandlers["speechStart"].postMessage({ lang });
       }
       return;
     }
@@ -7577,10 +7576,6 @@ function DashTools({ data, onDeleteLocalData }) {
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
-  // Live tools are available to all users. GPS is used only to provide location-based results,
-  // not to hide or unlock app functionality.
-  const italyAccess = true;
-
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
     ? (savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet")
@@ -7625,16 +7620,6 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
     setDocuments(prev => ({...prev, [sectionId]: prev[sectionId].filter(d => d.id !== id)}));
   };
 
-  // When the user flips "I've arrived" on, jump straight to the Itinerary
-  // tab instead of leaving them on Overview.
-  const prevArrived = React.useRef(italyAccess);
-  React.useEffect(() => {
-    const accessNow = italyAccess;
-    if (accessNow && !prevArrived.current) {
-      goSection("itinerary");
-    }
-    prevArrived.current = accessNow;
-  }, [data.arrived]);
 
   const nights = tripLengthDays(data) - 1;
   const flightTotal = data.mode === "onsite" ? 0 : (data.flightPrice || 0);
@@ -7685,8 +7670,8 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
-        {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} liveItalyAccess={italyAccess} />}
-        {section === "nearby" && <DashNearby data={data} setData={setData} liveItalyAccess={italyAccess} />}
+        {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
+        {section === "nearby" && <DashNearby data={data} setData={setData} />}
         {section === "drive" && data.wantsCar && <DashDrive data={data} setData={setData} />}
         {section === "translate" && <DashTranslate />}
         {section === "tools" && <DashTools data={data} onDeleteLocalData={onStartNewTrip} />}
@@ -7828,10 +7813,9 @@ function App() {
     document.body.classList.toggle("theme-navy", theme === "navy");
   }, [theme]);
 
-  // Capture the traveler's home timezone before arrival. This avoids
-  // losing "home time" if the phone later switches itself to Italy time.
+  // Capture the traveler's home timezone once so the app can keep a stable home-time reference.
   React.useEffect(() => {
-    if (!data.homeTimeZone && !data.arrived) {
+    if (!data.homeTimeZone) {
       try {
         const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if (detectedZone) setData(prev => ({...prev, homeTimeZone: detectedZone}));
