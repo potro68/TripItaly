@@ -6874,6 +6874,16 @@ function LiveTranslator() {
         onEnd: () => setListening(false),
       };
 
+      // Prefer the explicit bridge injected by the native iOS wrapper.
+      // Fall back to the direct WKScriptMessageHandler only if needed.
+      if (typeof window.nativeSpeechStart === "function") {
+        setListening(true);
+        setError("");
+        const started = window.nativeSpeechStart(lang);
+        if (started !== false) return;
+        setListening(false);
+      }
+
       const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speechStart"];
       if (!bridge) {
         setListening(false);
