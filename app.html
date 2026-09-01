@@ -5819,6 +5819,16 @@ function LiveLocationMap({ data, compact }) {
   );
 }
 
+
+function isSameDate(d1, d2) {
+  return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
+}
+
+function cityForDay(days, dayNum) {
+  const block = days.find(b => b.days.includes(dayNum));
+  return block ? block.city : null;
+}
+
 function CityMap({ city }) {
   const [coords, setCoords] = useState(null);
   const [status, setStatus] = useState("idle"); // idle | loading | ok | outsideItaly | denied | error
