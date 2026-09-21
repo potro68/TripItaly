@@ -2404,28 +2404,6 @@
     background:rgba(244,200,74,.16) !important;
   }
 
-
-/* 687 Italy NOW V1.04 */
-
-.now-hero{border:1.5px solid var(--ink);border-radius:18px;padding:16px;background:var(--paper);margin-bottom:12px}
-.now-kicker{font-size:11px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
-.now-title{font-family:Fraunces,serif;font-size:24px;font-weight:700;margin-top:4px}
-.now-sub{font-size:12px;line-height:1.45;opacity:.72;margin-top:5px}
-.now-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
-.now-context{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--paper)}
-.now-context span{display:block;font-size:9.5px;font-weight:800;opacity:.62;text-transform:uppercase;letter-spacing:.35px}
-.now-context b{display:block;font-size:15px;margin-top:4px;overflow:hidden;text-overflow:ellipsis}
-.now-suggestion{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:9px;background:var(--paper)}
-.now-suggestion-top{display:flex;gap:10px;align-items:flex-start}
-.now-suggestion-icon{font-size:22px;line-height:1.1}
-.now-suggestion-main{flex:1;min-width:0}
-.now-suggestion-h{font-size:14px;font-weight:900}
-.now-suggestion-d{font-size:11px;line-height:1.4;opacity:.7;margin-top:3px}
-.now-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
-.now-btn{border:1px solid var(--ink);border-radius:10px;padding:8px 10px;background:var(--paper);font:800 11px Sora,sans-serif;cursor:pointer}
-.now-btn.primary{background:var(--ink);color:var(--paper)}
-@media(max-width:430px){.now-context-grid{grid-template-columns:1fr 1fr}.now-title{font-size:21px}}
-
 </style>
 </head>
 <body>
@@ -4739,7 +4717,6 @@ const DASH_SECTIONS = [
 ];
 
 const DASH_SECTIONS_ITALY = [
-  { id: "now", icon: "🧠", label: "NOW" },
   { id: "itinerary", icon: "🗺️", label: "Itinerary" },
   { id: "nearby", icon: "📍", label: "Nearby" },
   { id: "drive", icon: "🚗", label: "Drive" },
@@ -4772,8 +4749,8 @@ const MENU_LANGUAGES = [
 ];
 
 const TRIP_ENGINE_MENU_TRANSLATIONS = {
-  en:{overview:"Overview",wallet:"Wallet",packing:"Packing",settings:"Settings",now:"NOW",itinerary:"Itinerary",nearby:"Nearby",drive:"Drive",offline:"Offline",translate:"Translate",tools:"Tools"},
-  it:{overview:"Panoramica",wallet:"Portafoglio",packing:"Bagaglio",settings:"Impostazioni",now:"ORA",itinerary:"Itinerario",nearby:"Nelle vicinanze",drive:"Guida",offline:"Offline",translate:"Traduci",tools:"Strumenti"},
+  en:{overview:"Overview",wallet:"Wallet",packing:"Packing",settings:"Settings",itinerary:"Itinerary",nearby:"Nearby",drive:"Drive",offline:"Offline",translate:"Translate",tools:"Tools"},
+  it:{overview:"Panoramica",wallet:"Portafoglio",packing:"Bagaglio",settings:"Impostazioni",itinerary:"Itinerario",nearby:"Nelle vicinanze",drive:"Guida",offline:"Offline",translate:"Traduci",tools:"Strumenti"},
   de:{overview:"Übersicht",wallet:"Reise-Wallet",packing:"Gepäck",settings:"Einstellungen",itinerary:"Reiseplan",nearby:"In der Nähe",drive:"Fahren",offline:"Offline",translate:"Übersetzen",tools:"Werkzeuge"},
   fr:{overview:"Aperçu",wallet:"Portefeuille",packing:"Bagages",settings:"Paramètres",itinerary:"Itinéraire",nearby:"À proximité",drive:"Conduite",offline:"Hors ligne",translate:"Traduire",tools:"Outils"},
   es:{overview:"Resumen",wallet:"Cartera",packing:"Equipaje",settings:"Ajustes",itinerary:"Itinerario",nearby:"Cerca de ti",drive:"Conducir",offline:"Sin conexión",translate:"Traducir",tools:"Herramientas"},
@@ -6492,9 +6469,6 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
   );
 }
 
-
-
-
 const NEARBY_FILTERS = [
   { id: "food", label: "🍝 Food", desc: "🍝 Restaurants · ☕ Cafés · 🍦 Ice cream" },
   { id: "attractions", label: "🏛️ Attractions", desc: "🏛️ Tourist attractions · Museums" },
@@ -6517,147 +6491,6 @@ const PLACE_TYPE_ICON = {
   supermarket: "🛒", shopping_mall: "🏬", pharmacy: "💊", parking: "🅿️",
   gas_station: "⛽", atm: "🏧", hospital: "🏥", train_station: "🚉", bus_station: "🚌",
 };
-
-
-function DashNow({ data, setData, onGoTo, dailyAmount }) {
-  const [status, setStatus] = useState("idle");
-  const [coords, setCoords] = useState(null);
-  const [locationName, setLocationName] = useState("");
-  const [localTime, setLocalTime] = useState("");
-  const [weather, setWeather] = useState(null);
-  const [places, setPlaces] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [added, setAdded] = useState({});
-
-  const today = new Date();
-  const totalDays = tripLengthDays(data);
-  let todayDayNum = null;
-  for (let i=1;i<=totalDays;i++) {
-    const d = tripDateForDay(data,i);
-    if (d && isSameDate(d,today)) { todayDayNum=i; break; }
-  }
-
-  const spentToday = todayDayNum ? expensesForDay(data,todayDayNum) : 0;
-  const budgetLeft = Math.max(0, Number(dailyAmount || 0) - Number(spentToday || 0));
-  const hour = new Date().getHours();
-
-  const weatherMeta = (code) => {
-    const c=Number(code);
-    if(c===0) return {icon:"☀️",label:"Clear",wet:false};
-    if(c<=2) return {icon:"🌤️",label:"Partly cloudy",wet:false};
-    if(c===3) return {icon:"☁️",label:"Overcast",wet:false};
-    if(c<=48) return {icon:"🌫️",label:"Fog",wet:false};
-    if(c<=67) return {icon:"🌧️",label:"Rain",wet:true};
-    if(c<=77) return {icon:"🌨️",label:"Snow",wet:true};
-    if(c<=86) return {icon:"🌧️",label:"Showers",wet:true};
-    return {icon:"⛈️",label:"Storm",wet:true};
-  };
-
-  const chooseTypes = (wet) => {
-    if (wet) return ["museum","cafe","shopping_mall"];
-    if (hour < 11) return ["cafe","attraction","museum"];
-    if (hour >= 12 && hour <= 14) return ["restaurant","cafe","attraction"];
-    if (hour >= 18) return ["restaurant","attraction","cafe"];
-    return ["attraction","museum","cafe"];
-  };
-
-  const locateAndSuggest = async () => {
-    setLoading(true); setError(""); setPlaces([]);
-    try {
-      const loc = await detectCurrentCountry();
-      if (loc.countryCode !== "IT") {
-        setStatus("outside"); setLoading(false); return;
-      }
-      setStatus("inside");
-      setCoords({lat:loc.lat,lng:loc.lng});
-      setLocationName(loc.city || loc.locality || loc.country || "Italy");
-      try {
-        const tz = Intl.DateTimeFormat(undefined,{hour:"2-digit",minute:"2-digit",timeZone:"Europe/Rome"}).format(new Date());
-        setLocalTime(tz);
-      } catch(_) { setLocalTime(new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})); }
-
-      let wet=false;
-      try {
-        const wr=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,weather_code&timezone=Europe%2FRome`);
-        const wj=await wr.json();
-        if(wj?.current){ const meta=weatherMeta(wj.current.weather_code); setWeather({...meta,temp:Math.round(wj.current.temperature_2m)}); wet=meta.wet; }
-      } catch(_) {}
-
-      const types=chooseTypes(wet);
-      const params=new URLSearchParams({action:"places",lat:loc.lat,lng:loc.lng,types:types.join(","),radius:"2500",device_id:getTripDeviceId()});
-      const guard=checkApiRate("places");
-      if(!guard.ok) throw new Error(apiRateMessage(guard));
-      recordApiUsage("places",1);
-      const pr=await fetch(`${PROXY_URL}?${params.toString()}`);
-      const pj=await pr.json();
-      const list=(pj.success && Array.isArray(pj.data) ? pj.data : [])
-        .filter(p=>p.openNow !== false)
-        .map(p=>({...p,_type:p.matchedType || "attraction"}))
-        .sort((a,b)=>(b.rating||0)-(a.rating||0))
-        .slice(0,4);
-      setPlaces(list);
-      if(!list.length) setError("No suitable open places found nearby right now.");
-    } catch(e) {
-      setError(e?.message || "Couldn't build live suggestions right now.");
-      if(Number(e?.code)===1) setStatus("denied");
-    } finally { setLoading(false); }
-  };
-
-  const addToToday = (p) => {
-    if(!todayDayNum) { onGoTo("itinerary"); return; }
-    setData(prev=>{
-      const dayPlans=prev.dayPlans || {};
-      const current=dayPlans[todayDayNum] || [];
-      if(current.includes(p.name)) return prev;
-      return {...prev,dayPlans:{...dayPlans,[todayDayNum]:[...current,p.name]}};
-    });
-    setAdded(prev=>({...prev,[p.id || p.name]:true}));
-  };
-
-  const navTo = (p) => {
-    const q=encodeURIComponent([p.name,p.address].filter(Boolean).join(" "));
-    window.open(`https://www.google.com/maps/search/?api=1&query=${q}`,"_blank","noopener,noreferrer");
-  };
-
-  return <div>
-    <div className="now-hero">
-      <div className="now-kicker">687 Intelligent Day</div>
-      <div className="now-title">NOW · What can I do now?</div>
-      <div className="now-sub">Uses your real location in Italy, local time, current weather and today's remaining trip budget to surface practical nearby options.</div>
-      <div className="now-context-grid">
-        <div className="now-context"><span>Location</span><b>{locationName || "Not checked yet"}</b></div>
-        <div className="now-context"><span>Italy time</span><b>{localTime || "—"}</b></div>
-        <div className="now-context"><span>Weather</span><b>{weather ? `${weather.icon} ${weather.temp}° · ${weather.label}` : "—"}</b></div>
-        <div className="now-context"><span>Budget left today</span><b>{formatHomeMoney(data,budgetLeft)}</b></div>
-      </div>
-      <div className="now-actions">
-        <button className="now-btn primary" onClick={locateAndSuggest} disabled={loading}>{loading ? "Checking…" : "✨ Show suggestions"}</button>
-        <button className="now-btn" onClick={()=>onGoTo("nearby")}>📍 Open Nearby</button>
-      </div>
-      {status==="outside" && <div className="now-sub" style={{marginTop:9}}>Live NOW suggestions are available when your GPS confirms you are in Italy.</div>}
-      {status==="denied" && <div className="now-sub" style={{marginTop:9}}>Location permission is required for live NOW suggestions.</div>}
-      {error && <div className="now-sub" style={{marginTop:9,fontWeight:800}}>{error}</div>}
-    </div>
-
-    {places.map((p,idx)=>{
-      const key=p.id || `${p.name}-${idx}`;
-      return <div className="now-suggestion" key={key}>
-        <div className="now-suggestion-top">
-          <div className="now-suggestion-icon">{PLACE_TYPE_ICON[p._type] || "📍"}</div>
-          <div className="now-suggestion-main">
-            <div className="now-suggestion-h">{p.name}</div>
-            <div className="now-suggestion-d">{p.address || "Nearby"}{p.rating ? ` · ⭐ ${p.rating}` : ""}{p.openNow===true ? " · Open now" : ""}</div>
-          </div>
-        </div>
-        <div className="now-actions">
-          <button className="now-btn primary" onClick={()=>navTo(p)}>🧭 GO</button>
-          <button className="now-btn" onClick={()=>addToToday(p)} disabled={!!added[key]}>{added[key] ? "✓ Planned" : "+ Plan"}</button>
-        </div>
-      </div>
-    })}
-  </div>;
-}
 
 function DashNearby({ data, setData }) {
   const [mode, setMode] = useState(data.wantsCar === true ? "car" : "walk");
@@ -7958,7 +7791,6 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
         {section === "settings" && <DashSettings data={data} setData={setData} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
-        {section === "now" && <DashNow data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && <DashNearby data={data} setData={setData} />}
         {section === "drive" && data.wantsCar && <DashDrive data={data} setData={setData} />}
