@@ -2501,6 +2501,67 @@
   .iday-location-clock{display:flex;align-items:center;gap:6px;border:1px solid #111;border-radius:12px;background:#fff;padding:9px 11px;margin-bottom:10px;font-size:11px;font-weight:800;color:#222}.iday-location-pin{font-size:14px}.iday-location-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.iday-location-dot{opacity:.45}.iday-location-time{margin-left:auto;font-variant-numeric:tabular-nums}.iday-today-card{overflow:hidden}.iday-today-stop{border:1px solid #111;border-radius:0;background:#fff;margin-top:8px;overflow:hidden}.iday-today-stop-top{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px}.iday-today-actions{display:flex;gap:5px;align-items:center;flex-shrink:0}.iday-today-actions button,.iday-nav-choice button,.iday-today-clear,.iday-open-itinerary{border:1px solid #111;border-radius:9px;background:#fff;color:#8f1734;font-family:'Sora',sans-serif;font-size:10px;font-weight:900;padding:7px 9px;cursor:pointer}.iday-today-actions .primary{background:#BC002D;color:#fff}.iday-nav-choice{display:flex;gap:7px;padding:8px 10px 10px 52px;border-top:1px solid #ddd;flex-wrap:wrap;background:#fffafc}.iday-budget-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}.iday-budget-mini-grid>div{border:1px solid #111;border-radius:10px;background:#fff;padding:8px 6px;text-align:center}.iday-budget-mini-grid span{display:block;font-size:9px;color:#666;font-weight:700}.iday-budget-mini-grid b{display:block;font-size:12px;color:#111;margin-top:3px}.iday-budget-mini.over{border-color:#BC002D}.iday-budget-mini.low{border-color:#d18a00}.iday-row{display:flex;gap:9px;padding:8px 0;border-top:1px solid rgba(0,0,0,.08)}.iday-row:first-of-type{border-top:none}.iday-row-main{min-width:0}.iday-row-h{font-size:11.5px;font-weight:900;color:#111}.iday-row-d{font-size:10.5px;color:#666;line-height:1.4;margin-top:2px}
   @media(max-width:560px){.iday-today-stop-top{grid-template-columns:30px minmax(0,1fr);align-items:start}.iday-today-actions{grid-column:2;justify-content:flex-start;margin-top:3px;flex-wrap:wrap}.iday-nav-choice{padding-left:48px}.iday-budget-mini-grid{grid-template-columns:1fr}}
 
+
+
+/* ---- Intelligent Day / NOW — ported from 687 Japan V1.84 ---- */
+.live-hero,.live-card{
+  border:1px solid #111;border-radius:16px;background:#fff;padding:13px;margin-bottom:10px;
+  box-shadow:0 5px 16px rgba(0,0,0,.045);
+}
+.live-hero{background:linear-gradient(180deg,#fff8fa 0%,#fff 100%)}
+.live-kicker{font-size:10px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:#8f1734}
+.live-title{font-size:21px;font-weight:900;color:#111;margin-top:3px}
+.live-sub,.live-card-d{font-size:10.5px;line-height:1.45;color:#666}
+.live-card-h{font-size:15px;font-weight:900;color:#111}
+.live-status-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.live-status-chip{
+  display:inline-flex;align-items:center;gap:4px;border:1px solid #111;border-radius:999px;
+  background:#fff;padding:6px 8px;font-size:9.5px;font-weight:800;color:#222
+}
+.live-action-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.live-mini-btn,.now-action-btn,.now-secondary-btn,.now-neutral-btn{
+  border:1px solid #111;border-radius:10px;padding:8px 10px;font-size:10px;font-weight:900;
+  cursor:pointer;background:#fff;color:#111
+}
+.now-action-btn{background:#8f1734;color:#fff;-webkit-text-fill-color:#fff}
+.now-secondary-btn{background:#fff7f8;color:#8f1734}
+.now-action-btn:disabled,.now-secondary-btn:disabled{opacity:.5;cursor:not-allowed}
+.live-suggestion{
+  display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:start;
+  padding:10px 0;border-top:1px solid #eee
+}
+.live-suggestion:first-of-type{border-top:none}
+.live-suggestion-icon{font-size:22px;line-height:1.1}
+.live-suggestion-main{min-width:0}
+.live-suggestion-h{font-size:11.5px;font-weight:900;color:#111;line-height:1.25}
+.live-suggestion-d{font-size:9.5px;color:#666;line-height:1.35;margin-top:2px}
+.price-intel-badge{
+  display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:5px;padding:5px 7px;
+  border:1px solid #d6d6d6;border-radius:9px;background:#fafafa;font-size:9px;font-weight:800;color:#333
+}
+.price-intel-badge.free,.price-intel-badge.safe{border-color:#8fc9a4;background:#f3fbf6}
+.price-intel-badge.over{border-color:#e6a0a0;background:#fff5f5}
+.price-intel-source{font-weight:700;color:#777}
+.smart-route-row{
+  display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:8px;align-items:start;
+  border-top:1px solid #eee;padding:9px 0
+}
+.smart-route-row:first-of-type{border-top:none}
+.smart-route-time{font-size:9.5px;font-weight:900;color:#8f1734}
+.smart-route-main{min-width:0}
+.smart-route-actions{display:flex;flex-direction:column;gap:5px}
+.smart-route-actions button{padding:6px 7px;font-size:8.5px}
+.iday-now-grid{display:grid;grid-template-columns:105px 1fr;gap:8px;margin-top:10px}
+.iday-now-grid input{
+  width:100%;box-sizing:border-box;border:1px solid #bbb;border-radius:10px;padding:9px;font-size:11px;background:#fff
+}
+@media(max-width:520px){
+  .live-suggestion{grid-template-columns:28px minmax(0,1fr)}
+  .live-suggestion>div:last-child{grid-column:2;display:flex!important;flex-wrap:wrap}
+  .smart-route-row{grid-template-columns:46px minmax(0,1fr)}
+  .smart-route-actions{grid-column:2;flex-direction:row;flex-wrap:wrap}
+}
+
 </style>
 </head>
 <body>
@@ -5258,14 +5319,20 @@ async function detectCurrentCountry() {
   const lat = pos.coords.latitude;
   const lng = pos.coords.longitude;
 
-  // Country verification through OpenStreetMap reverse geocoding.
-  // This distinguishes the current country from real GPS coordinates.
-  const url = `https://nominatim.openstreetmap.org/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&format=json&zoom=3&addressdetails=1`;
+  // Country + locality verification through OpenStreetMap reverse geocoding.
+  // One GPS lookup supplies both the Italy live-country check and a readable place name.
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&format=json&zoom=10&addressdetails=1`;
   const res = await fetch(url, {headers:{"Accept-Language":"en"}});
-  if (!res.ok) throw new Error("Country verification is temporarily unavailable.");
+  if (!res.ok) throw new Error("Location verification is temporarily unavailable.");
   const json = await res.json();
-  const countryCode = String(json?.address?.country_code || "").toUpperCase();
-  return {lat, lng, countryCode, country:json?.address?.country || countryCode || "Unknown"};
+  const a = json?.address || {};
+  const countryCode = String(a.country_code || "").toUpperCase();
+  const locality = a.city || a.town || a.village || a.municipality || a.county || "";
+  return {
+    lat, lng, countryCode,
+    country:a.country || countryCode || "Unknown",
+    locality
+  };
 }
 
 function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, lockedTotal, remaining, pctUsed, nights, dailyAmount, onStartNewTrip }) {
@@ -7888,6 +7955,461 @@ function DashTools({ data, onDeleteLocalData }) {
 }
 
 
+
+function italyNowClockParts(timeZone) {
+  try {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+      year:"numeric", month:"2-digit", day:"2-digit",
+      hour:"2-digit", minute:"2-digit", hourCycle:"h23", weekday:"short"
+    }).formatToParts(now);
+    const get = t => parts.find(p => p.type === t)?.value || "";
+    return {
+      date:`${get("year")}-${get("month")}-${get("day")}`,
+      hour:Number(get("hour") || 0), minute:Number(get("minute") || 0),
+      weekday:get("weekday"), clock:`${get("hour")}:${get("minute")}`,
+      timeZone:timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || ""
+    };
+  } catch (_) {
+    const d=new Date();
+    return {date:d.toISOString().slice(0,10),hour:d.getHours(),minute:d.getMinutes(),weekday:"",clock:d.toTimeString().slice(0,5),timeZone:""};
+  }
+}
+
+function italyNowMinutesFromClock(value){
+  const m=String(value||"").match(/^(\d{1,2}):(\d{2})$/);
+  if(!m) return null;
+  const h=Number(m[1]), min=Number(m[2]);
+  if(h<0||h>23||min<0||min>59) return null;
+  return h*60+min;
+}
+function italyNowMinutesUntil(clock,hour,minute){
+  const target=italyNowMinutesFromClock(clock);
+  if(target==null) return null;
+  const now=Number(hour||0)*60+Number(minute||0);
+  let diff=target-now; if(diff<0) diff+=1440; return diff;
+}
+function italyNowFormatDuration(totalMinutes){
+  if(totalMinutes==null) return "";
+  const mins=Math.max(0,Math.round(totalMinutes)),h=Math.floor(mins/60),m=mins%60;
+  if(!h) return `${m} min`; if(!m) return `${h}h`; return `${h}h ${m}m`;
+}
+function italyNowHaversineKm(lat1,lon1,lat2,lon2){
+  const nums=[lat1,lon1,lat2,lon2].map(Number); if(nums.some(v=>!Number.isFinite(v))) return null;
+  const [a,b,c,d]=nums,R=6371,toRad=x=>x*Math.PI/180,dLat=toRad(c-a),dLon=toRad(d-b);
+  const x=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+function italyNowRoughTravelMinutes(km,mode){
+  if(km==null) return null;
+  const roadFactor=mode==="car"?1.35:1.25,speedKmh=mode==="car"?24:4.5;
+  return Math.max(3,Math.round((km*roadFactor/speedKmh)*60));
+}
+function italyNowWeatherDescription(code){
+  const c=Number(code);
+  if(c===0)return{icon:"☀️",label:"Clear",wet:false,severe:false};
+  if(c<=2)return{icon:"🌤️",label:"Partly cloudy",wet:false,severe:false};
+  if(c===3)return{icon:"☁️",label:"Overcast",wet:false,severe:false};
+  if(c<=48)return{icon:"🌫️",label:"Fog",wet:false,severe:false};
+  if(c<=67)return{icon:"🌧️",label:"Rain / drizzle",wet:true,severe:false};
+  if(c<=77)return{icon:"🌨️",label:"Snow",wet:true,severe:false};
+  if(c<=86)return{icon:"🌧️",label:"Showers",wet:true,severe:false};
+  if(c>=95)return{icon:"⛈️",label:"Thunderstorm",wet:true,severe:true};
+  return{icon:"🌤️",label:"Variable",wet:false,severe:false};
+}
+function italyNowVisitMinutes(type,hour){
+  const t=String(type||"");
+  if(t==="cafe"||t==="ice_cream")return 35;
+  if(t==="restaurant")return hour>=11&&hour<=21?60:45;
+  if(t==="museum"||t==="attraction")return 75;
+  if(t==="shopping_mall")return 60;
+  return 55;
+}
+function italyNowContextTypes(weatherInfo,hour,budgetLow){
+  if(weatherInfo?.severe||weatherInfo?.wet)return["museum","shopping_mall","cafe"];
+  if(budgetLow)return["attraction","museum","cafe"];
+  if(hour<10)return["attraction","cafe"];
+  if(hour<14)return["attraction","museum","restaurant"];
+  if(hour<18)return["attraction","museum","cafe"];
+  if(hour<22)return["restaurant","shopping_mall","attraction"];
+  return["restaurant","cafe"];
+}
+function italyNowPlaceCategory(place){
+  const types=Array.isArray(place?.types)?place.types:[];
+  const t=String(place?.matchedType||"");
+  const name=String(place?.name||"").toLowerCase();
+  if(["restaurant","cafe","ice_cream"].includes(t)||/restaurant|cafe|coffee|food|pizza|trattoria|osteria|gelato/.test(name))return"food";
+  if(["museum","attraction"].includes(t)||/museum|church|basilica|cathedral|castle|palace|historic|gallery/.test(name))return"culture";
+  if(/park|garden|nature|river|lake|view|beach|mountain/.test(name))return"nature";
+  if(["shopping_mall","supermarket"].includes(t)||/mall|market|shop|store/.test(name))return"shopping";
+  if(["train_station","bus_station","hospital","pharmacy","atm","parking","gas_station"].includes(t))return"practical";
+  return"other";
+}
+function italyNowCategoryDurationMinutes(category){
+  return({food:60,culture:90,nature:75,shopping:60,practical:30,other:60})[category]||60;
+}
+function italyNowTravelMinutesForKm(km){
+  const d=Number(km||0); if(!Number.isFinite(d)||d<0)return 20;
+  if(d<=1)return Math.max(5,Math.round(d*14));
+  if(d<=3)return Math.max(10,Math.round(d*8));
+  if(d<=8)return Math.max(15,Math.round(d*5));
+  return Math.max(25,Math.round(d*3.5));
+}
+function italyNowIndoorCategory(category){
+  return["food","culture","shopping","practical","other"].includes(category);
+}
+function italyNowCategoryLabel(category){
+  return({food:"Food",culture:"Culture",nature:"Nature",shopping:"Shopping",practical:"Practical",other:"Explore"})[category]||"Explore";
+}
+function italyNowCategoryIcon(category){
+  return({food:"🍝",culture:"🏛️",nature:"🌿",shopping:"🛍️",practical:"🚉",other:"📍"})[category]||"📍";
+}
+function italyNowClockToMinutes(hour,minute){return Number(hour||0)*60+Number(minute||0);}
+function italyNowMinutesToClock(total){
+  let n=Math.round(Number(total||0));n=((n%1440)+1440)%1440;
+  return `${String(Math.floor(n/60)).padStart(2,"0")}:${String(n%60).padStart(2,"0")}`;
+}
+
+function italyNowReadCachedEurRate(currency){
+  try{
+    const raw=localStorage.getItem(`tripengine_fx_EUR_${currency}`); if(!raw)return null;
+    const v=Number(JSON.parse(raw)?.rate); return Number.isFinite(v)&&v>0?v:null;
+  }catch(_){return null;}
+}
+function italyNowUseEurToCurrencyRate(currency){
+  const target=String(currency||"EUR").toUpperCase();
+  const [rate,setRate]=React.useState(()=>target==="EUR"?1:italyNowReadCachedEurRate(target));
+  React.useEffect(()=>{
+    let alive=true;
+    if(target==="EUR"){setRate(1);return()=>{alive=false;};}
+    const cached=italyNowReadCachedEurRate(target); if(cached)setRate(cached);
+    fetch(`https://api.frankfurter.dev/v1/latest?base=EUR&symbols=${target}`)
+      .then(r=>r.ok?r.json():null).then(j=>{
+        const v=Number(j?.rates?.[target]);
+        if(alive&&Number.isFinite(v)&&v>0){setRate(v);try{localStorage.setItem(`tripengine_fx_EUR_${target}`,JSON.stringify({rate:v,savedAt:Date.now()}));}catch(_){}}
+      }).catch(()=>{});
+    return()=>{alive=false;};
+  },[target]);
+  return rate;
+}
+function italyNowConvertVerifiedPrice(price,homeCurrency,eurToHome){
+  if(!price?.known)return null;
+  const target=String(homeCurrency||"EUR").toUpperCase();
+  if(price.currency===target)return{...price,budgetMin:price.min,budgetMax:price.max,budgetCurrency:target};
+  if(price.currency==="EUR"&&target==="EUR")return{...price,budgetMin:price.min,budgetMax:price.max,budgetCurrency:"EUR"};
+  if(price.currency==="EUR"&&Number.isFinite(Number(eurToHome))&&Number(eurToHome)>0){
+    return{...price,budgetMin:price.min*Number(eurToHome),budgetMax:price.max*Number(eurToHome),budgetCurrency:target};
+  }
+  return null;
+}
+function italyNowPriceAffordability(place,budgetLeft,homeCurrency,eurToHome){
+  const raw=verifiedPlacePrice(place),converted=italyNowConvertVerifiedPrice(raw,homeCurrency,eurToHome);
+  if(!raw.known)return{status:"unknown",raw,converted:null};
+  if(raw.free)return{status:"free",raw,converted};
+  if(!converted||!(Number(budgetLeft)>=0))return{status:"known-unconverted",raw,converted};
+  const hi=Number(converted.budgetMax??converted.budgetMin??0),lo=Number(converted.budgetMin??hi);
+  if(lo>Number(budgetLeft))return{status:"over",raw,converted};
+  if(hi<=Number(budgetLeft))return{status:"safe",raw,converted};
+  return{status:"borderline",raw,converted};
+}
+function italyNowFormatVerifiedPrice(place,homeCurrency,eurToHome){
+  const p=verifiedPlacePrice(place);
+  if(!p.known){
+    const level=placePriceLevelLabel(place);
+    return level?{text:level,exact:false,source:"price level",approxText:""}:{text:"Price unavailable",exact:false,source:"",approxText:""};
+  }
+  if(p.free)return{text:"FREE",exact:true,source:p.source,approxText:""};
+  const lo=Number(p.min||0),hi=Number(p.max??p.min??0);
+  const text=lo===hi?formatCurrencyAmount(p.currency,lo,0):`${formatCurrencyAmount(p.currency,lo,0)}–${formatCurrencyAmount(p.currency,hi,0)}`;
+  let approxText="",target=String(homeCurrency||"EUR").toUpperCase();
+  if(p.currency==="EUR"&&target!=="EUR"&&Number.isFinite(Number(eurToHome))&&Number(eurToHome)>0){
+    const a=lo*Number(eurToHome),b=hi*Number(eurToHome);
+    approxText=a===b?`≈ ${formatCurrencyAmount(target,a,0)}`:`≈ ${formatCurrencyAmount(target,a,0)}–${formatCurrencyAmount(target,b,0)}`;
+  }
+  return{text,exact:true,source:p.source,approxText};
+}
+function italyNowPriceScoreAdjustment(place,budgetLeft,homeCurrency,eurToHome){
+  const a=italyNowPriceAffordability(place,budgetLeft,homeCurrency,eurToHome);
+  if(a.status==="free")return 55;
+  if(a.status==="safe"){
+    const hi=Number(a.converted?.budgetMax??0),ratio=Number(budgetLeft)>0?hi/Number(budgetLeft):1;
+    if(ratio<=.15)return 38;if(ratio<=.35)return 26;if(ratio<=.65)return 12;return 3;
+  }
+  if(a.status==="borderline")return-18;
+  if(a.status==="over")return-120;
+  return 0;
+}
+function italyNowBuildSmartRoute(candidates,options={}){
+  const {startLat=null,startLng=null,startMinutes=0,availableMinutes=null,badWeather=false,maxStops=4,excludeNames=[],budgetLeft=null,homeCurrency="EUR",eurToHome=null}=options;
+  const excluded=new Set((excludeNames||[]).map(x=>String(x||"").trim().toLowerCase()));
+  const pool=(candidates||[]).filter(p=>p&&p.name).filter(p=>!excluded.has(String(p.name).trim().toLowerCase())).filter(p=>p.fits!==false)
+    .map(p=>({...p,category:italyNowPlaceCategory(p)})).filter(p=>!badWeather||italyNowIndoorCategory(p.category));
+  const chosen=[],usedCategories=new Set(); let currentLat=Number(startLat),currentLng=Number(startLng),clock=Number(startMinutes||0);
+  let remaining=availableMinutes==null?null:Math.max(0,Number(availableMinutes)),moneyRemaining=budgetLeft==null?null:Math.max(0,Number(budgetLeft));
+  for(let step=0;step<maxStops;step++){
+    const ranked=pool.filter(p=>!chosen.some(c=>c.name===p.name)).map(p=>{
+      let km=null;
+      if(Number.isFinite(currentLat)&&Number.isFinite(currentLng)&&Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng)))km=italyNowHaversineKm(currentLat,currentLng,Number(p.lat),Number(p.lng));
+      if(km==null)km=Number(p.km??0);
+      const travel=italyNowTravelMinutesForKm(km),visit=italyNowCategoryDurationMinutes(p.category),total=travel+visit;
+      if(remaining!=null&&total>remaining)return null;
+      let score=120-Math.min(70,Number(km||0)*10)-Math.min(35,travel*.65);
+      score+=usedCategories.has(p.category)?-15:35;
+      if(p.category==="culture"||p.category==="nature")score+=12;
+      if(badWeather&&italyNowIndoorCategory(p.category))score+=20;
+      if(p.category==="practical")score-=10;
+      score+=italyNowPriceScoreAdjustment(p,moneyRemaining,homeCurrency,eurToHome);
+      return{place:p,score,km:Number(km||0),travel,visit,total};
+    }).filter(Boolean).sort((a,b)=>b.score-a.score);
+    if(!ranked.length)break;
+    const pick=ranked[0],arrival=clock+pick.travel,finish=arrival+pick.visit;
+    chosen.push({
+      id:pick.place.id||`smart-${Date.now()}-${step}`,name:pick.place.name,lat:pick.place.lat,lng:pick.place.lng,
+      category:pick.place.category,km:Math.round(pick.km*10)/10,travelMin:pick.travel,visitMin:pick.visit,
+      start:italyNowMinutesToClock(arrival),end:italyNowMinutesToClock(finish),matchedType:pick.place.matchedType||"",
+      priceRange:pick.place.priceRange||pick.place.price_range||null,priceLevel:pick.place.priceLevel??pick.place.price_level??null
+    });
+    usedCategories.add(pick.place.category);clock=finish;
+    if(Number.isFinite(Number(pick.place.lat))&&Number.isFinite(Number(pick.place.lng))){currentLat=Number(pick.place.lat);currentLng=Number(pick.place.lng);}
+    if(remaining!=null)remaining=Math.max(0,remaining-pick.total);
+    if(moneyRemaining!=null){
+      const pa=italyNowPriceAffordability(pick.place,moneyRemaining,homeCurrency,eurToHome),cost=Number(pa.converted?.budgetMax);
+      if(!["unknown","known-unconverted"].includes(pa.status)&&Number.isFinite(cost))moneyRemaining=Math.max(0,moneyRemaining-cost);
+    }
+  }
+  return chosen;
+}
+
+function ItalyDashNow({data,setData,onGoTo,dailyAmount}){
+  const deviceTimeZone=Intl.DateTimeFormat().resolvedOptions().timeZone||"Europe/Rome";
+  const [liveTimeZone,setLiveTimeZone]=React.useState(deviceTimeZone);
+  const clock=italyNowClockParts(liveTimeZone);
+  const [currentLocationName,setCurrentLocationName]=React.useState("");
+  const [gpsState,setGpsState]=React.useState("idle");
+  const [weather,setWeather]=React.useState(null);
+  const [livePlaces,setLivePlaces]=React.useState([]);
+  const [liveLoading,setLiveLoading]=React.useState(false);
+  const [liveError,setLiveError]=React.useState("");
+  const [smartDayMessage,setSmartDayMessage]=React.useState("");
+  const [liveCoords,setLiveCoords]=React.useState(null);
+  const [navChoiceStop,setNavChoiceStop]=React.useState("");
+  const homeCurrency=getHomeCurrency(data);
+  const eurToHome=italyNowUseEurToCurrencyRate(homeCurrency);
+
+  const workingDay=italyIntelligentWorkingDay(data);
+  const spentToday=(data.expenses||[]).filter(e=>Number(e.dayNum||e.day||0)===workingDay).reduce((s,e)=>s+Number(e.amount||0),0);
+  const budgetLeft=Math.max(0,Number(dailyAmount||0)-spentToday);
+  const budgetLow=Number(dailyAmount||0)>0&&budgetLeft<Number(dailyAmount||0)*.25;
+  const currentPlans=(data.dayPlans||{})[workingDay]||[];
+  const smartRoute=(data.smartDayPlans||{})[workingDay]||[];
+  const completedMap=data.completedStops||{};
+  const activePlans=currentPlans.filter(stop=>!completedMap[`${workingDay}|${String(stop||"").trim()}`]);
+  const nextPlanned=activePlans.length?activePlans[0]:"";
+  const commitment=(data.liveCommitments||{})[workingDay]||{time:"",label:""};
+  const freeMinutes=italyNowMinutesUntil(commitment.time,clock.hour,clock.minute);
+  const usableMinutes=freeMinutes==null?null:Math.max(0,freeMinutes-30);
+  const weatherInfo=weather?italyNowWeatherDescription(weather.weather_code):null;
+
+  const saveCommitment=(field,value)=>setData(prev=>{
+    const all=prev.liveCommitments||{},current=all[workingDay]||{time:"",label:""};
+    return {...prev,liveCommitments:{...all,[workingDay]:{...current,[field]:value}}};
+  });
+
+  const syncLocation=async()=>{
+    try{
+      const loc=await detectCurrentCountry();
+      setCurrentLocationName(loc.locality||loc.country||"");
+      setLiveCoords({lat:Number(loc.lat),lng:Number(loc.lng)});
+      setGpsState(loc.countryCode==="IT"?"inside":"outside");
+      try{
+        const u=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1`;
+        const r=await fetch(u),j=await r.json();
+        if(j?.timezone)setLiveTimeZone(j.timezone);
+        if(j?.current)setWeather(j.current);
+      }catch(_){}
+      return loc;
+    }catch(e){
+      setGpsState(Number(e?.code)===1?"denied":"error");
+      return null;
+    }
+  };
+  React.useEffect(()=>{syncLocation();},[]);
+
+  const refreshLiveContext=async()=>{
+    setLiveLoading(true);setLiveError("");
+    try{
+      const loc=await syncLocation();
+      if(!loc||loc.countryCode!=="IT"){
+        setLiveError("Live suggestions are available when your GPS confirms you are in Italy.");
+        setLivePlaces([]);setLiveLoading(false);return;
+      }
+      let currentWeather=weather;
+      try{
+        const u=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1`;
+        const r=await fetch(u),j=await r.json(); if(j?.current){currentWeather=j.current;setWeather(j.current);} if(j?.timezone)setLiveTimeZone(j.timezone);
+      }catch(_){}
+      const wInfo=currentWeather?italyNowWeatherDescription(currentWeather.weather_code):null;
+      const types=italyNowContextTypes(wInfo,clock.hour,budgetLow);
+      const params=new URLSearchParams({action:"places",lat:loc.lat,lng:loc.lng,types:types.join(","),radius:"2500",device_id:getTripDeviceId()});
+      const guard=checkApiRate("places");
+      if(!guard.ok){setLiveError(apiRateMessage(guard));setLivePlaces([]);setLiveLoading(false);return;}
+      recordApiUsage("places",1);
+      const pr=await fetch(`${PROXY_URL}?${params.toString()}`),pj=await pr.json();
+      const raw=pj.success&&Array.isArray(pj.data)?pj.data:[];
+      const normalizedPlans=currentPlans.map(x=>String(x||"").trim().toLowerCase());
+      const enriched=raw.map(p=>{
+        const km=italyNowHaversineKm(loc.lat,loc.lng,p.lat,p.lng);
+        const travelMin=italyNowRoughTravelMinutes(km,data.wantsCar?"car":"walk");
+        const visitMin=italyNowVisitMinutes(p.matchedType,clock.hour);
+        const totalNeed=(travelMin||0)+visitMin+(travelMin||0);
+        const fits=usableMinutes==null?true:totalNeed<=usableMinutes;
+        const category=italyNowPlaceCategory(p);
+        const affordability=italyNowPriceAffordability(p,budgetLeft,homeCurrency,eurToHome);
+        return {...p,km,travelMin,visitMin,fits,category,affordability,alreadyPlanned:normalizedPlans.includes(String(p.name||"").trim().toLowerCase())};
+      }).filter(p=>p.openNow!==false).filter(p=>p.fits!==false).sort((a,b)=>{
+        let sa=100-(Number(a.km||0)*9)+italyNowPriceScoreAdjustment(a,budgetLeft,homeCurrency,eurToHome);
+        let sb=100-(Number(b.km||0)*9)+italyNowPriceScoreAdjustment(b,budgetLeft,homeCurrency,eurToHome);
+        if(a.alreadyPlanned)sa-=40;if(b.alreadyPlanned)sb-=40;
+        return sb-sa;
+      }).slice(0,8);
+      setLivePlaces(enriched);
+      if(!enriched.length)setLiveError("No suitable open places found nearby right now.");
+    }catch(e){setLiveError("Live suggestions are temporarily unavailable.");setLivePlaces([]);}
+    setLiveLoading(false);
+  };
+
+  const addPlaceToToday=place=>setData(prev=>{
+    const plans=prev.dayPlans||{},current=plans[workingDay]||[];
+    if(current.includes(place.name))return prev;
+    return {...prev,dayPlans:{...plans,[workingDay]:[...current,place.name]}};
+  });
+  const openMaps=place=>{
+    const has=Number.isFinite(Number(place?.lat))&&Number.isFinite(Number(place?.lng));
+    const dest=has?`${Number(place.lat)},${Number(place.lng)}`:String(place?.name||place||"").trim(); if(!dest)return;
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=${data.wantsCar?"driving":"walking"}`,"_blank","noopener,noreferrer");
+  };
+  const openWaze=place=>{
+    const has=Number.isFinite(Number(place?.lat))&&Number.isFinite(Number(place?.lng));
+    const url=has?`https://waze.com/ul?ll=${encodeURIComponent(`${Number(place.lat)},${Number(place.lng)}`)}&navigate=yes`:`https://waze.com/ul?q=${encodeURIComponent(String(place?.name||place||"").trim())}&navigate=yes`;
+    window.open(url,"_blank","noopener,noreferrer");
+  };
+
+  const buildAndSaveSmartDay=(mode="normal")=>{
+    if(!livePlaces.length){setSmartDayMessage("Tap Show suggestions first so Smart Day has live places to work with.");return;}
+    const badWeather=!!weatherInfo?.wet;
+    const existingNames=mode==="rebuild"?currentPlans.filter(name=>!!completedMap[`${workingDay}|${String(name||"").trim()}`]):[];
+    const route=italyNowBuildSmartRoute(livePlaces,{
+      startLat:liveCoords?.lat,startLng:liveCoords?.lng,startMinutes:italyNowClockToMinutes(clock.hour,clock.minute),
+      availableMinutes:usableMinutes,badWeather,maxStops:4,excludeNames:existingNames,budgetLeft,homeCurrency,eurToHome
+    });
+    if(!route.length){setSmartDayMessage(commitment.time?"I can't fit a useful stop before your next fixed plan.":"I couldn't build a useful route from the current nearby results.");return;}
+    setData(prev=>{
+      const plans={...(prev.dayPlans||{})},oldPlans=plans[workingDay]||[];
+      const doneNames=mode==="rebuild"?oldPlans.filter(name=>!!(prev.completedStops||{})[`${workingDay}|${String(name||"").trim()}`]):oldPlans;
+      const merged=[...doneNames];route.forEach(x=>{if(!merged.some(n=>String(n).trim().toLowerCase()===String(x.name).trim().toLowerCase()))merged.push(x.name);});
+      plans[workingDay]=merged;const smart={...(prev.smartDayPlans||{})};smart[workingDay]=route;
+      return {...prev,dayPlans:plans,smartDayPlans:smart};
+    });
+    setSmartDayMessage(`${route.length} stop${route.length===1?"":"s"} planned from now${commitment.time?` before ${commitment.label||commitment.time}`:""}.`);
+  };
+
+  const removeSmartStop=stop=>setData(prev=>{
+    const smart={...(prev.smartDayPlans||{})};smart[workingDay]=(smart[workingDay]||[]).filter(x=>x.name!==stop.name);
+    const plans={...(prev.dayPlans||{})};plans[workingDay]=(plans[workingDay]||[]).filter(x=>x!==stop.name);
+    return {...prev,smartDayPlans:smart,dayPlans:plans};
+  });
+
+  return <div>
+    <div className="live-hero">
+      <div className="live-kicker">687 Italy · NOW</div>
+      <div className="live-title">What can I do now?</div>
+      <div className="live-status-row">
+        <div className="live-status-chip">📍 {currentLocationName?`${currentLocationName} · ${clock.clock}`:`Locating… · ${clock.clock}`}</div>
+        <div className="live-status-chip">📅 Day {workingDay}</div>
+        {weatherInfo&&<div className="live-status-chip">{weatherInfo.icon} {Math.round(weather.temperature_2m)}°</div>}
+        {Number(dailyAmount||0)>0&&<div className="live-status-chip">👛 {formatHomeMoney(data,budgetLeft)} left today</div>}
+      </div>
+      <div className="live-sub" style={{marginTop:8}}>Location and local time update automatically.</div>
+    </div>
+
+    <div className="live-card">
+      <div className="live-card-h">Next fixed plan</div>
+      <div className="live-card-d">Optional. Add it only if you have something you must not miss.</div>
+      <div className="iday-now-grid">
+        <input type="time" value={commitment.time||""} onChange={e=>saveCommitment("time",e.target.value)}/>
+        <input type="text" placeholder="e.g. Dinner, train, museum entry" value={commitment.label||""} onChange={e=>saveCommitment("label",e.target.value)}/>
+      </div>
+      <div className="live-card-d" style={{marginTop:8,fontWeight:800}}>
+        {commitment.time?`⏳ ${italyNowFormatDuration(freeMinutes)} free${commitment.label?` before ${commitment.label}`:""}.`:"⏳ Add a time only if needed."}
+      </div>
+      {nextPlanned&&<div className="live-card-d" style={{marginTop:6}}>Next planned stop: <b>{nextPlanned}</b></div>}
+    </div>
+
+    {smartRoute.length>0&&<div className="live-card" id="iday-smart-route-result">
+      <div className="live-card-h">Smart route from now</div>
+      <div className="live-card-d">Built from your current location, time, weather, budget and verified nearby results.</div>
+      {smartRoute.map((stop,i)=><div className="smart-route-row" key={`${stop.id||stop.name}-${i}`}>
+        <div className="smart-route-time">{stop.start}<br/>↓<br/>{stop.end}</div>
+        <div className="smart-route-main">
+          <div className="live-suggestion-h">{italyNowCategoryIcon(stop.category)} {stop.name}</div>
+          <div className="live-suggestion-d">{italyNowCategoryLabel(stop.category)} · {stop.km!=null?`${Number(stop.km).toFixed(1)} km · `:""}{stop.travelMin} min travel · {stop.visitMin} min visit</div>
+          {(()=>{const pf=italyNowFormatVerifiedPrice(stop,homeCurrency,eurToHome);return <div className="price-intel-badge">{pf.exact?"💶":"🏷️"} {pf.text}{pf.approxText?<span className="price-intel-source">· {pf.approxText}</span>:null}</div>;})()}
+        </div>
+        <div className="smart-route-actions">
+          <button className="now-action-btn" onClick={()=>setNavChoiceStop(navChoiceStop===`smart:${i}`?"":`smart:${i}`)}>GO</button>
+          <button className="now-secondary-btn" onClick={()=>removeSmartStop(stop)}>Skip</button>
+        </div>
+        {navChoiceStop===`smart:${i}`&&<div className="iday-nav-choice" style={{gridColumn:"2 / -1"}}>
+          <button onClick={()=>{setNavChoiceStop("");openMaps(stop);}}>Google Maps</button>
+          <button onClick={()=>{setNavChoiceStop("");openWaze(stop);}}>Waze</button>
+        </div>}
+      </div>)}
+    </div>}
+
+    <div className="live-card">
+      <div className="live-card-h">What makes sense now</div>
+      <div className="live-card-d">One tap checks your GPS, weather, budget and nearby places. GO navigates now; + Plan saves the place to today's itinerary.</div>
+      <div className="live-action-row">
+        <button className="now-action-btn" onClick={refreshLiveContext} disabled={liveLoading}>{liveLoading?"Checking…":"✨ Show suggestions"}</button>
+        <button className="now-secondary-btn" onClick={()=>onGoTo("nearby")}>📍 Open Nearby</button>
+      </div>
+      {gpsState==="outside"&&<div className="live-card-d" style={{marginTop:8}}>Live suggestions are available when your GPS confirms you are in Italy.</div>}
+      {gpsState==="denied"&&<div className="live-card-d" style={{marginTop:8}}>Location permission is needed for live suggestions.</div>}
+      {weatherInfo?.wet&&<div className="live-card-d" style={{marginTop:8,fontWeight:800}}>{weatherInfo.icon} Wet weather: indoor options first.</div>}
+      {liveError&&!livePlaces.length&&<div className="live-card-d" style={{marginTop:8}}>{liveError}</div>}
+      {livePlaces.map((p,idx)=>{
+        const key=`place:${p.id||idx}`,choosing=navChoiceStop===key,pf=italyNowFormatVerifiedPrice(p,homeCurrency,eurToHome),af=italyNowPriceAffordability(p,budgetLeft,homeCurrency,eurToHome);
+        const cls=af.status==="free"?" free":af.status==="safe"?" safe":af.status==="over"?" over":"";
+        return <div className="live-suggestion" key={p.id||`${p.name}-${idx}`}>
+          <div className="live-suggestion-icon">{PLACE_TYPE_ICON[p.matchedType]||"📍"}</div>
+          <div className="live-suggestion-main">
+            <div className="live-suggestion-h">{p.name}</div>
+            <div className="live-suggestion-d">{p.km!=null?`${p.km.toFixed(1)} km`:""}{p.travelMin!=null?` · about ${p.travelMin} min away`:""}{commitment.time?(p.fits?" · ✅ fits":" · ⚠️ too tight"):""}</div>
+            <div className={"price-intel-badge"+cls}>{pf.exact?"💶":"🏷️"} {pf.text}{pf.approxText?<span className="price-intel-source">· {pf.approxText}</span>:null}{pf.source?<span className="price-intel-source">· {pf.source}</span>:null}</div>
+            {choosing&&<div className="iday-nav-choice" style={{marginTop:7}}><button onClick={()=>{setNavChoiceStop("");openMaps(p);}}>Google Maps</button><button onClick={()=>{setNavChoiceStop("");openWaze(p);}}>Waze</button></div>}
+          </div>
+          <div style={{display:"flex",gap:6,flexShrink:0}}>
+            <button className="now-action-btn" onClick={()=>setNavChoiceStop(choosing?"":key)}>🧭 GO</button>
+            <button className="now-secondary-btn" onClick={()=>addPlaceToToday(p)}>+ Plan</button>
+          </div>
+        </div>;
+      })}
+    </div>
+
+    <div className="live-card">
+      <div className="live-card-h">Smart Day</div>
+      <div className="live-card-d">Builds a route from the live suggestions using time, travel, weather, different activity types and verified prices when available.</div>
+      <div className="live-action-row">
+        <button className="now-action-btn" onClick={()=>buildAndSaveSmartDay("normal")}>✨ Build Smart Day</button>
+        {smartRoute.length>0&&<button className="now-secondary-btn" onClick={()=>buildAndSaveSmartDay("rebuild")}>↺ Rebuild remaining</button>}
+        <button className="now-secondary-btn" onClick={()=>onGoTo("itinerary")}>🗺️ Open Itinerary</button>
+      </div>
+      {smartDayMessage&&<div className="live-card-d" style={{marginTop:9,fontWeight:800}}>{smartDayMessage}</div>}
+    </div>
+  </div>;
+}
+
 function italyIntelligentWorkingDay(data){
   const totalDays = tripLengthDays(data);
   const today = new Date();
@@ -7996,7 +8518,11 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
   const nav=[["today","☀️","Today"],["now","⚡","NOW"],["budget","👛","Budget"],["prevent","🛡️","Prevent"],["guardian","🔔","Guardian"],["signals","📡","Signals"],["rescue","🆘","Rescue"]];
   const titleMap={today:"Today",now:"NOW · What can I do now?",budget:"Budget",prevent:"Prevent",guardian:"Trip Guardian",signals:"Live Signals",rescue:"Rescue"};
   const subtitleMap={today:"",now:"What makes sense right now.",budget:"What is safe to spend today.",prevent:"Check conditions before they become a problem.",guardian:"Important trip notifications.",signals:"Live reports around your trip.",rescue:"Fast help when something has already gone wrong."};
-  return <div className="iday-shell"><aside className="iday-side"><button className="iday-back" onClick={()=>onGoTo("overview")}>← Dashboard</button>{nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}</aside><main className="iday-main"><div className="iday-head"><h1>{titleMap[active]}</h1>{subtitleMap[active]&&<p>{subtitleMap[active]}</p>}</div>{active==="today"?<ItalyIntelligentToday data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>:<div className="iday-card"><div className="iday-kicker">687 Italy · Intelligent Day</div><div className="iday-title">{titleMap[active]}</div><div className="iday-sub">This section will be connected in its dedicated porting step.</div></div>}</main></div>;
+  return <div className="iday-shell"><aside className="iday-side"><button className="iday-back" onClick={()=>onGoTo("overview")}>← Dashboard</button>{nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}</aside><main className="iday-main"><div className="iday-head"><h1>{titleMap[active]}</h1>{subtitleMap[active]&&<p>{subtitleMap[active]}</p>}</div>{active==="today"
+  ? <ItalyIntelligentToday data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
+  : active==="now"
+    ? <ItalyDashNow data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
+    : <div className="iday-card"><div className="iday-kicker">687 Italy · Intelligent Day</div><div className="iday-title">{titleMap[active]}</div><div className="iday-sub">This section will be connected in its dedicated porting step.</div></div>}</main></div>;
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
