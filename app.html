@@ -8642,9 +8642,16 @@ function saveGuardianSettings(v){
 
 async function guardianEnsureServiceWorker(){
   if(!("serviceWorker" in navigator)) throw new Error("Service Worker unavailable");
-  const registration = await navigator.serviceWorker.register("/service-worker.js", { scope:"/" });
-  await navigator.serviceWorker.ready;
-  return registration;
+
+  const registration = await navigator.serviceWorker.register(
+    "/guardian-sw-v1112.js",
+    { scope:"/", updateViaCache:"none" }
+  );
+
+  try{ await registration.update(); }catch(_){}
+
+  const ready = await navigator.serviceWorker.ready;
+  return ready || registration;
 }
 
 async function pulseGuardianSubscribe(preferences){
@@ -8681,7 +8688,7 @@ async function pulseGuardianSubscribe(preferences){
 
   const j = await r.json().catch(()=>null);
   if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
-  return subscription;
+  return {subscription, pulse:j};
 }
 
 async function pulseGuardianSyncContext(data, settings){
@@ -8874,7 +8881,7 @@ function ItalyIntelligentDayGuardian({data}){
     : "";
 
   return <div id="iday-guardian" className="iday-card iday-anchor">
-    <div className="iday-kicker">687 Trip Guardian</div>
+    <div className="iday-kicker">687 Trip Guardian · Build 1.11.2</div>
     <div className="iday-title">Important information, even when you are not looking at NOW</div>
     <div className="iday-sub">
       Guardian is the notification layer of Intelligent Day. It uses the same itinerary, weather, route and Signals context — never a second plan.
