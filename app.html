@@ -2623,6 +2623,26 @@
 .iday-guardian-note{font-size:9.5px;line-height:1.45;color:#666;margin-top:10px}
 @media(max-width:430px){.iday-guardian-grid{grid-template-columns:1fr}}
 
+
+
+/* ---- Intelligent Day / Signals — ported from 687 Japan V1.84 ---- */
+.iday-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.iday-signal-btn{border:1px solid #111;border-radius:10px;background:#FCEAF0;padding:10px 7px;font-size:10.5px;font-weight:900;text-align:left;color:#8F001F;cursor:pointer}
+.iday-contrib{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.iday-contrib-box{border:1px solid #111;border-radius:10px;background:#fff;padding:8px 6px;text-align:center}
+.iday-contrib-n{font-size:16px;font-weight:1000;color:#8f1734;line-height:1}
+.iday-contrib-l{font-size:9.5px;font-weight:900;color:#222;margin-top:4px}
+.iday-signal-votes{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.iday-confirm{border:1px solid #111;border-radius:10px;background:#fff;color:#8f1734;font-size:10px;font-weight:900;padding:7px 9px;cursor:pointer}
+.iday-confirm.done{background:#ffe8ed;color:#8f1734}
+.iday-signal-toast{margin-top:8px;border:1px solid #146c2e;border-radius:10px;background:#e9f8ee;color:#105f28;padding:8px 10px;font-size:10.5px;font-weight:900}
+.iday-signal-toast.error{border-color:#8f1734;background:#ffe8ed;color:#8f1734}
+@media(max-width:430px){
+  .iday-grid{grid-template-columns:1fr}
+  .iday-contrib{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .iday-signal-votes{width:100%;justify-content:flex-start;margin-top:6px}
+}
+
 </style>
 </head>
 <body>
@@ -8738,6 +8758,88 @@ async function pulseGuardianSyncContext(data, settings){
   return j;
 }
 
+
+const IDAY_SIGNAL_TYPES = [
+  ["traffic","🚗","Traffic blocked / very slow",45], ["accident","💥","Accident / obstruction",60],
+  ["road_closed","⛔","Road / path closed",120], ["transit_delay","🚆","Train / metro / bus delay",60],
+  ["station_crowded","🚉","Station very crowded",45], ["path_blocked","🚶","Walking route blocked",90],
+  ["crowded","👥","Very crowded",45], ["queue","⏳","Long queue",45],
+  ["closed","🚫","Closed / unavailable",180], ["rough_sea","🌊","Rough sea",45],
+  ["wind","💨","Strong wind",45], ["rain","🌧️","Heavy rain",35],
+  ["hail","🧊","Hail / severe storm",30], ["trail","🥾","Trail problem",180],
+  ["parking","🅿️","Parking full",45], ["soldout","🎟️","Sold out",180],
+  ["entrance","↪️","Entrance changed",180], ["scam","⚠️","Tourist scam concern",240]
+];
+
+function pulseTypeForLocal(type){
+  const map={
+    traffic:"transport",
+    accident:"transport",
+    road_closed:"closed",
+    transit_delay:"transport",
+    station_crowded:"crowded",
+    path_blocked:"trail",
+    wind:"strong_wind",
+    rain:"heavy_rain",
+    soldout:"sold_out"
+  };
+  return map[type] || type;
+}
+
+function localMetaForPulseType(type){
+  const reverse={
+    transport:"transit_delay",
+    strong_wind:"wind",
+    heavy_rain:"rain",
+    sold_out:"soldout"
+  };
+  const localType=reverse[type] || type;
+  return IDAY_SIGNAL_TYPES.find(x=>x[0]===localType)
+      || IDAY_SIGNAL_TYPES.find(x=>pulseTypeForLocal(x[0])===type)
+      || [localType,"📡",String(type||"Signal"),45];
+}
+
+async function pulseFetchNearby(lat,lng,radius=4000){
+  const url=`${PULSE_API_BASE}/v1/signals/nearby?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&country_code=IT&radius_m=${encodeURIComponent(radius)}`;
+  const r=await fetch(url,{cache:"no-store"});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
+  return Array.isArray(j.signals)?j.signals:[];
+}
+
+async function pulseReportSignal({type,lat,lng,locality}){
+  const r=await fetch(`${PULSE_API_BASE}/v1/signals/report`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      app_id:"tripitaly",
+      country_code:"IT",
+      type:pulseTypeForLocal(type),
+      lat,lng,
+      locality:String(locality||"").slice(0,80),
+      device_id:pulseDeviceId()
+    })
+  });
+  const j=await r.json().catch(()=>null);
+  if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
+  return j;
+}
+
+async function pulseVoteSignal(signalId,vote){
+  const r=await fetch(`${PULSE_API_BASE}/v1/signals/vote`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      signal_id:signalId,
+      vote,
+      device_id:pulseDeviceId()
+    })
+  });
+  const j=await r.json().catch(()=>null);
+  if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
+  return j;
+}
+
 function ItalyIntelligentDayGuardian({data}){
   const [settings,setSettings]=React.useState(loadGuardianSettings);
   const [permission,setPermission]=React.useState(()=>typeof Notification!=="undefined"?Notification.permission:"unsupported");
@@ -8925,6 +9027,429 @@ function ItalyIntelligentDayGuardian({data}){
     </div>
   </div>;
 }
+
+function ItalyIntelligentDaySignals({ data }){
+  const key="tripitaly_live_signals_v1";
+  const statsKey="tripitaly_signal_contribution_stats_v1";
+  const ownIdsKey="tripitaly_signal_own_ids_v1";
+  const votesKey="tripitaly_signal_votes_v1";
+  const workingDay=italyIntelligentWorkingDay(data);
+  const plans=(data.dayPlans||{})[workingDay]||[];
+  const completed=data.completedStops||{};
+  const nextStop=plans.find(p=>!completed[`${workingDay}|${String(p||"").trim()}`]) || plans[0] || "";
+
+  const loadStats=()=>{
+    try{
+      const v=JSON.parse(localStorage.getItem(statsKey)||"{}");
+      return {
+        reports:Number(v.reports||0),
+        confirms:Number(v.confirms||0),
+        gone:Number(v.gone||0),
+        helped:Number(v.helped||0)
+      };
+    }catch(_){return {reports:0,confirms:0,gone:0,helped:0};}
+  };
+
+  const [items,setItems]=React.useState([]);
+  const [msg,setMsg]=React.useState("");
+  const [msgKind,setMsgKind]=React.useState("good");
+  const [target,setTarget]=React.useState(null);
+  const [pulseState,setPulseState]=React.useState("loading");
+  const [stats,setStats]=React.useState(loadStats);
+  const msgTimerRef=React.useRef(null);
+
+  const flashMsg=(text,kind="good",ms=3000)=>{
+    try{if(msgTimerRef.current) clearTimeout(msgTimerRef.current);}catch(_){}
+    setMsgKind(kind);
+    setMsg(text);
+    msgTimerRef.current=setTimeout(()=>setMsg(""),ms);
+  };
+
+  React.useEffect(()=>()=>{
+    try{if(msgTimerRef.current) clearTimeout(msgTimerRef.current);}catch(_){}
+  },[]);
+
+  const bumpStats=(delta)=>{
+    setStats(prev=>{
+      const next={
+        reports:Math.max(0,Number(prev.reports||0)+Number(delta.reports||0)),
+        confirms:Math.max(0,Number(prev.confirms||0)+Number(delta.confirms||0)),
+        gone:Math.max(0,Number(prev.gone||0)+Number(delta.gone||0)),
+        helped:Math.max(0,Number(prev.helped||0)+Number(delta.helped||0))
+      };
+      try{localStorage.setItem(statsKey,JSON.stringify(next));}catch(_){}
+      return next;
+    });
+  };
+
+  const readOwnIds=()=>{
+    try{
+      const a=JSON.parse(localStorage.getItem(ownIdsKey)||"[]");
+      return new Set(Array.isArray(a)?a.map(String):[]);
+    }catch(_){return new Set();}
+  };
+
+  const rememberOwnId=(id)=>{
+    if(!id) return;
+    const set=readOwnIds();
+    set.add(String(id));
+    try{localStorage.setItem(ownIdsKey,JSON.stringify([...set].slice(-200)));}catch(_){}
+  };
+
+  const readVotes=()=>{
+    try{
+      const v=JSON.parse(localStorage.getItem(votesKey)||"{}");
+      return v&&typeof v==="object"?v:{};
+    }catch(_){return {};}
+  };
+
+  const rememberVote=(id,vote)=>{
+    if(!id) return;
+    const v=readVotes();
+    v[String(id)]=vote;
+    try{localStorage.setItem(votesKey,JSON.stringify(v));}catch(_){}
+  };
+
+  const isOwnSignal=(item)=>{
+    if(item?.ownedByMe) return true;
+    if(!item?.serverId) return false;
+    return readOwnIds().has(String(item.serverId));
+  };
+
+  const voteFor=(item)=>item?.serverId?readVotes()[String(item.serverId)]||"":"";
+
+  const saveLocal=(arr)=>{
+    try{localStorage.setItem(key,JSON.stringify((arr||[]).slice(0,80)));}catch(_){}
+  };
+
+  const loadLocal=()=>{
+    try{
+      const a=JSON.parse(localStorage.getItem(key)||"[]");
+      const now=Date.now();
+      const active=(Array.isArray(a)?a:[]).filter(x=>!x.expiresAt || now<Number(x.expiresAt||0));
+      saveLocal(active);
+      return active;
+    }catch(_){return [];}
+  };
+
+  const mergeSignals=(local,remote)=>{
+    const byId=new Map();
+    (local||[]).forEach(x=>byId.set(String(x.serverId||x.id),x));
+    const ownIds=readOwnIds();
+
+    (remote||[]).forEach(s=>{
+      const meta=localMetaForPulseType(s.type);
+      const sid=String(s.id);
+      const existing=byId.get(sid)||{};
+      byId.set(sid,{
+        ...existing,
+        id:existing.id||`pulse_${sid}`,
+        serverId:sid,
+        source:"pulse",
+        type:existing.type||meta[0],
+        pulseType:s.type,
+        label:existing.label||meta[2],
+        icon:existing.icon||meta[1],
+        scopeType:existing.scopeType||"nearby",
+        target:existing.target||s.locality||"Near you",
+        day:existing.day==null?workingDay:existing.day,
+        lat:s.lat,
+        lng:s.lng,
+        createdAt:Date.now()-Number(s.age_seconds||0)*1000,
+        expiresAt:Number(s.expires_at||0),
+        confirmations:Number(s.confirmations||1),
+        confidence:Number(s.confidence||0),
+        distance_m:Number(s.distance_m||0),
+        ownedByMe:existing.ownedByMe || ownIds.has(sid),
+        lastSeenConfirmations:Number(existing.lastSeenConfirmations||s.confirmations||1)
+      });
+    });
+
+    return [...byId.values()]
+      .filter(x=>!x.expiresAt || Date.now()<Number(x.expiresAt||0))
+      .sort((a,b)=>Number(a.distance_m||999999)-Number(b.distance_m||999999));
+  };
+
+  const refresh=()=>{
+    const local=loadLocal();
+    setItems(local);
+
+    if(!navigator.geolocation){
+      setPulseState("local");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      try{
+        const remote=await pulseFetchNearby(pos.coords.latitude,pos.coords.longitude,4000);
+        const merged=mergeSignals(local,remote);
+
+        let helpedDelta=0;
+        const localByServer=new Map((local||[]).filter(x=>x.serverId).map(x=>[String(x.serverId),x]));
+        merged.forEach(x=>{
+          if(!x.serverId || !isOwnSignal(x)) return;
+          const previous=localByServer.get(String(x.serverId));
+          const prevSeen=Number(previous?.lastSeenConfirmations||previous?.confirmations||1);
+          const current=Number(x.confirmations||1);
+          if(current>prevSeen) helpedDelta+=current-prevSeen;
+          x.lastSeenConfirmations=current;
+          x.ownedByMe=true;
+        });
+        if(helpedDelta>0) bumpStats({helped:helpedDelta});
+
+        setItems(merged);
+        saveLocal(merged);
+        setPulseState("online");
+      }catch(_){
+        setItems(local);
+        setPulseState("local");
+      }
+    },()=>{
+      setItems(local);
+      setPulseState("local");
+    },{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+  };
+
+  React.useEffect(()=>{
+    refresh();
+    const id=setInterval(refresh,2*60*1000);
+    return ()=>clearInterval(id);
+  },[]);
+
+  const targets=[
+    {scopeType:"route",target:nextStop?`On the way to ${nextStop}`:"On the way / current route",icon:"🛣️"},
+    ...plans.map(p=>({scopeType:"stop",target:p,icon:"📍"}))
+  ];
+
+  const report=(t)=>{
+    if(!target){setMsgKind("error");setMsg("Choose a stop or your current route first.");return;}
+    if(!navigator.geolocation){setMsgKind("error");setMsg("Location unavailable.");return;}
+
+    setMsgKind("good");
+    setMsg("Sending signal…");
+
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const meta=IDAY_SIGNAL_TYPES.find(x=>x[0]===t);
+      const now=Date.now();
+
+      const localItem={
+        id:`sig_${now}_${Math.random().toString(36).slice(2,7)}`,
+        type:t,
+        label:meta[2],
+        icon:meta[1],
+        scopeType:target.scopeType,
+        target:target.target,
+        day:workingDay,
+        lat:pos.coords.latitude,
+        lng:pos.coords.longitude,
+        createdAt:now,
+        expiresAt:now+meta[3]*60000,
+        source:"local",
+        ownedByMe:true,
+        lastSeenConfirmations:1
+      };
+
+      let local=loadLocal();
+
+      try{
+        const res=await pulseReportSignal({
+          type:t,
+          lat:pos.coords.latitude,
+          lng:pos.coords.longitude,
+          locality:target.target
+        });
+
+        const s=res.signal;
+        localItem.serverId=s?.id||"";
+        localItem.source="pulse";
+        localItem.pulseType=s?.type||pulseTypeForLocal(t);
+        localItem.confirmations=Number(s?.confirmations||1);
+        localItem.confidence=Number(s?.confidence||0.35);
+        localItem.expiresAt=Number(s?.expires_at||localItem.expiresAt);
+        localItem.lastSeenConfirmations=Number(s?.confirmations||1);
+        rememberOwnId(localItem.serverId);
+        bumpStats({reports:1});
+
+        local.unshift(localItem);
+        saveLocal(local);
+        setTarget(null);
+        flashMsg(res.merged
+          ? `Thanks — signal confirmed for ${target.target}.`
+          : `Thanks — your signal can help travelers near ${target.target}.`
+        );
+        refresh();
+      }catch(_){
+        local.unshift(localItem);
+        saveLocal(local);
+        setItems(local);
+        setTarget(null);
+        setPulseState("local");
+        setMsgKind("error");
+        setMsg(`Pulse is temporarily unavailable. Report saved on this device for ${target.target}.`);
+      }
+    },()=>{setMsgKind("error");setMsg("Allow location to report what you see.");},{
+      enableHighAccuracy:true,
+      timeout:10000,
+      maximumAge:60000
+    });
+  };
+
+  const confirm=async(item)=>{
+    if(!item.serverId){
+      flashMsg("This local-only signal cannot be confirmed on Pulse yet.","error",3800);
+      return;
+    }
+    if(isOwnSignal(item)){
+      flashMsg("This is your report — other travelers can confirm it.","good",3200);
+      return;
+    }
+    if(voteFor(item)){
+      flashMsg("You already responded to this signal.","good",2800);
+      return;
+    }
+
+    try{
+      const res=await pulseVoteSignal(item.serverId,"confirm");
+      rememberVote(item.serverId,"confirm");
+      bumpStats({confirms:1});
+      const n=Number(res?.signal?.confirmations||Number(item.confirmations||1)+1);
+      setItems(prev=>prev.map(x=>x.id===item.id?{...x,confirmations:n}:x));
+      flashMsg("Thanks — your confirmation helps travelers nearby.");
+      setTimeout(refresh,300);
+    }catch(e){
+      if(String(e?.message||"").includes("Already voted")){
+        rememberVote(item.serverId,"already");
+        flashMsg("You already responded to this signal.","good",3000);
+      }else{
+        flashMsg("Could not confirm on Pulse right now.","error",3800);
+      }
+    }
+  };
+
+  const gone=async(item)=>{
+    if(item.serverId){
+      if(voteFor(item)){
+        flashMsg("You already responded to this signal.","good",2800);
+        return;
+      }
+      try{
+        await pulseVoteSignal(item.serverId,"gone");
+        rememberVote(item.serverId,"gone");
+        bumpStats({gone:1});
+        flashMsg("Thanks — marked Gone on 687 Pulse.");
+      }catch(e){
+        if(String(e?.message||"").includes("Already voted")){
+          rememberVote(item.serverId,"already");
+          flashMsg("You already responded to this signal.","good",3000);
+        }else{
+          flashMsg("Could not update Pulse right now. Removed from this device.","error",3800);
+        }
+      }
+    }
+
+    const next=items.filter(x=>x.id!==item.id);
+    setItems(next);
+    saveLocal(next);
+    setTimeout(refresh,300);
+  };
+
+  const relevant=items
+    .filter(x=>x.day==null || Number(x.day)===Number(workingDay))
+    .filter(x=>x.source==="pulse" || x.scopeType==="route" || !x.target || plans.includes(x.target));
+
+  return <div id="iday-signals" className="iday-card iday-anchor">
+    <div className="iday-kicker">687 Live Signals · Italy V1.12</div>
+    <div className="iday-title">What is happening on your stops and routes</div>
+    <div className="iday-sub">Signals is connected to Today's plan. If something happens at a stop or while you are travelling between stops, report it in two taps. GPS and time are automatic.</div>
+
+    <div className="iday-row" style={{marginTop:8}}>
+      <div>{pulseState==="online"?"🟢":pulseState==="loading"?"🟡":"⚪"}</div>
+      <div className="iday-row-main">
+        <div className="iday-row-h">{pulseState==="online"?"687 Pulse connected":pulseState==="loading"?"Connecting to 687 Pulse…":"Pulse unavailable · local fallback active"}</div>
+        <div className="iday-row-d">{pulseState==="online"?"Nearby reports are shared between 687 travelers.":"Your report is still kept on this device and will not be lost."}</div>
+      </div>
+    </div>
+
+    <div style={{marginTop:10}}>
+      <div className="iday-kicker">Your contribution</div>
+      <div className="iday-contrib">
+        <div className="iday-contrib-box"><div className="iday-contrib-n">{stats.reports}</div><div className="iday-contrib-l">Reports shared</div></div>
+        <div className="iday-contrib-box"><div className="iday-contrib-n">{stats.confirms}</div><div className="iday-contrib-l">Quick confirms</div></div>
+        <div className="iday-contrib-box"><div className="iday-contrib-n">{stats.helped}</div><div className="iday-contrib-l">Travelers helped*</div></div>
+      </div>
+      <div className="iday-sub" style={{marginTop:5}}>*Based on new confirmations received on your shared reports on this device.</div>
+    </div>
+
+    <div className="iday-row" style={{marginTop:10}}>
+      <div>1️⃣</div>
+      <div className="iday-row-main">
+        <div className="iday-row-h">Where is the problem?</div>
+        <div className="iday-row-d">Choose a planned stop or the route you are currently travelling.</div>
+      </div>
+    </div>
+
+    <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
+      {targets.map((x,i)=><button
+        key={`${x.scopeType}-${i}`}
+        className={"iday-secondary"+(target&&target.scopeType===x.scopeType&&target.target===x.target?" active":"")}
+        style={target&&target.scopeType===x.scopeType&&target.target===x.target?{background:"#ffe8ed",borderColor:"#8f1734"}:{}}
+        onClick={()=>setTarget(x)}
+      >{x.icon} {x.target}</button>)}
+    </div>
+
+    {!plans.length && <div className="iday-sub" style={{marginTop:8}}>No stops in Today yet. You can still report something on your current route.</div>}
+
+    {target&&<>
+      <div className="iday-row" style={{marginTop:12}}>
+        <div>2️⃣</div>
+        <div className="iday-row-main">
+          <div className="iday-row-h">What happened?</div>
+          <div className="iday-row-d">One tap sends the selected signal for {target.target}.</div>
+        </div>
+      </div>
+      <div className="iday-grid">
+        {IDAY_SIGNAL_TYPES.map(x=><button key={x[0]} className="iday-signal-btn" onClick={()=>report(x[0])}>{x[1]} {x[2]}</button>)}
+      </div>
+    </>}
+
+    {msg&&<div className={"iday-signal-toast"+(msgKind==="error"?" error":"")}>{msg}</div>}
+
+    <div style={{marginTop:12}}>
+      <div className="iday-kicker">Active signals near your day</div>
+      {relevant.length
+        ? relevant.slice(0,12).map(x=>{
+            const voted=voteFor(x);
+            const own=isOwnSignal(x);
+            return <div className="iday-row" key={x.id}>
+              <div>{x.icon}</div>
+              <div className="iday-row-main">
+                <div className="iday-row-h">{x.label}</div>
+                <div className="iday-row-d">
+                  {x.target||"Near you"}
+                  {Number.isFinite(Number(x.distance_m))&&Number(x.distance_m)>0?` · ${Math.round(Number(x.distance_m))} m`:""}
+                  {" · "}{Math.max(0,Math.round((Date.now()-Number(x.createdAt||Date.now()))/60000))} min ago
+                  {x.source==="pulse"?` · ${Number(x.confirmations||1)} confirmation${Number(x.confirmations||1)===1?"":"s"}`:" · this device"}
+                </div>
+                {!own&&x.serverId&&<div className="iday-row-d" style={{marginTop:4,fontWeight:900}}>Still true?</div>}
+              </div>
+              <div className="iday-signal-votes">
+                {!own&&x.serverId&&<button className={"iday-confirm"+(voted?" done":"")} onClick={()=>confirm(x)}>{voted==="confirm"?"✓ Confirmed":"✓ Confirm"}</button>}
+                <button className="iday-secondary" onClick={()=>gone(x)}>Gone</button>
+              </div>
+            </div>;
+          })
+        : <div className="iday-sub">No active reports near your current location or today's route.</div>}
+    </div>
+
+    <div className="iday-sub" style={{marginTop:10}}>
+      687 Pulse is now connected. Reports are shared anonymously when the backend is reachable; local storage remains only as a safety fallback.
+    </div>
+  </div>;
+}
+
+
+const GUARDIAN_SETTINGS_KEY="tripjpn_guardian_settings_v1";
+
 
 function ItalyIntelligentDayPrevent({ data, onOpenNow }){
   const [state,setState]=React.useState({
@@ -9402,11 +9927,13 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
         ? <ItalyIntelligentDayPrevent data={data} onOpenNow={()=>setActive("now")}/>
         : active==="guardian"
           ? <ItalyIntelligentDayGuardian data={data}/>
-          : <div className="iday-card">
-              <div className="iday-kicker">687 Italy · Intelligent Day</div>
-              <div className="iday-title">{titleMap[active]}</div>
-              <div className="iday-sub">This section will be connected in its dedicated porting step.</div>
-            </div>}</main></div>;
+          : active==="signals"
+            ? <ItalyIntelligentDaySignals data={data}/>
+            : <div className="iday-card">
+                <div className="iday-kicker">687 Italy · Intelligent Day</div>
+                <div className="iday-title">{titleMap[active]}</div>
+                <div className="iday-sub">This section will be connected in its dedicated porting step.</div>
+              </div>}</main></div>;
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
