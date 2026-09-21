@@ -4849,7 +4849,7 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRe
           cursor:"default"
         }}
       >
-        687 Italy · Android/Web parity port · V1.01
+        687 Italy · Android/Web parity port · V1.05 Nearby Price
       </div>
     </div>
   );
@@ -6492,6 +6492,78 @@ const PLACE_TYPE_ICON = {
   gas_station: "⛽", atm: "🏧", hospital: "🏥", train_station: "🚉", bus_station: "🚌",
 };
 
+
+// ---- Verified local price helpers (ported from 687 Japan V1.84; Italy local currency = EUR) ----
+function priceMoneyToNumber(money) {
+  if (!money || typeof money !== "object") return null;
+  const units = Number(money.units ?? 0);
+  const nanos = Number(money.nanos ?? 0);
+  if (!Number.isFinite(units)) return null;
+  return units + (Number.isFinite(nanos) ? nanos / 1e9 : 0);
+}
+
+function normalizePriceCurrency(code) {
+  const c = String(code || "").trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(c) ? c : "";
+}
+
+function verifiedPlacePrice(place) {
+  if (!place || typeof place !== "object") return {known:false, free:false, min:null, max:null, currency:"", source:""};
+  const range = place.priceRange || place.price_range || null;
+  if (range) {
+    const startObj = range.startPrice || range.start_price || null;
+    const endObj = range.endPrice || range.end_price || null;
+    const min = priceMoneyToNumber(startObj);
+    const max = priceMoneyToNumber(endObj);
+    const currency = normalizePriceCurrency(startObj?.currencyCode || startObj?.currency_code || endObj?.currencyCode || endObj?.currency_code);
+    if ((Number.isFinite(min) || Number.isFinite(max)) && currency) {
+      const lo = Number.isFinite(min) ? Math.max(0, min) : Math.max(0, max);
+      const hi = Number.isFinite(max) ? Math.max(lo, max) : lo;
+      return {known:true, free:hi===0, min:lo, max:hi, currency, source:"provider price range"};
+    }
+  }
+  const c = normalizePriceCurrency(place.verifiedPriceCurrency || place.priceCurrency || place.currency);
+  const min = Number(place.verifiedPriceMin ?? place.priceMin);
+  const max = Number(place.verifiedPriceMax ?? place.priceMax ?? min);
+  if (c && Number.isFinite(min) && min >= 0) {
+    const hi = Number.isFinite(max) ? Math.max(min, max) : min;
+    return {known:true, free:hi===0, min, max:hi, currency:c, source:String(place.verifiedPriceSource || place.priceSource || "verified source")};
+  }
+  return {known:false, free:false, min:null, max:null, currency:"", source:""};
+}
+
+function placePriceLevelLabel(place) {
+  const key = String(place?.priceLevel || place?.price_level || "").toUpperCase();
+  const map = {
+    "PRICE_LEVEL_FREE":"Free",
+    "PRICE_LEVEL_INEXPENSIVE":"Inexpensive",
+    "PRICE_LEVEL_MODERATE":"Moderate",
+    "PRICE_LEVEL_EXPENSIVE":"Expensive",
+    "PRICE_LEVEL_VERY_EXPENSIVE":"Very expensive"
+  };
+  return map[key] || "";
+}
+
+function formatVerifiedItalyPrice(place, homeCurrency="EUR", eurToHome=null) {
+  const p = verifiedPlacePrice(place);
+  if (!p.known) {
+    const level = placePriceLevelLabel(place);
+    return level ? {text:level, approxText:"", source:"price level"} : {text:"Price unavailable", approxText:"", source:""};
+  }
+  if (p.free) return {text:"FREE", approxText:"", source:p.source};
+  const lo = Number(p.min || 0);
+  const hi = Number(p.max ?? p.min ?? 0);
+  const text = lo === hi ? formatCurrencyAmount(p.currency, lo, 0) : `${formatCurrencyAmount(p.currency, lo, 0)}–${formatCurrencyAmount(p.currency, hi, 0)}`;
+  const target = String(homeCurrency || "EUR").toUpperCase();
+  let approxText = "";
+  if (p.currency === "EUR" && target !== "EUR" && Number.isFinite(Number(eurToHome)) && Number(eurToHome) > 0) {
+    const alo = lo * Number(eurToHome);
+    const ahi = hi * Number(eurToHome);
+    approxText = alo === ahi ? `≈ ${formatCurrencyAmount(target, alo, 0)}` : `≈ ${formatCurrencyAmount(target, alo, 0)}–${formatCurrencyAmount(target, ahi, 0)}`;
+  }
+  return {text, approxText, source:p.source};
+}
+
 function DashNearby({ data, setData }) {
   const [mode, setMode] = useState(data.wantsCar === true ? "car" : "walk");
   const [filter, setFilter] = useState("food");
@@ -6501,6 +6573,17 @@ function DashNearby({ data, setData }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [addedIds, setAddedIds] = useState({});
+  const [eurToHomeRate, setEurToHomeRate] = useState(null);
+  const nearbyHomeCurrency = getHomeCurrency(data);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    if (nearbyHomeCurrency === "EUR") { setEurToHomeRate(1); return () => { cancelled = true; }; }
+    fetchCurrencyConversionRate("EUR", nearbyHomeCurrency).then(rate => {
+      if (!cancelled) setEurToHomeRate(rate);
+    });
+    return () => { cancelled = true; };
+  }, [nearbyHomeCurrency]);
 
   // Same "which day counts as today" logic used in the Itinerary tab —
   // real calendar date match, or Day 1 once the user has marked arrival.
@@ -6562,7 +6645,7 @@ function DashNearby({ data, setData }) {
     const CACHE_TTL = 10 * 60 * 1000;
     const latBucket = Number(coords.lat).toFixed(3);
     const lngBucket = Number(coords.lng).toFixed(3);
-    const cacheKey = `687_nearby_v2_${latBucket}_${lngBucket}_${filter}_${mode}`;
+    const cacheKey = `687_nearby_v3_price_${latBucket}_${lngBucket}_${filter}_${mode}`;
     try {
       const cachedRaw = localStorage.getItem(cacheKey);
       if (cachedRaw) {
@@ -6715,6 +6798,16 @@ function DashNearby({ data, setData }) {
                     {p.openNow === true && <span style={{color:"#2E8B57", fontWeight:700}}> · Open now</span>}
                     {p.openNow === false && <span style={{color:"#C0392B", fontWeight:700}}> · Closed</span>}
                   </div>
+                  {(() => {
+                    const price = formatVerifiedItalyPrice(p, nearbyHomeCurrency, eurToHomeRate);
+                    return (
+                      <div style={{marginTop:6, fontSize:12.5, fontWeight:700, lineHeight:1.35}}>
+                        <div>{price.text}</div>
+                        {price.approxText && <div style={{fontSize:11.5, fontWeight:600, opacity:.72}}>{price.approxText}</div>}
+                        {price.source && <div style={{fontSize:10.5, fontWeight:500, opacity:.5}}>{price.source}</div>}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
               {todayDayNum && (
