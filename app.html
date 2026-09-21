@@ -2610,6 +2610,19 @@
 .iday-hour-temp{font-size:15px;font-weight:900;color:#111}
 .iday-hour-meta{font-size:8.5px;color:#555;margin-top:3px;white-space:nowrap}
 
+
+
+/* ---- Intelligent Day / Guardian — ported from 687 Japan V1.84 ---- */
+.iday-guardian-status{display:flex;align-items:center;gap:8px;margin-top:10px;padding:10px 12px;border:1px solid #111;border-radius:12px;background:#fffafc}
+.iday-guardian-dot{width:10px;height:10px;border-radius:50%;background:#999;flex:0 0 10px}
+.iday-guardian-dot.on{background:#1f8f4e}
+.iday-guardian-dot.blocked{background:#8f1734}
+.iday-guardian-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.iday-guardian-toggle{border:1px solid #111;border-radius:11px;background:#fde7ee;color:#8f1734;padding:10px;font-size:10.5px;font-weight:900;text-align:left;cursor:pointer}
+.iday-guardian-toggle.active{background:#8f1734;color:#fff;-webkit-text-fill-color:#fff}
+.iday-guardian-note{font-size:9.5px;line-height:1.45;color:#666;margin-top:10px}
+@media(max-width:430px){.iday-guardian-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -8580,6 +8593,325 @@ function italyPreventHourLabel(iso){
   return s.includes("T") ? s.split("T")[1].slice(0,5) : s;
 }
 
+
+const PULSE_API_BASE = "https://687-pulse-api.potrocag.workers.dev";
+const PULSE_DEVICE_KEY = "tripitaly_pulse_device_v1";
+const GUARDIAN_SETTINGS_KEY = "tripitaly_guardian_settings_v1";
+const GUARDIAN_VAPID_PUBLIC_KEY = "BMK7AxNh4voZUYTflVND178tWaBxf6NuOcCNqUlcK90AK_-t41E3YOz9DOOUWWtBUU6PkO9HKFFfNJA45m6J3MM";
+
+function guardianUrlBase64ToUint8Array(base64String){
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i=0;i<rawData.length;i++) outputArray[i]=rawData.charCodeAt(i);
+  return outputArray;
+}
+
+function pulseDeviceId(){
+  try{
+    let id=localStorage.getItem(PULSE_DEVICE_KEY);
+    if(!id){
+      id=`it_${Date.now()}_${Math.random().toString(36).slice(2,12)}`;
+      localStorage.setItem(PULSE_DEVICE_KEY,id);
+    }
+    return id;
+  }catch(_){
+    return `it_session_${Date.now()}_${Math.random().toString(36).slice(2,10)}`;
+  }
+}
+
+function loadGuardianSettings(){
+  try{
+    const v=JSON.parse(localStorage.getItem(GUARDIAN_SETTINGS_KEY)||"{}");
+    return {
+      enabled:!!v.enabled,
+      weather:v.weather!==false,
+      leaveTime:v.leaveTime!==false,
+      route:v.route!==false,
+      signals:v.signals!==false
+    };
+  }catch(_){
+    return {enabled:false,weather:true,leaveTime:true,route:true,signals:true};
+  }
+}
+
+function saveGuardianSettings(v){
+  try{localStorage.setItem(GUARDIAN_SETTINGS_KEY,JSON.stringify(v));}catch(_){}
+}
+
+async function pulseGuardianSubscribe(preferences){
+  if(!("serviceWorker" in navigator)) throw new Error("Service Worker unavailable");
+  if(!("PushManager" in window)) throw new Error("Push notifications are not supported on this device");
+
+  const reg = await navigator.serviceWorker.ready;
+  let subscription = await reg.pushManager.getSubscription();
+
+  if(!subscription){
+    subscription = await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey: guardianUrlBase64ToUint8Array(GUARDIAN_VAPID_PUBLIC_KEY)
+    });
+  }
+
+  const r = await fetch(`${PULSE_API_BASE}/v1/push/subscribe`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      app_id:"tripitaly",
+      country_code:"IT",
+      device_id:pulseDeviceId(),
+      subscription:subscription.toJSON(),
+      preferences:{
+        enabled: preferences?.enabled !== false,
+        weather: preferences?.weather !== false,
+        leave: preferences?.leaveTime !== false,
+        route: preferences?.route !== false,
+        signals: preferences?.signals !== false
+      }
+    })
+  });
+
+  const j = await r.json().catch(()=>null);
+  if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
+  return subscription;
+}
+
+async function pulseGuardianSyncContext(data, settings){
+  if(!settings?.enabled) return {ok:false, skipped:"paused"};
+
+  const workingDay=italyIntelligentWorkingDay(data);
+  const plans=(data.dayPlans||{})[workingDay]||[];
+  const completed=data.completedStops||{};
+  const nextStop=plans.find(stop=>!completed[`${workingDay}|${String(stop||"").trim()}`]) || "";
+
+  const commitment=(data.liveCommitments||{})[workingDay]||{time:"",label:""};
+  let commitmentAt=0;
+
+  try{
+    if(commitment.time){
+      const tz=Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Rome";
+      const cp=italyNowClockParts(tz);
+      const mins=italyNowMinutesUntil(commitment.time,cp.hour,cp.minute);
+      if(Number.isFinite(mins) && mins>=0 && mins<=24*60){
+        commitmentAt=Date.now()+mins*60*1000;
+      }
+    }
+  }catch(_){}
+
+  const loc=await detectCurrentCountry();
+
+  const r=await fetch(`${PULSE_API_BASE}/v1/guardian/context`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      app_id:"tripitaly",
+      country_code:"IT",
+      device_id:pulseDeviceId(),
+      lat:Number(loc.lat),
+      lng:Number(loc.lng),
+      locality:String(loc.locality||loc.country||""),
+      working_day:workingDay,
+      next_stop:String(nextStop||""),
+      commitment_label:String(commitment.label||""),
+      commitment_at:commitmentAt,
+      client_time:Date.now()
+    })
+  });
+
+  const j=await r.json().catch(()=>null);
+  if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
+  return j;
+}
+
+function ItalyIntelligentDayGuardian({data}){
+  const [settings,setSettings]=React.useState(loadGuardianSettings);
+  const [permission,setPermission]=React.useState(()=>typeof Notification!=="undefined"?Notification.permission:"unsupported");
+  const [msg,setMsg]=React.useState("");
+  const supported=typeof Notification!=="undefined";
+
+  React.useEffect(()=>{
+    if(!settings.enabled || permission!=="granted") return;
+    let alive=true;
+
+    const sync=async()=>{
+      try{
+        await pulseGuardianSyncContext(data,settings);
+        if(alive) setMsg(m=>m||"Guardian context synced to 687 Pulse.");
+      }catch(_){}
+    };
+
+    sync();
+    const timer=setInterval(sync,10*60*1000);
+    return()=>{alive=false;clearInterval(timer);};
+  },[settings.enabled,settings.weather,settings.leaveTime,settings.route,settings.signals,permission,data]);
+
+  const toggleGuardian=async(key,label)=>{
+    const next={...settings,[key]:!settings[key]};
+    setSettings(next);
+    saveGuardianSettings(next);
+    setMsg(`${label} ${next[key] ? "ON" : "OFF"} · saving…`);
+
+    if(typeof Notification!=="undefined" && Notification.permission==="granted"){
+      try{
+        await pulseGuardianSubscribe(next);
+        await pulseGuardianSyncContext(data,next).catch(()=>null);
+        setMsg(`${label} ${next[key] ? "ON" : "OFF"} · saved to 687 Pulse.`);
+      }catch(err){
+        setMsg(`${label} ${next[key] ? "ON" : "OFF"} locally · Pulse sync failed: ${String(err?.message||err)}`);
+      }
+    }else{
+      setMsg(`${label} ${next[key] ? "ON" : "OFF"} locally.`);
+    }
+  };
+
+  const enable=async()=>{
+    setMsg("");
+    if(!supported){setMsg("Notifications are not supported in this browser yet.");return;}
+
+    try{
+      const p=await Notification.requestPermission();
+      setPermission(p);
+
+      if(p==="granted"){
+        const next={...settings,enabled:true};
+        setSettings(next);
+        saveGuardianSettings(next);
+        setMsg("Connecting Guardian to 687 Pulse…");
+        await pulseGuardianSubscribe(next);
+        await pulseGuardianSyncContext(data,next);
+        setMsg("Guardian is armed, connected to 687 Pulse, and automatic monitoring is ready.");
+      }else{
+        const next={...settings,enabled:false};
+        setSettings(next);
+        saveGuardianSettings(next);
+        setMsg(p==="denied"?"Notifications are blocked for this site/device.":"Notification permission was not granted.");
+      }
+    }catch(err){
+      setMsg(`Guardian permission is enabled, but Pulse subscription failed: ${String(err?.message||err)}`);
+    }
+  };
+
+  const disable=async()=>{
+    const next={...settings,enabled:false};
+    setSettings(next);
+    saveGuardianSettings(next);
+
+    try{
+      await pulseGuardianSubscribe(next);
+      setMsg("Guardian alerts are paused on this device and Pulse was updated.");
+    }catch(_){
+      setMsg("Guardian alerts are paused on this device.");
+    }
+  };
+
+  const testNotification=async()=>{
+    setMsg("");
+    if(!supported){setMsg("Notifications are not supported in this browser yet.");return;}
+    if(Notification.permission!=="granted"){setMsg("Enable notifications first.");return;}
+
+    try{
+      if("serviceWorker" in navigator){
+        const reg=await navigator.serviceWorker.ready;
+        await reg.showNotification("687 Trip Guardian",{
+          body:"Test alert: Guardian can notify you about weather, leave time, route problems and important signals.",
+          tag:"687-guardian-test",
+          icon:"/icons/68t_italy_192.png",
+          badge:"/icons/68t_italy_192.png",
+          data:{url:"/?guardian=guardian",target:"guardian"}
+        });
+        setMsg("System notification sent through Guardian service worker.");
+        return;
+      }
+
+      const n=new Notification("687 Trip Guardian",{
+        body:"Test alert: Guardian can notify you about weather, leave time, route problems and important signals.",
+        tag:"687-guardian-test"
+      });
+      n.onclick=()=>{try{window.focus();}catch(_){};n.close();};
+      setMsg("Test notification sent.");
+    }catch(_){
+      setMsg("Guardian service worker is not ready yet. Reload once and try again.");
+    }
+  };
+
+  const testBackendPush=async()=>{
+    setMsg("Sending backend push test…");
+    try{
+      const r=await fetch(`${PULSE_API_BASE}/v1/push/test`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          app_id:"tripitaly",
+          country_code:"IT",
+          device_id:pulseDeviceId()
+        })
+      });
+      const j=await r.json().catch(()=>null);
+      if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
+      setMsg("Backend push accepted by 687 Pulse. Minimize the app and check the notification.");
+    }catch(err){
+      setMsg(`Backend push test failed: ${String(err?.message||err)}`);
+    }
+  };
+
+  const statusText=
+    !supported ? "Not supported here"
+    : permission==="denied" ? "Blocked by device/browser"
+    : settings.enabled&&permission==="granted" ? "Guardian armed"
+    : "Guardian paused";
+
+  const statusClass=
+    !supported||permission==="denied" ? "blocked"
+    : settings.enabled&&permission==="granted" ? "on"
+    : "";
+
+  return <div id="iday-guardian" className="iday-card iday-anchor">
+    <div className="iday-kicker">687 Trip Guardian</div>
+    <div className="iday-title">Important information, even when you are not looking at NOW</div>
+    <div className="iday-sub">
+      Guardian is the notification layer of Intelligent Day. It uses the same itinerary, weather, route and Signals context — never a second plan.
+    </div>
+
+    <div className="iday-guardian-status">
+      <span className={`iday-guardian-dot ${statusClass}`}></span>
+      <div className="iday-row-main">
+        <div className="iday-row-h">{statusText}</div>
+        <div className="iday-row-d">Permission: {String(permission)}</div>
+      </div>
+    </div>
+
+    <div className="iday-guardian-grid">
+      <button type="button" aria-pressed={!!settings.weather} className={"iday-guardian-toggle"+(settings.weather?" active":" inactive")} onClick={()=>toggleGuardian("weather","Weather changes")}>
+        <span>🌧️ Weather changes</span><strong>{settings.weather?"ON ✓":"OFF"}</strong>
+      </button>
+      <button type="button" aria-pressed={!!settings.leaveTime} className={"iday-guardian-toggle"+(settings.leaveTime?" active":" inactive")} onClick={()=>toggleGuardian("leaveTime","Leave-time alerts")}>
+        <span>⏰ Leave-time alerts</span><strong>{settings.leaveTime?"ON ✓":"OFF"}</strong>
+      </button>
+      <button type="button" aria-pressed={!!settings.route} className={"iday-guardian-toggle"+(settings.route?" active":" inactive")} onClick={()=>toggleGuardian("route","Route problems")}>
+        <span>🚆 Route problems</span><strong>{settings.route?"ON ✓":"OFF"}</strong>
+      </button>
+      <button type="button" aria-pressed={!!settings.signals} className={"iday-guardian-toggle"+(settings.signals?" active":" inactive")} onClick={()=>toggleGuardian("signals","Important Signals")}>
+        <span>📡 Important Signals</span><strong>{settings.signals?"ON ✓":"OFF"}</strong>
+      </button>
+    </div>
+
+    <div className="iday-actions">
+      {(!settings.enabled || permission!=="granted")
+        ? <button className="iday-primary" onClick={enable}>🔔 Enable Guardian</button>
+        : <button className="iday-secondary" onClick={disable}>Pause Guardian</button>}
+      <button className="iday-secondary" onClick={testNotification}>Send test notification</button>
+      <button className="iday-secondary" onClick={testBackendPush}>Test backend push</button>
+    </div>
+
+    {msg&&<div className="iday-sub" style={{fontWeight:800,color:"#222",marginTop:8}}>{msg}</div>}
+
+    <div className="iday-guardian-note">
+      Guardian keeps the current day context synced to 687 Pulse while armed. The backend can alert for severe weather, leave-time, route problems and important Signals. Closed-app automatic checks also require the Pulse backend's scheduled monitoring to be enabled.
+    </div>
+  </div>;
+}
+
 function ItalyIntelligentDayPrevent({ data, onOpenNow }){
   const [state,setState]=React.useState({
     loading:true,status:"good",title:"Checking today…",details:[],plan:[],hourly:[],updatedAt:""
@@ -9054,11 +9386,13 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
       ? <ItalyIntelligentDayBudget data={data} dailyAmount={dailyAmount} onOpenItinerary={()=>onGoTo("itinerary")}/>
       : active==="prevent"
         ? <ItalyIntelligentDayPrevent data={data} onOpenNow={()=>setActive("now")}/>
-        : <div className="iday-card">
-            <div className="iday-kicker">687 Italy · Intelligent Day</div>
-            <div className="iday-title">{titleMap[active]}</div>
-            <div className="iday-sub">This section will be connected in its dedicated porting step.</div>
-          </div>}</main></div>;
+        : active==="guardian"
+          ? <ItalyIntelligentDayGuardian data={data}/>
+          : <div className="iday-card">
+              <div className="iday-kicker">687 Italy · Intelligent Day</div>
+              <div className="iday-title">{titleMap[active]}</div>
+              <div className="iday-sub">This section will be connected in its dedicated porting step.</div>
+            </div>}</main></div>;
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
