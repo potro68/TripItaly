@@ -2704,6 +2704,32 @@ function buildDrivingLink(fromCity, toCity) {
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
+function buildDrivingWazeLink(toCity) {
+  const q = encodeURIComponent(`${toCity || ""}, Italy`);
+  return `https://waze.com/ul?q=${q}&navigate=yes`;
+}
+
+function DriveRouteNavigateButton({ fromCity, toCity, label, className="leg-transport-link", style }) {
+  const [open, setOpen] = useState(false);
+  if (!toCity) return null;
+  return (
+    <div className="navigate-btn-wrap" style={style} onClick={e => e.stopPropagation()}>
+      <button type="button" className={className} style={{width:"100%", marginTop:0}} onClick={() => setOpen(v => !v)}>
+        {label || `🧭 Navigate to ${toCity}`}
+      </button>
+      {open && (
+        <>
+          <div className="navigate-menu-backdrop" onClick={() => setOpen(false)}></div>
+          <div className="navigate-menu">
+            <a href={buildDrivingLink(fromCity, toCity)} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>📍 Google Maps</a>
+            <a href={buildDrivingWazeLink(toCity)} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🚗 Waze</a>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 
 // Internal flight between two Italian cities, reusing the same Aviasales
 // link builder as international flights — just with both airports inside Italy.
@@ -3650,19 +3676,19 @@ const SHOWCASE = [
     grad: "linear-gradient(135deg, #1FA6B0, #0E5E68)",
     photos: [IMG_MANAROLA],
     highlights: [
-      { name: "Amalfi Coast & Positano", booking: false, url: null },
+      { name: "Amalfi Coast & Positano", booking: false, url: "https://www.italia.it/en/campania/costiera-amalfitana" },
       { name: "Capri's Blue Grotto", booking: true, url: "https://www.capritourism.com" },
-      { name: "Cinque Terre villages", booking: false, url: null },
-      { name: "Sicily's beaches & Taormina", booking: false, url: null },
+      { name: "Cinque Terre villages", booking: false, url: "https://www.parconazionale5terre.it/" },
+      { name: "Sicily's beaches & Taormina", booking: false, url: "https://www.comune.taormina.me.it/" },
     ] },
   { icon: "⛰️", label: "Mountains & Lakes", desc: "Alpine peaks, glacial lakes, quiet hilltop towns",
     grad: "linear-gradient(135deg, #4B7A5E, #2D4E3B)",
     photos: [IMG_LAKECOMO],
     highlights: [
       { name: "Lake Como & Lake Garda", booking: false },
-      { name: "The Dolomites", booking: false },
-      { name: "Mount Etna, Sicily", booking: false },
-      { name: "Cinque Terre hiking trails", booking: false },
+      { name: "The Dolomites", booking: false, url: "https://www.dolomiti.org/" },
+      { name: "Mount Etna, Sicily", booking: false, url: "https://parcoetna.it/" },
+      { name: "Cinque Terre hiking trails", booking: false, url: "https://www.parconazionale5terre.it/" },
     ] },
 ];
 
@@ -4802,7 +4828,7 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRe
         <button
           className="btn-secondary"
           style={{width:"100%", textAlign:"left", padding:"14px 16px"}}
-          onClick={() => openExternalWebsite("https://go687.com/687-italy-user-guide.pdf", {step:9, section:"settings"})}
+          onClick={() => openExternalWebsite("https://tripitaly.app/687-italy-user-guide.pdf", {step:9, section:"settings"})}
         >
           📖 User Guide
           <span style={{display:"block", fontSize:12, fontWeight:500, opacity:.72, marginTop:4}}>
@@ -4849,7 +4875,7 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRe
           cursor:"default"
         }}
       >
-        687 Italy · Android/Web parity port · V1.01
+        687 Italy · Android/Web parity port · V1.03
       </div>
     </div>
   );
@@ -5095,9 +5121,9 @@ function DailyStatusDonut({ data, dailyAmount }) {
   });
 
   const colors = statuses.map(s =>
-    s.status === "over" ? "#D6453D" :
-    s.status === "ok" ? "#7BCB82" :
-    "#D8DDE1"
+    s.status === "over" ? "#D97706" :
+    s.status === "ok" ? "#16A34A" :
+    "#94A3B8"
   );
 
   const slice = 360 / Math.max(1, totalDays);
@@ -5123,15 +5149,15 @@ function DailyStatusDonut({ data, dailyAmount }) {
 
         <div className="daily-status-legend">
           <div className="daily-status-legend-row">
-            <span className="daily-status-dot" style={{background:"#D6453D"}}></span>
+            <span className="daily-status-dot" style={{background:"#D97706"}}></span>
             Over budget
           </div>
           <div className="daily-status-legend-row">
-            <span className="daily-status-dot" style={{background:"#7BCB82"}}></span>
+            <span className="daily-status-dot" style={{background:"#16A34A"}}></span>
             Within budget
           </div>
           <div className="daily-status-legend-row">
-            <span className="daily-status-dot" style={{background:"#D8DDE1"}}></span>
+            <span className="daily-status-dot" style={{background:"#94A3B8"}}></span>
             No spending yet
           </div>
         </div>
@@ -5201,11 +5227,11 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
   const suggestedDaily = remainingDays > 0 ? totalRemaining / remainingDays : 0;
 
   const totalBudgetSegments = [
-    ...(!isOnsite && flightTotal > 0 ? [{ label:"Flights", value:flightTotal, color:"#1C5A7A" }] : []),
-    ...(hotelTotal > 0 ? [{ label:isOnsite ? "Already booked" : "Stay", value:hotelTotal, color:"#2E8B8B" }] : []),
-    ...(carTotal > 0 ? [{ label:"Car", value:carTotal, color:"#F4B93E" }] : []),
-    ...(groundSpent > 0 ? [{ label:"Ground expenses", value:groundSpent, color:"#8E6FB1" }] : []),
-    ...(totalRemaining > 0 ? [{ label:"Remaining budget", value:totalRemaining, color:"#D9D2C2" }] : []),
+    ...(!isOnsite && flightTotal > 0 ? [{ label:"Flights", value:flightTotal, color:"#2563EB" }] : []),
+    ...(hotelTotal > 0 ? [{ label:isOnsite ? "Already booked" : "Stay", value:hotelTotal, color:"#0F766E" }] : []),
+    ...(carTotal > 0 ? [{ label:"Car", value:carTotal, color:"#CA8A04" }] : []),
+    ...(groundSpent > 0 ? [{ label:"Ground expenses", value:groundSpent, color:"#7C3AED" }] : []),
+    ...(totalRemaining > 0 ? [{ label:"Remaining budget", value:totalRemaining, color:"#64748B" }] : []),
   ];
 
   return (
@@ -6218,7 +6244,7 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
               <a href={transfer.flightUrl} target="_blank" rel="noopener noreferrer sponsored" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>✈️ Check flights</a>
             )}
             {data.wantsCar && (
-              <a href={buildDrivingLink(transfer.from, transfer.to)} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>🚗 Navigate</a>
+              <DriveRouteNavigateButton fromCity={transfer.from} toCity={transfer.to} label="🚗 Navigate" className="btn-secondary" style={{flex:1}} />
             )}
           </div>
           {!transfer.trainUrl && <p className="park-hint" style={{marginTop:7}}>Train search opens Trenitalia; route/date are shown here so you can enter them quickly.</p>}
@@ -6492,6 +6518,74 @@ const PLACE_TYPE_ICON = {
   gas_station: "⛽", atm: "🏧", hospital: "🏥", train_station: "🚉", bus_station: "🚌",
 };
 
+// 687 VERIFIED PRICE UX — Italy local EUR first, Home Currency underneath when available.
+// Never invent a monetary price. Generic price levels remain descriptive only.
+function priceMoneyToNumber(money) {
+  if (!money || typeof money !== "object") return null;
+  const units = Number(money.units ?? money.unit ?? money.value ?? NaN);
+  const nanos = Number(money.nanos ?? 0);
+  if (!Number.isFinite(units)) return null;
+  return units + (Number.isFinite(nanos) ? nanos / 1e9 : 0);
+}
+function normalizePriceCurrency(code) {
+  const c = String(code || "").trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(c) ? c : "";
+}
+function verifiedPlacePrice(place) {
+  if (!place || typeof place !== "object") return {known:false, free:false, min:null, max:null, currency:"", source:""};
+  const range = place.priceRange || place.price_range || null;
+  if (range) {
+    const startObj = range.startPrice || range.start_price || null;
+    const endObj = range.endPrice || range.end_price || null;
+    const min = priceMoneyToNumber(startObj), max = priceMoneyToNumber(endObj);
+    const currency = normalizePriceCurrency(startObj?.currencyCode || startObj?.currency_code || endObj?.currencyCode || endObj?.currency_code);
+    if ((Number.isFinite(min) || Number.isFinite(max)) && currency) {
+      const lo = Number.isFinite(min) ? Math.max(0,min) : Math.max(0,max);
+      const hi = Number.isFinite(max) ? Math.max(lo,max) : lo;
+      return {known:true, free:hi===0, min:lo, max:hi, currency, source:"provider price range"};
+    }
+  }
+  const candidates = [
+    [place.verifiedPriceMin, place.verifiedPriceMax, place.verifiedPriceCurrency, place.verifiedPriceSource],
+    [place.priceMin, place.priceMax, place.currency || place.priceCurrency, place.priceSource],
+    [place.price_min, place.price_max, place.currency || place.price_currency, place.price_source],
+    [place.admissionPrice, place.admissionPrice, place.admissionCurrency || place.currency, place.admissionSource],
+    [place.ticketPrice, place.ticketPrice, place.ticketCurrency || place.currency, place.ticketSource]
+  ];
+  for (const row of candidates) {
+    const min = Number(row[0]), max = Number(row[1]), currency = normalizePriceCurrency(row[2]);
+    if (currency && (Number.isFinite(min) || Number.isFinite(max))) {
+      const lo = Number.isFinite(min) ? Math.max(0,min) : Math.max(0,max);
+      const hi = Number.isFinite(max) ? Math.max(lo,max) : lo;
+      return {known:true, free:hi===0, min:lo, max:hi, currency, source:String(row[3] || "verified source")};
+    }
+  }
+  const level = String(place.priceLevel ?? place.price_level ?? "").toUpperCase();
+  if (level === "PRICE_LEVEL_FREE" || level === "0") return {known:true, free:true, min:0, max:0, currency:"EUR", source:"provider: free"};
+  return {known:false, free:false, min:null, max:null, currency:"", source:""};
+}
+function placePriceLevelLabel(place) {
+  const key = String(place?.priceLevel ?? place?.price_level ?? "").toUpperCase();
+  return ({"0":"Free","1":"Inexpensive","2":"Moderate","3":"Expensive","4":"Very expensive","PRICE_LEVEL_FREE":"Free","PRICE_LEVEL_INEXPENSIVE":"Inexpensive","PRICE_LEVEL_MODERATE":"Moderate","PRICE_LEVEL_EXPENSIVE":"Expensive","PRICE_LEVEL_VERY_EXPENSIVE":"Very expensive"})[key] || "";
+}
+function formatVerifiedPriceItaly(place, homeCurrency, eurToHomeRate) {
+  const p = verifiedPlacePrice(place);
+  if (!p.known) {
+    const level = placePriceLevelLabel(place);
+    return level ? {text:level, exact:false, approxText:"", source:"price level"} : {text:"Price unavailable", exact:false, approxText:"", source:""};
+  }
+  if (p.free) return {text:"FREE", exact:true, approxText:"", source:p.source};
+  const lo = Math.round(Number(p.min || 0)), hi = Math.round(Number(p.max ?? p.min ?? 0));
+  const sym = currencySymbolFor(p.currency);
+  let approxText = "";
+  const target = String(homeCurrency || "EUR").toUpperCase();
+  if (p.currency === "EUR" && target !== "EUR" && Number.isFinite(Number(eurToHomeRate)) && Number(eurToHomeRate) > 0) {
+    const alo = lo * Number(eurToHomeRate), ahi = hi * Number(eurToHomeRate);
+    approxText = alo === ahi ? `≈ ${formatCurrencyAmount(target, alo)}` : `≈ ${formatCurrencyAmount(target, alo)}–${formatCurrencyAmount(target, ahi)}`;
+  }
+  return {text:lo===hi ? `${sym}${lo.toLocaleString()}` : `${sym}${lo.toLocaleString()}–${sym}${hi.toLocaleString()}`, exact:true, approxText, source:p.source};
+}
+
 function DashNearby({ data, setData }) {
   const [mode, setMode] = useState(data.wantsCar === true ? "car" : "walk");
   const [filter, setFilter] = useState("food");
@@ -6501,6 +6595,15 @@ function DashNearby({ data, setData }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [addedIds, setAddedIds] = useState({});
+  const [eurToHomeRate, setEurToHomeRate] = useState(getHomeCurrency(data) === "EUR" ? 1 : null);
+
+  React.useEffect(() => {
+    let alive = true;
+    const home = getHomeCurrency(data);
+    if (home === "EUR") { setEurToHomeRate(1); return () => { alive = false; }; }
+    fetchCurrencyConversionRate("EUR", home).then(rate => { if (alive) setEurToHomeRate(rate); });
+    return () => { alive = false; };
+  }, [getHomeCurrency(data)]);
 
   // Same "which day counts as today" logic used in the Itinerary tab —
   // real calendar date match, or Day 1 once the user has marked arrival.
@@ -6715,6 +6818,10 @@ function DashNearby({ data, setData }) {
                     {p.openNow === true && <span style={{color:"#2E8B57", fontWeight:700}}> · Open now</span>}
                     {p.openNow === false && <span style={{color:"#C0392B", fontWeight:700}}> · Closed</span>}
                   </div>
+                  {(() => {
+                    const pf = formatVerifiedPriceItaly(p, getHomeCurrency(data), eurToHomeRate);
+                    return <div className="d" style={{marginTop:5,fontWeight:700}}>{pf.exact ? "💶 " : "🏷️ "}{pf.text}{pf.approxText ? <span style={{fontWeight:500,opacity:.72}}> · {pf.approxText}</span> : null}</div>;
+                  })()}
                 </div>
               </div>
               {todayDayNum && (
@@ -7666,20 +7773,20 @@ function DashTools({ data, onDeleteLocalData }) {
         <div className="legal-links">
           <a
             className="legal-link"
-            href="https://go687.com/privacy.html"
-            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/privacy.html", {step:9, section:"tools"}); }}
+            href="https://tripitaly.app/privacy.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://tripitaly.app/privacy.html", {step:9, section:"tools"}); }}
             rel="noopener noreferrer"
           >Privacy</a>
           <a
             className="legal-link"
-            href="https://go687.com/terms.html"
-            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/terms.html", {step:9, section:"tools"}); }}
+            href="https://tripitaly.app/terms.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://tripitaly.app/terms.html", {step:9, section:"tools"}); }}
             rel="noopener noreferrer"
           >Terms</a>
           <a
             className="legal-link"
-            href="https://go687.com/support.html"
-            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/support.html", {step:9, section:"tools"}); }}
+            href="https://tripitaly.app/support.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://tripitaly.app/support.html", {step:9, section:"tools"}); }}
             rel="noopener noreferrer"
           >Support</a>
         </div>
