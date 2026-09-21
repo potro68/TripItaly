@@ -2404,6 +2404,98 @@
     background:rgba(244,200,74,.16) !important;
   }
 
+
+  /* ---- Intelligent Day menu shell — aligned with 687 Japan V1.84 ---- */
+  .iday-shell{
+    display:grid;
+    grid-template-columns:88px minmax(0,1fr);
+    min-height:calc(100vh - 70px);
+    background:#fff;
+  }
+  .iday-side{
+    position:sticky;
+    top:0;
+    align-self:start;
+    height:calc(100vh - 70px);
+    overflow-y:auto;
+    border-right:1px solid #111;
+    background:#fff7f8;
+    padding:8px 6px 14px;
+    z-index:45;
+    box-sizing:border-box;
+  }
+  .iday-side button{
+    width:100%;
+    border:1px solid #111;
+    border-radius:11px;
+    background:#fff;
+    color:#3b0b12;
+    font-family:'Sora',sans-serif;
+    font-weight:800;
+    cursor:pointer;
+    box-sizing:border-box;
+  }
+  .iday-back{
+    padding:8px 3px;
+    font-size:10px;
+    line-height:1.15;
+    margin-bottom:8px;
+  }
+  .iday-nav{
+    min-height:54px;
+    margin:0 0 7px;
+    padding:7px 3px;
+    font-size:9.5px;
+    line-height:1.15;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+  }
+  .iday-nav .ico{font-size:18px;line-height:1}
+  .iday-nav:active{background:#ffe8ed}
+  .iday-nav.active{
+    background:#ffe8ed !important;
+    color:#8f1734 !important;
+    box-shadow:inset 0 0 0 1px #8f1734;
+  }
+  .iday-main{
+    min-width:0;
+    padding:12px 12px 28px;
+    box-sizing:border-box;
+  }
+  .iday-head{margin-bottom:12px}
+  .iday-head h1{font-size:22px;margin:0;color:#111}
+  .iday-head p{font-size:11px;color:#666;margin:4px 0 0;line-height:1.4}
+  .iday-card{
+    border:1px solid #111;
+    border-radius:16px;
+    background:#fff;
+    padding:13px;
+    margin-bottom:10px;
+    box-shadow:0 5px 16px rgba(0,0,0,.045);
+  }
+  .iday-kicker{
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.6px;
+    text-transform:uppercase;
+    color:#8f1734;
+  }
+  .iday-title{
+    font-size:16px;
+    font-weight:900;
+    color:#111;
+    margin-top:3px;
+  }
+  .iday-sub{
+    font-size:10.5px;
+    color:#666;
+    line-height:1.45;
+    margin-top:4px;
+  }
+
 </style>
 </head>
 <body>
@@ -4719,6 +4811,7 @@ const DASH_SECTIONS = [
 const DASH_SECTIONS_ITALY = [
   { id: "itinerary", icon: "🗺️", label: "Itinerary" },
   { id: "nearby", icon: "📍", label: "Nearby" },
+  { id: "live", icon: "🧠", label: "Intelligent Day" },
   { id: "drive", icon: "🚗", label: "Drive" },
   { id: "translate", icon: "🌐", label: "Translate" },
   { id: "tools", icon: "🧰", label: "Tools" },
@@ -4749,14 +4842,14 @@ const MENU_LANGUAGES = [
 ];
 
 const TRIP_ENGINE_MENU_TRANSLATIONS = {
-  en:{overview:"Overview",wallet:"Wallet",packing:"Packing",settings:"Settings",itinerary:"Itinerary",nearby:"Nearby",drive:"Drive",offline:"Offline",translate:"Translate",tools:"Tools"},
-  it:{overview:"Panoramica",wallet:"Portafoglio",packing:"Bagaglio",settings:"Impostazioni",itinerary:"Itinerario",nearby:"Nelle vicinanze",drive:"Guida",offline:"Offline",translate:"Traduci",tools:"Strumenti"},
-  de:{overview:"Übersicht",wallet:"Reise-Wallet",packing:"Gepäck",settings:"Einstellungen",itinerary:"Reiseplan",nearby:"In der Nähe",drive:"Fahren",offline:"Offline",translate:"Übersetzen",tools:"Werkzeuge"},
-  fr:{overview:"Aperçu",wallet:"Portefeuille",packing:"Bagages",settings:"Paramètres",itinerary:"Itinéraire",nearby:"À proximité",drive:"Conduite",offline:"Hors ligne",translate:"Traduire",tools:"Outils"},
-  es:{overview:"Resumen",wallet:"Cartera",packing:"Equipaje",settings:"Ajustes",itinerary:"Itinerario",nearby:"Cerca de ti",drive:"Conducir",offline:"Sin conexión",translate:"Traducir",tools:"Herramientas"},
-  pt:{overview:"Visão geral",wallet:"Carteira",packing:"Bagagem",settings:"Definições",itinerary:"Itinerário",nearby:"Perto de si",drive:"Conduzir",offline:"Offline",translate:"Traduzir",tools:"Ferramentas"},
-  ja:{overview:"概要",wallet:"ウォレット",packing:"荷造り",settings:"設定",itinerary:"旅程",nearby:"周辺",drive:"ドライブ",offline:"オフライン",translate:"翻訳",tools:"ツール"},
-  th:{overview:"ภาพรวม",wallet:"กระเป๋าเดินทาง",packing:"จัดกระเป๋า",settings:"การตั้งค่า",itinerary:"กำหนดการ",nearby:"ใกล้ฉัน",drive:"ขับรถ",offline:"ออฟไลน์",translate:"แปลภาษา",tools:"เครื่องมือ"},
+  en:{overview:"Overview",wallet:"Wallet",packing:"Packing",settings:"Settings",live:"Intelligent Day",itinerary:"Itinerary",nearby:"Nearby",drive:"Drive",offline:"Offline",translate:"Translate",tools:"Tools"},
+  it:{overview:"Panoramica",wallet:"Portafoglio",packing:"Bagaglio",settings:"Impostazioni",live:"Giornata intelligente",itinerary:"Itinerario",nearby:"Nelle vicinanze",drive:"Guida",offline:"Offline",translate:"Traduci",tools:"Strumenti"},
+  de:{overview:"Übersicht",wallet:"Reise-Wallet",packing:"Gepäck",settings:"Einstellungen",live:"Intelligenter Tag",itinerary:"Reiseplan",nearby:"In der Nähe",drive:"Fahren",offline:"Offline",translate:"Übersetzen",tools:"Werkzeuge"},
+  fr:{overview:"Aperçu",wallet:"Portefeuille",packing:"Bagages",settings:"Paramètres",live:"Journée intelligente",itinerary:"Itinéraire",nearby:"À proximité",drive:"Conduite",offline:"Hors ligne",translate:"Traduire",tools:"Outils"},
+  es:{overview:"Resumen",wallet:"Cartera",packing:"Equipaje",settings:"Ajustes",live:"Día inteligente",itinerary:"Itinerario",nearby:"Cerca de ti",drive:"Conducir",offline:"Sin conexión",translate:"Traducir",tools:"Herramientas"},
+  pt:{overview:"Visão geral",wallet:"Carteira",packing:"Bagagem",settings:"Definições",live:"Dia inteligente",itinerary:"Itinerário",nearby:"Perto de si",drive:"Conduzir",offline:"Offline",translate:"Traduzir",tools:"Ferramentas"},
+  ja:{overview:"概要",wallet:"ウォレット",packing:"荷造り",settings:"設定",live:"インテリジェントデイ",itinerary:"旅程",nearby:"周辺",drive:"ドライブ",offline:"オフライン",translate:"翻訳",tools:"ツール"},
+  th:{overview:"ภาพรวม",wallet:"กระเป๋าเดินทาง",packing:"จัดกระเป๋า",settings:"การตั้งค่า",live:"Intelligent Day",itinerary:"กำหนดการ",nearby:"ใกล้ฉัน",drive:"ขับรถ",offline:"ออฟไลน์",translate:"แปลภาษา",tools:"เครื่องมือ"},
 };
 
 function menuLabel(id, lang) {
@@ -7789,6 +7882,72 @@ function DashTools({ data, onDeleteLocalData }) {
   );
 }
 
+
+function IntelligentDayMenuShell({ onGoTo }){
+  const [active,setActive]=React.useState("today");
+
+  const nav=[
+    ["today","☀️","Today"],
+    ["now","⚡","NOW"],
+    ["budget","👛","Budget"],
+    ["prevent","🛡️","Prevent"],
+    ["guardian","🔔","Guardian"],
+    ["signals","📡","Signals"],
+    ["rescue","🆘","Rescue"]
+  ];
+
+  const titleMap={
+    today:"Today",
+    now:"NOW · What can I do now?",
+    budget:"Budget",
+    prevent:"Prevent",
+    guardian:"Trip Guardian",
+    signals:"Live Signals",
+    rescue:"Rescue"
+  };
+
+  const subtitleMap={
+    today:"Your Intelligent Day hub for 687 Italy.",
+    now:"What makes sense right now.",
+    budget:"What is safe to spend today.",
+    prevent:"Check conditions before they become a problem.",
+    guardian:"Important trip notifications.",
+    signals:"Live reports around your trip.",
+    rescue:"Fast help when something has already gone wrong."
+  };
+
+  return (
+    <div className="iday-shell">
+      <aside className="iday-side">
+        <button className="iday-back" onClick={()=>onGoTo("overview")}>← Dashboard</button>
+        {nav.map(n=>(
+          <button
+            className={"iday-nav"+(active===n[0]?" active":"")}
+            key={n[0]}
+            onClick={()=>setActive(n[0])}
+          >
+            <span className="ico">{n[1]}</span>
+            <span>{n[2]}</span>
+          </button>
+        ))}
+      </aside>
+      <main className="iday-main">
+        <div className="iday-head">
+          <h1>{titleMap[active]}</h1>
+          <p>{subtitleMap[active]}</p>
+        </div>
+        <div className="iday-card">
+          <div className="iday-kicker">687 Italy · Intelligent Day</div>
+          <div className="iday-title">{titleMap[active]}</div>
+          <div className="iday-sub">
+            Menu structure aligned with 687 Japan V1.84. The feature engine for this section will be connected in the next dedicated porting steps.
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
@@ -7848,6 +8007,10 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
   const sections = data.mode === "onsite" ? DASH_SECTIONS.filter(s => ["overview","wallet","packing","settings"].includes(s.id)) : DASH_SECTIONS;
   const italySections = DASH_SECTIONS_ITALY.filter(s => s.id !== "drive" || data.wantsCar === true);
   const allLabels = [...DASH_SECTIONS, ...DASH_SECTIONS_ITALY];
+
+  if (section === "live") {
+    return <IntelligentDayMenuShell onGoTo={goSection} />;
+  }
 
   return (
     <div className="dash-layout">
