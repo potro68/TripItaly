@@ -2496,6 +2496,11 @@
     margin-top:4px;
   }
 
+
+  /* ---- Intelligent Day / Today — ported from 687 Japan V1.84 ---- */
+  .iday-location-clock{display:flex;align-items:center;gap:6px;border:1px solid #111;border-radius:12px;background:#fff;padding:9px 11px;margin-bottom:10px;font-size:11px;font-weight:800;color:#222}.iday-location-pin{font-size:14px}.iday-location-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.iday-location-dot{opacity:.45}.iday-location-time{margin-left:auto;font-variant-numeric:tabular-nums}.iday-today-card{overflow:hidden}.iday-today-stop{border:1px solid #111;border-radius:0;background:#fff;margin-top:8px;overflow:hidden}.iday-today-stop-top{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px}.iday-today-actions{display:flex;gap:5px;align-items:center;flex-shrink:0}.iday-today-actions button,.iday-nav-choice button,.iday-today-clear,.iday-open-itinerary{border:1px solid #111;border-radius:9px;background:#fff;color:#8f1734;font-family:'Sora',sans-serif;font-size:10px;font-weight:900;padding:7px 9px;cursor:pointer}.iday-today-actions .primary{background:#BC002D;color:#fff}.iday-nav-choice{display:flex;gap:7px;padding:8px 10px 10px 52px;border-top:1px solid #ddd;flex-wrap:wrap;background:#fffafc}.iday-budget-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}.iday-budget-mini-grid>div{border:1px solid #111;border-radius:10px;background:#fff;padding:8px 6px;text-align:center}.iday-budget-mini-grid span{display:block;font-size:9px;color:#666;font-weight:700}.iday-budget-mini-grid b{display:block;font-size:12px;color:#111;margin-top:3px}.iday-budget-mini.over{border-color:#BC002D}.iday-budget-mini.low{border-color:#d18a00}.iday-row{display:flex;gap:9px;padding:8px 0;border-top:1px solid rgba(0,0,0,.08)}.iday-row:first-of-type{border-top:none}.iday-row-main{min-width:0}.iday-row-h{font-size:11.5px;font-weight:900;color:#111}.iday-row-d{font-size:10.5px;color:#666;line-height:1.4;margin-top:2px}
+  @media(max-width:560px){.iday-today-stop-top{grid-template-columns:30px minmax(0,1fr);align-items:start}.iday-today-actions{grid-column:2;justify-content:flex-start;margin-top:3px;flex-wrap:wrap}.iday-nav-choice{padding-left:48px}.iday-budget-mini-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -7883,69 +7888,115 @@ function DashTools({ data, onDeleteLocalData }) {
 }
 
 
-function IntelligentDayMenuShell({ onGoTo }){
-  const [active,setActive]=React.useState("today");
+function italyIntelligentWorkingDay(data){
+  const totalDays = tripLengthDays(data);
+  const today = new Date();
+  for(let i=1;i<=totalDays;i++){
+    const d=tripDateForDay(data,i);
+    if(d && isSameDate(d,today)) return i;
+  }
+  return 1;
+}
 
-  const nav=[
-    ["today","☀️","Today"],
-    ["now","⚡","NOW"],
-    ["budget","👛","Budget"],
-    ["prevent","🛡️","Prevent"],
-    ["guardian","🔔","Guardian"],
-    ["signals","📡","Signals"],
-    ["rescue","🆘","Rescue"]
-  ];
+function ItalyIntelligentDayLocationClock(){
+  const [place,setPlace]=React.useState("");
+  const [timeZone,setTimeZone]=React.useState(TRIP_ENGINE_APP.destinationTimeZone || "Europe/Rome");
+  const [clock,setClock]=React.useState("");
+  const [status,setStatus]=React.useState("loading");
 
-  const titleMap={
-    today:"Today",
-    now:"NOW · What can I do now?",
-    budget:"Budget",
-    prevent:"Prevent",
-    guardian:"Trip Guardian",
-    signals:"Live Signals",
-    rescue:"Rescue"
+  React.useEffect(()=>{
+    let alive=true;
+    (async()=>{
+      try{
+        const loc=await detectCurrentCountry();
+        if(!alive) return;
+        setPlace(String(loc?.locality || loc?.country || "").trim() || "Current location");
+        try{
+          const u=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(loc.lat)}&longitude=${encodeURIComponent(loc.lng)}&current=temperature_2m&timezone=auto&forecast_days=1`;
+          const r=await fetch(u);
+          if(r.ok){ const j=await r.json(); if(alive && j?.timezone) setTimeZone(j.timezone); }
+        }catch(_){}
+        if(alive) setStatus("ok");
+      }catch(_){ if(alive){setPlace("");setStatus("error");} }
+    })();
+    return()=>{alive=false;};
+  },[]);
+
+  React.useEffect(()=>{
+    const tick=()=>{
+      try{setClock(new Intl.DateTimeFormat("en-GB",{timeZone,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date()));}
+      catch(_){setClock(new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));}
+    };
+    tick(); const id=setInterval(tick,30000); return()=>clearInterval(id);
+  },[timeZone]);
+
+  if(status==="error") return null;
+  return <div className="iday-location-clock" aria-live="polite"><span className="iday-location-pin">📍</span><span className="iday-location-name">{place || "Locating…"}</span><span className="iday-location-dot">·</span><span className="iday-location-time">{clock || "--:--"}</span></div>;
+}
+
+function ItalyIntelligentToday({data,setData,dailyAmount,onGoTo}){
+  const workingDay=italyIntelligentWorkingDay(data);
+  const totalDays=tripLengthDays(data);
+  const currentPlans=(data.dayPlans || {})[workingDay] || [];
+  const completedMap=data.completedStops || {};
+  const [navChoiceStop,setNavChoiceStop]=React.useState("");
+  const isStopDone=stop=>!!completedMap[`${workingDay}|${String(stop||"").trim()}`];
+  const activePlans=currentPlans.filter(stop=>!isStopDone(stop));
+
+  const toggleDone=stop=>{
+    const key=`${workingDay}|${String(stop||"").trim()}`;
+    setData(prev=>{const all=prev.completedStops||{};return {...prev,completedStops:{...all,[key]:!all[key]}};});
   };
-
-  const subtitleMap={
-    today:"Your Intelligent Day hub for 687 Italy.",
-    now:"What makes sense right now.",
-    budget:"What is safe to spend today.",
-    prevent:"Check conditions before they become a problem.",
-    guardian:"Important trip notifications.",
-    signals:"Live reports around your trip.",
-    rescue:"Fast help when something has already gone wrong."
+  const clearCurrentDay=()=>{
+    setData(prev=>{
+      const plans={...(prev.dayPlans||{})}; delete plans[workingDay];
+      const completed={...(prev.completedStops||{})}; Object.keys(completed).forEach(k=>{if(String(k).startsWith(`${workingDay}|`)) delete completed[k];});
+      return {...prev,dayPlans:plans,completedStops:completed};
+    });
   };
+  const openMaps=stop=>{const q=String(stop||"").trim(); if(q) window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}&travelmode=${data.wantsCar?"driving":"walking"}`,"_blank","noopener,noreferrer");};
+  const openWaze=stop=>{const q=String(stop||"").trim(); if(q) window.open(`https://waze.com/ul?q=${encodeURIComponent(q)}&navigate=yes`,"_blank","noopener,noreferrer");};
 
-  return (
-    <div className="iday-shell">
-      <aside className="iday-side">
-        <button className="iday-back" onClick={()=>onGoTo("overview")}>← Dashboard</button>
-        {nav.map(n=>(
-          <button
-            className={"iday-nav"+(active===n[0]?" active":"")}
-            key={n[0]}
-            onClick={()=>setActive(n[0])}
-          >
-            <span className="ico">{n[1]}</span>
-            <span>{n[2]}</span>
-          </button>
-        ))}
-      </aside>
-      <main className="iday-main">
-        <div className="iday-head">
-          <h1>{titleMap[active]}</h1>
-          <p>{subtitleMap[active]}</p>
-        </div>
-        <div className="iday-card">
-          <div className="iday-kicker">687 Italy · Intelligent Day</div>
-          <div className="iday-title">{titleMap[active]}</div>
-          <div className="iday-sub">
-            Menu structure aligned with 687 Japan V1.84. The feature engine for this section will be connected in the next dedicated porting steps.
-          </div>
-        </div>
-      </main>
+  const spentToday=(data.expenses||[]).filter(e=>Number(e.dayNum||e.day||0)===workingDay).reduce((sum,e)=>sum+Number(e.amount||0),0);
+  const spentAll=totalSpent(data);
+  const flightTotal=data.mode==="onsite"?0:Number(data.flightPrice||0);
+  const hotelTotal=data.mode==="onsite"?Number(data.prepaidTotal||0):Number(data.hotelPrice||0);
+  const carTotal=data.mode==="onsite"?0:(data.wantsCar?Number(data.carPrice||0):0);
+  const lockedTotal=flightTotal+hotelTotal+carTotal;
+  const groundBudget=Math.max(0,Number(data.budget||0)-lockedTotal);
+  const tripRemaining=Math.max(0,groundBudget-spentAll);
+  const daysLeftInclToday=Math.max(1,totalDays-workingDay+1);
+  const safeToday=tripRemaining/daysLeftInclToday;
+  const originalLeftToday=Number(dailyAmount||0)-spentToday;
+  const pctToday=Number(dailyAmount||0)>0?Math.round((spentToday/Number(dailyAmount||0))*100):0;
+  const overToday=originalLeftToday<0;
+  const lowToday=!overToday && Number(dailyAmount||0)>0 && originalLeftToday<Number(dailyAmount||0)*.25;
+  const noBudget=!(Number(data.budget||0)>0);
+
+  return <>
+    <ItalyIntelligentDayLocationClock />
+    <div className="iday-card iday-today-card" style={{marginBottom:10}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}><div className="iday-title" style={{margin:0}}>Your day</div>{currentPlans.length>0&&<button className="iday-today-clear" onClick={clearCurrentDay}>Clear day</button>}</div>
+      {currentPlans.length?currentPlans.map((stop,idx)=>{const done=isStopDone(stop);const isNext=!done&&activePlans[0]===stop;const choosing=navChoiceStop===stop;return <div className="iday-today-stop" key={`${stop}-${idx}`} style={done?{opacity:.55}:{}}><div className="iday-today-stop-top"><div>{done?"✅":(isNext?"➡️":"📍")}</div><div><div className="iday-row-h" style={done?{textDecoration:"line-through"}:{}}>{stop}</div><div className="iday-row-d">{done?"Done":(isNext?"Next":"Planned")}</div></div><div className="iday-today-actions">{!done&&<button onClick={()=>setNavChoiceStop(choosing?"":stop)}>GO</button>}<button className={done?"":"primary"} onClick={()=>{toggleDone(stop);if(choosing)setNavChoiceStop("");}}>{done?"Undo":"Done"}</button></div></div>{!done&&choosing&&<div className="iday-nav-choice"><button onClick={()=>{setNavChoiceStop("");openMaps(stop);}}>Google Maps</button><button onClick={()=>{setNavChoiceStop("");openWaze(stop);}}>Waze</button></div>}</div>;}) : <div className="iday-sub" style={{marginTop:8}}>Nothing planned yet. Add places from Nearby or Itinerary.</div>}
     </div>
-  );
+
+    <div className={`iday-card iday-budget-mini${overToday?" over":lowToday?" low":""}`} style={{marginTop:10}}>
+      <div className="iday-kicker">Budget · Day {workingDay}</div>
+      <div className="iday-budget-mini-grid"><div><span>Spent today</span><b>{formatHomeMoney(data,spentToday)}</b></div><div><span>Left today</span><b>{noBudget?"—":formatHomeMoney(data,Math.max(0,originalLeftToday))}</b></div><div><span>Safe today</span><b>{noBudget?"—":formatHomeMoney(data,safeToday)}</b></div></div>
+      <div className="iday-sub" style={{marginTop:8}}>{noBudget?"Set your trip budget first; Intelligent Day reads daily expenses from your itinerary.":overToday?`You're ${formatHomeMoney(data,Math.abs(originalLeftToday))} over the original daily target.`:lowToday?"Today's budget is getting low.":`You're using ${Math.max(0,pctToday)}% of today's original target.`}</div>
+      <button className="iday-open-itinerary" style={{marginTop:10}} onClick={()=>onGoTo("itinerary")}>Open today's itinerary</button>
+    </div>
+
+    <div className="iday-card" style={{marginTop:10}}><div className="iday-kicker">How Intelligent Day works</div><div className="iday-title">Your plan stays at the center</div><div className="iday-row"><div>⚡</div><div className="iday-row-main"><div className="iday-row-h">NOW</div><div className="iday-row-d">Uses location, time, weather and nearby places to tell you what makes sense now.</div></div></div><div className="iday-row"><div>👛</div><div className="iday-row-main"><div className="iday-row-h">Budget</div><div className="iday-row-d">Reads itinerary expenses and shows what is safe today.</div></div></div><div className="iday-row"><div>🛡️</div><div className="iday-row-main"><div className="iday-row-h">Prevent</div><div className="iday-row-d">Checks conditions against your day before they become a problem.</div></div></div><div className="iday-row"><div>🔔</div><div className="iday-row-main"><div className="iday-row-h">Guardian</div><div className="iday-row-d">Will notify you about important changes once Guardian is connected.</div></div></div><div className="iday-row"><div>📡</div><div className="iday-row-main"><div className="iday-row-h">Signals</div><div className="iday-row-d">Will show live reports around your planned stops and routes.</div></div></div><div className="iday-row"><div>🆘</div><div className="iday-row-main"><div className="iday-row-h">Rescue</div><div className="iday-row-d">Fast help when something has already gone wrong.</div></div></div><div className="iday-sub" style={{marginTop:8,fontWeight:800}}>Itinerary and Nearby write to the same plan. Intelligent Day does not create a second itinerary.</div></div>
+  </>;
+}
+
+function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
+  const [active,setActive]=React.useState("today");
+  const nav=[["today","☀️","Today"],["now","⚡","NOW"],["budget","👛","Budget"],["prevent","🛡️","Prevent"],["guardian","🔔","Guardian"],["signals","📡","Signals"],["rescue","🆘","Rescue"]];
+  const titleMap={today:"Today",now:"NOW · What can I do now?",budget:"Budget",prevent:"Prevent",guardian:"Trip Guardian",signals:"Live Signals",rescue:"Rescue"};
+  const subtitleMap={today:"",now:"What makes sense right now.",budget:"What is safe to spend today.",prevent:"Check conditions before they become a problem.",guardian:"Important trip notifications.",signals:"Live reports around your trip.",rescue:"Fast help when something has already gone wrong."};
+  return <div className="iday-shell"><aside className="iday-side"><button className="iday-back" onClick={()=>onGoTo("overview")}>← Dashboard</button>{nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}</aside><main className="iday-main"><div className="iday-head"><h1>{titleMap[active]}</h1>{subtitleMap[active]&&<p>{subtitleMap[active]}</p>}</div>{active==="today"?<ItalyIntelligentToday data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>:<div className="iday-card"><div className="iday-kicker">687 Italy · Intelligent Day</div><div className="iday-title">{titleMap[active]}</div><div className="iday-sub">This section will be connected in its dedicated porting step.</div></div>}</main></div>;
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
@@ -8009,7 +8060,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
   const allLabels = [...DASH_SECTIONS, ...DASH_SECTIONS_ITALY];
 
   if (section === "live") {
-    return <IntelligentDayMenuShell onGoTo={goSection} />;
+    return <IntelligentDayMenuShell onGoTo={goSection} data={data} setData={setData} dailyAmount={dailyAmount} />;
   }
 
   return (
