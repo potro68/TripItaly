@@ -2643,6 +2643,18 @@
   .iday-signal-votes{width:100%;justify-content:flex-start;margin-top:6px}
 }
 
+
+
+/* ---- Intelligent Day / Rescue — adapted from 687 Japan V1.84 ---- */
+.rescue-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.rescue-chip{border:1px solid #111;border-radius:999px;background:#fff;color:#222;padding:8px 10px;font-size:10.5px;font-weight:900;cursor:pointer}
+.rescue-chip.active{background:#8f1734;color:#fff;-webkit-text-fill-color:#fff}
+.rescue-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.rescue-action{border:1px solid #111;border-radius:10px;background:#fff;color:#8f1734;padding:9px 10px;font-size:10.5px;font-weight:900;cursor:pointer}
+.rescue-action.emergency{background:#8f1734;color:#fff;-webkit-text-fill-color:#fff}
+.rescue-msg{margin-top:9px;font-size:10.5px;font-weight:800;color:#222}
+.rescue-note{margin-top:10px;font-size:9.5px;line-height:1.45;color:#666}
+
 </style>
 </head>
 <body>
@@ -9910,6 +9922,187 @@ function ItalyIntelligentDayBudget({ data, dailyAmount, onOpenItinerary, compact
   </div>;
 }
 
+
+function ItalyIntelligentDayRescue({data,onGoTo,onOpenNow}){
+  const [kind,setKind]=React.useState("train");
+  const [msg,setMsg]=React.useState("");
+  const [coords,setCoords]=React.useState(null);
+
+  React.useEffect(()=>{
+    detectCurrentCountry().then(loc=>{
+      if(Number.isFinite(Number(loc?.lat))&&Number.isFinite(Number(loc?.lng))){
+        setCoords({lat:Number(loc.lat),lng:Number(loc.lng)});
+      }
+    }).catch(()=>{});
+  },[]);
+
+  const advice={
+    train:{
+      title:"Missed train / connection",
+      text:"Find the nearest station, ask staff in Italian, or open NOW to rebuild the rest of your day around the delay."
+    },
+    flight:{
+      title:"Flight cancelled / badly delayed",
+      text:"Open the nearest airport, ask for help in Italian, then use NOW to rebuild the remaining day once you know the new timing."
+    },
+    weather:{
+      title:"Bad weather",
+      text:"Switch to indoor options nearby and use NOW to rebuild the day around museums, covered places, food and other indoor stops."
+    },
+    passport:{
+      title:"Lost passport",
+      text:"Find the nearest police station, locate your embassy or consulate, and use the ready Italian phrase. Keep document copies in Wallet."
+    },
+    doctor:{
+      title:"Need a doctor / pharmacy",
+      text:"Find a nearby hospital or pharmacy, use the Italian help phrase, or call 112 for an emergency."
+    },
+    lost:{
+      title:"Lost / unsure where to go",
+      text:"Open your exact position, find the nearest police station, or show the Italian help phrase. In an emergency in Italy call 112."
+    }
+  };
+
+  const phrases={
+    train:"Ho perso il treno/la coincidenza. Quando parte il prossimo?",
+    flight:"Il mio volo è in ritardo o è stato cancellato. Cosa devo fare?",
+    weather:"A causa del maltempo cerco un posto al coperto qui vicino.",
+    passport:"Ho perso il passaporto. Devo contattare la polizia e la mia ambasciata o consolato.",
+    doctor:"Ho bisogno di un medico o di una farmacia. Potete aiutarmi?",
+    lost:"Mi sono perso/a. Potete aiutarmi a capire dove mi trovo?"
+  };
+
+  const mapsSearch=q=>{
+    const center=coords?`${coords.lat},${coords.lng}`:"";
+    const query=center?`${q} near ${center}`:q;
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`,"_blank","noopener,noreferrer");
+  };
+
+  const whereAmI=()=>{
+    if(coords){
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${coords.lat},${coords.lng}`)}`,"_blank","noopener,noreferrer");
+    }else{
+      mapsSearch("my location");
+    }
+  };
+
+  const copyPhrase=async()=>{
+    const text=phrases[kind]||"Potete aiutarmi?";
+    try{
+      await navigator.clipboard.writeText(text);
+      setMsg("Italian phrase copied.");
+    }catch(_){
+      setMsg(text);
+    }
+  };
+
+  const actions={
+    train:[
+      ["station","🚉 Nearest station"],
+      ["phrase","🇮🇹 Ask staff"],
+      ["translate","🌐 Translate"],
+      ["rebuild","↺ Rebuild day"]
+    ],
+    flight:[
+      ["airport","✈️ Airport"],
+      ["phrase","🇮🇹 Ask for help"],
+      ["translate","🌐 Translate"],
+      ["rebuild","↺ Rebuild day"]
+    ],
+    weather:[
+      ["indoor","🏛️ Indoor places"],
+      ["nearby","📍 Nearby"],
+      ["rebuild","↺ Rebuild day"]
+    ],
+    passport:[
+      ["police","👮 Police"],
+      ["embassy","🛂 Embassy / consulate"],
+      ["phrase","🇮🇹 Italian phrase"],
+      ["translate","🌐 Translate"],
+      ["wallet","💳 Wallet"]
+    ],
+    doctor:[
+      ["hospital","🏥 Hospital"],
+      ["pharmacy","💊 Pharmacy"],
+      ["phrase","🇮🇹 Italian phrase"],
+      ["translate","🌐 Translate"],
+      ["112","☎️ 112 emergency"]
+    ],
+    lost:[
+      ["whereami","📍 Where am I?"],
+      ["police","👮 Police"],
+      ["phrase","🇮🇹 Ask for help"],
+      ["translate","🌐 Translate"],
+      ["112","☎️ 112 emergency"]
+    ]
+  };
+
+  const handle=id=>{
+    setMsg("");
+    switch(id){
+      case "station": mapsSearch("train station"); break;
+      case "airport": mapsSearch("airport"); break;
+      case "hospital": mapsSearch("hospital"); break;
+      case "pharmacy": mapsSearch("pharmacy"); break;
+      case "police": mapsSearch("police station"); break;
+      case "embassy": mapsSearch("embassy consulate"); break;
+      case "whereami": whereAmI(); break;
+      case "phrase": copyPhrase(); break;
+      case "translate": onGoTo("translate"); break;
+      case "nearby": onGoTo("nearby"); break;
+      case "wallet": onGoTo("wallet"); break;
+      case "indoor":
+        onGoTo("nearby");
+        setMsg("Open Nearby and choose indoor places around you.");
+        break;
+      case "rebuild":
+        onOpenNow();
+        break;
+      case "112":
+        window.location.href="tel:112";
+        break;
+      default: break;
+    }
+  };
+
+  const current=advice[kind]||advice.lost;
+
+  return <div>
+    <div className="iday-card" style={{marginBottom:10}}>
+      <div className="iday-kicker">687 Rescue · Italy V1.13</div>
+      <div className="iday-title">Something went wrong?</div>
+      <div className="iday-sub">Fast access to the same rescue tools used in the Japan master, adapted for Italy.</div>
+    </div>
+
+    <div className="iday-card">
+      <div className="rescue-tabs">
+        <button className={"rescue-chip"+(kind==="train"?" active":"")} onClick={()=>{setKind("train");setMsg("");}}>🚆 Train</button>
+        <button className={"rescue-chip"+(kind==="flight"?" active":"")} onClick={()=>{setKind("flight");setMsg("");}}>✈️ Flight</button>
+        <button className={"rescue-chip"+(kind==="weather"?" active":"")} onClick={()=>{setKind("weather");setMsg("");}}>🌧️ Weather</button>
+        <button className={"rescue-chip"+(kind==="passport"?" active":"")} onClick={()=>{setKind("passport");setMsg("");}}>🛂 Passport</button>
+        <button className={"rescue-chip"+(kind==="doctor"?" active":"")} onClick={()=>{setKind("doctor");setMsg("");}}>🏥 Doctor</button>
+        <button className={"rescue-chip"+(kind==="lost"?" active":"")} onClick={()=>{setKind("lost");setMsg("");}}>🧭 Lost</button>
+      </div>
+
+      <div className="iday-title" style={{fontSize:16}}>{current.title}</div>
+      <div className="iday-sub" style={{marginTop:5}}>{current.text}</div>
+
+      <div className="rescue-actions">
+        {(actions[kind]||[]).map(([id,label])=>
+          <button key={id} className={"rescue-action"+(id==="112"?" emergency":"")} onClick={()=>handle(id)}>{label}</button>
+        )}
+      </div>
+
+      {msg&&<div className="rescue-msg">{msg}</div>}
+
+      <div className="rescue-note">
+        112 is the European emergency number used in Italy. Rescue opens maps, translation, Wallet, Nearby or NOW; it does not replace emergency services.
+      </div>
+    </div>
+  </div>;
+}
+
+
 function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
   const [active,setActive]=React.useState("today");
   const nav=[["today","☀️","Today"],["now","⚡","NOW"],["budget","👛","Budget"],["prevent","🛡️","Prevent"],["guardian","🔔","Guardian"],["signals","📡","Signals"],["rescue","🆘","Rescue"]];
@@ -9927,11 +10120,13 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
           ? <ItalyIntelligentDayGuardian data={data}/>
           : active==="signals"
             ? <ItalyIntelligentDaySignals data={data}/>
-            : <div className="iday-card">
-                <div className="iday-kicker">687 Italy · Intelligent Day</div>
-                <div className="iday-title">{titleMap[active]}</div>
-                <div className="iday-sub">This section will be connected in its dedicated porting step.</div>
-              </div>}</main></div>;
+            : active==="rescue"
+              ? <ItalyIntelligentDayRescue data={data} onGoTo={onGoTo} onOpenNow={()=>setActive("now")}/>
+              : <div className="iday-card">
+                  <div className="iday-kicker">687 Italy · Intelligent Day</div>
+                  <div className="iday-title">{titleMap[active]}</div>
+                  <div className="iday-sub">This section will be connected in its dedicated porting step.</div>
+                </div>}</main></div>;
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
