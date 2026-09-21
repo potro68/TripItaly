@@ -2794,7 +2794,7 @@ function buildStay22HotelSearchLink(data, cityOverride) {
     adults: String(Math.max(1, data.people || 1)),
     children: "0",
     lang: "en",
-    currency: "EUR",
+    currency: getHomeCurrency(data),
     campaign: "tripitaly_app_hotel_search",
     excludeproviders: "booking",
     roam: "true",
@@ -2816,7 +2816,7 @@ function buildStay22ProviderLink(provider, campaign, data, cityOverride) {
     adults: String(Math.max(1, data.people || 1)),
     children: "0",
     lang: "en",
-    currency: "EUR",
+    currency: getHomeCurrency(data),
   });
   if (data.startDate) params.set("checkin", data.startDate);
   if (data.endDate) params.set("checkout", data.endDate);
@@ -2960,7 +2960,7 @@ function buildVrboSearchLink(data, cityOverride) {
     adults: String(adults),
     children: "0",
     lang: "en",
-    currency: "EUR",
+    currency: getHomeCurrency(data),
   });
 
   if (data.startDate) params.set("checkin", data.startDate);
@@ -3039,7 +3039,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
         <label>What have you already spent in total?</label>
         <p className="park-hint">Flights, hotel, car rental — combined. This sets your starting budget.</p>
         <div className="budget-input-wrap">
-          <span className="currency-sym">€</span>
+          <span className="currency-sym">{currencySymbolFor(getHomeCurrency(data))}</span>
           <input
             type="number"
             placeholder="e.g. 900"
@@ -3446,7 +3446,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
         <div className="price-entry-row">
           <span className="price-entry-label">After booking, enter the accommodation total:</span>
           <div className="price-entry-input">
-            <span className="pe-sym">€</span>
+            <span className="pe-sym">{currencySymbolFor(getHomeCurrency(data))}</span>
             <input
               type="number"
               placeholder="0"
@@ -3490,7 +3490,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
           <div className="price-entry-row">
             <span className="price-entry-label">Booked? Enter what you paid:</span>
             <div className="price-entry-input">
-              <span className="pe-sym">€</span>
+              <span className="pe-sym">{currencySymbolFor(getHomeCurrency(data))}</span>
               <input
                 type="number"
                 placeholder="0"
@@ -3842,15 +3842,23 @@ function ScreenBudget({ data, setData, onNext, onBack }) {
 
       <div className="field">
         <label>Total budget</label>
-        <div className="budget-input-wrap">
-          <span className="currency-sym">€</span>
-          <input
-            type="number"
-            placeholder="e.g. 2000"
-            value={data.budget || ""}
-            onChange={e => setData({...data, budget: Number(e.target.value)})}
-          />
+        <div style={{display:"grid",gridTemplateColumns:"1fr 116px",gap:8,alignItems:"stretch"}}>
+          <div className="budget-input-wrap">
+            <span className="currency-sym">{currencySymbolFor(getHomeCurrency(data))}</span>
+            <input
+              className="main-budget-input"
+              type="number"
+              placeholder="e.g. 2000"
+              value={data.budget || ""}
+              onChange={e => setData({...data, budget: Number(e.target.value)})}
+            />
+          </div>
+          <select aria-label="Home currency" value={getHomeCurrency(data)} onChange={e => setData({...data, homeCurrency:e.target.value})}
+            style={{border:"1.5px solid var(--line)",borderRadius:10,background:"#fff",fontFamily:"Sora, sans-serif",fontWeight:800,padding:"0 10px",fontSize:15}}>
+            {HOME_CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
+        <p className="park-hint" style={{marginTop:7}}>Your budget stays in your home currency. Prices in Italy stay in euros and are converted only when useful.</p>
       </div>
 
       <div className="field">
@@ -4574,7 +4582,7 @@ function ScreenFlights({ data, setData, onNext, onBack }) {
         <div className="price-entry-row">
           <span className="price-entry-label">Booked? Enter the total amount you paid:</span>
           <div className="price-entry-input">
-            <span className="pe-sym">€</span>
+            <span className="pe-sym">{currencySymbolFor(getHomeCurrency(data))}</span>
             <input
               type="number"
               min="0"
@@ -4619,6 +4627,88 @@ function formatDayStrip(d) {
   };
 }
 
+
+// 687 SHARED HOME-CURRENCY ENGINE — ported from Japan V1.84 master
+const HOME_CURRENCIES = [
+  "EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SGD","HKD","CNY","KRW","THB",
+  "INR","BRL","MXN","SEK","NOK","DKK","PLN","CZK","HUF","RON","TRY","ZAR","MYR","PHP","IDR","ILS","ISK"
+];
+
+function detectHomeCurrency() {
+  const regionToCurrency = {
+    US:"USD", GB:"GBP", JP:"JPY", CH:"CHF", CA:"CAD", AU:"AUD", NZ:"NZD", SG:"SGD", HK:"HKD",
+    CN:"CNY", KR:"KRW", TH:"THB", IN:"INR", BR:"BRL", MX:"MXN", SE:"SEK", NO:"NOK", DK:"DKK",
+    PL:"PLN", CZ:"CZK", HU:"HUF", RO:"RON", TR:"TRY", ZA:"ZAR", MY:"MYR", PH:"PHP", ID:"IDR",
+    IL:"ILS", IS:"ISK",
+    IT:"EUR", FR:"EUR", DE:"EUR", ES:"EUR", PT:"EUR", NL:"EUR", BE:"EUR", AT:"EUR", IE:"EUR",
+    FI:"EUR", GR:"EUR", LU:"EUR", SK:"EUR", SI:"EUR", EE:"EUR", LV:"EUR", LT:"EUR", HR:"EUR",
+    CY:"EUR", MT:"EUR"
+  };
+  try {
+    const locale = navigator.languages?.[0] || navigator.language || "";
+    let region = "";
+    try { region = new Intl.Locale(locale).region || ""; } catch (_) {}
+    if (!region) {
+      const m = String(locale).match(/[-_]([A-Za-z]{2})\b/);
+      if (m) region = m[1].toUpperCase();
+    }
+    return regionToCurrency[region] || "EUR";
+  } catch (_) { return "EUR"; }
+}
+
+function getHomeCurrency(data) {
+  const c = String(data?.homeCurrency || "").toUpperCase();
+  return HOME_CURRENCIES.includes(c) ? c : "EUR";
+}
+
+function currencySymbolFor(code) {
+  const c = String(code || "EUR").toUpperCase();
+  try {
+    const part = new Intl.NumberFormat(undefined, {style:"currency", currency:c, currencyDisplay:"narrowSymbol"})
+      .formatToParts(0).find(p => p.type === "currency");
+    return part?.value || c;
+  } catch (_) { return c; }
+}
+
+function formatCurrencyAmount(code, amount, maximumFractionDigits=0) {
+  const c = String(code || "EUR").toUpperCase();
+  const n = Number(amount || 0);
+  try {
+    return new Intl.NumberFormat(undefined, {style:"currency", currency:c, currencyDisplay:"narrowSymbol", minimumFractionDigits:0, maximumFractionDigits}).format(n);
+  } catch (_) { return `${c} ${n.toLocaleString(undefined,{maximumFractionDigits})}`; }
+}
+
+function formatHomeMoney(data, amount, maximumFractionDigits=0) {
+  return formatCurrencyAmount(getHomeCurrency(data), amount, maximumFractionDigits);
+}
+
+async function fetchCurrencyConversionRate(fromCurrency, toCurrency) {
+  const from = String(fromCurrency || "").toUpperCase();
+  const to = String(toCurrency || "").toUpperCase();
+  if (!from || !to) return null;
+  if (from === to) return 1;
+  try {
+    const r = await fetch(`https://api.frankfurter.dev/v1/latest?base=${from}&symbols=${to}`);
+    const j = await r.json();
+    const v = Number(j?.rates?.[to]);
+    return Number.isFinite(v) && v > 0 ? v : null;
+  } catch (_) { return null; }
+}
+
+function convertTripHomeCurrencyAmounts(data, nextCurrency, rate) {
+  const factor = Number(rate);
+  if (!Number.isFinite(factor) || factor <= 0) return data;
+  const moneyFields = ["budget","prepaidTotal","flightPrice","hotelPrice","carPrice"];
+  const out = {...data, homeCurrency:nextCurrency};
+  moneyFields.forEach(k => {
+    if (Number.isFinite(Number(data?.[k]))) out[k] = Math.round(Number(data[k]) * factor * 100) / 100;
+  });
+  if (Array.isArray(data?.expenses)) {
+    out.expenses = data.expenses.map(e => ({...e, amount: Math.round(Number(e.amount || 0) * factor * 100) / 100}));
+  }
+  return out;
+}
+
 const DASH_SECTIONS = [
   { id: "overview", icon: "🏠", label: "Overview" },
   { id: "wallet", icon: "👛", label: "Wallet" },
@@ -4644,6 +4734,7 @@ const TRIP_ENGINE_APP = {
   destinationTimeZone: "Europe/Rome",
   brandName: "687 Italy",
   defaultLanguage: "en",
+  destinationCurrency: "EUR",
 };
 
 const MENU_LANGUAGES = [
@@ -4672,7 +4763,20 @@ function menuLabel(id, lang) {
   return TRIP_ENGINE_MENU_TRANSLATIONS[lang]?.[id] || TRIP_ENGINE_MENU_TRANSLATIONS.en[id] || id;
 }
 
-function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
+function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRestoreTrip, onDeleteArchive }) {
+  const [currencyBusy, setCurrencyBusy] = useState(false);
+  const changeTripCurrency = async (nextCurrency) => {
+    const from = getHomeCurrency(data);
+    const to = String(nextCurrency || from).toUpperCase();
+    if (from === to || currencyBusy) return;
+    const hasMoney = Number(data?.budget || 0) > 0 || Number(data?.prepaidTotal || 0) > 0 || Number(data?.flightPrice || 0) > 0 || Number(data?.hotelPrice || 0) > 0 || Number(data?.carPrice || 0) > 0 || (data?.expenses || []).some(e => Number(e.amount || 0) > 0);
+    if (hasMoney && !window.confirm(`Change home currency from ${from} to ${to}? Existing budget, booking totals and logged expenses will be converted using the current reference exchange rate.`)) return;
+    setCurrencyBusy(true);
+    const rate = await fetchCurrencyConversionRate(from,to);
+    setCurrencyBusy(false);
+    if (!rate) { window.alert("The reference exchange rate is unavailable right now. Your trip currency was not changed."); return; }
+    setData(convertTripHomeCurrencyAmounts(data,to,rate));
+  };
   return (
     <div>
       <div className="field">
@@ -4683,15 +4787,13 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
         </select>
       </div>
       <div className="field">
-        <label>Theme</label>
-        <div className="traveler-grid" style={{gridTemplateColumns:"1fr 1fr"}}>
-          <div className={"traveler-chip"+(theme==="classic"?" selected":"")} onClick={()=>setTheme("classic")}>
-            <span className="tc-icon">☀️</span><span className="tc-label">Classic</span>
-          </div>
-          <div className={"traveler-chip"+(theme==="navy"?" selected":"")} onClick={()=>setTheme("navy")}>
-            <span className="tc-icon">🌙</span><span className="tc-label">Navy & Gold</span>
-          </div>
-        </div>
+        <label>Home currency</label>
+        <p className="park-hint">Your trip budget, paid bookings and logged expenses use this currency. Italy prices remain in EUR.</p>
+        <select value={getHomeCurrency(data)} disabled={currencyBusy} onChange={e=>changeTripCurrency(e.target.value)}
+          style={{border:"1.5px solid var(--line)",borderRadius:10,background:"#fff",fontFamily:"Sora, sans-serif",fontWeight:800,padding:"10px 12px",minWidth:130}}>
+          {HOME_CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
+        </select>
+        {currencyBusy && <p className="park-hint" style={{marginTop:6}}>Converting existing trip amounts…</p>}
       </div>
 
 
@@ -4747,13 +4849,13 @@ function DashSettings({ uiLanguage, setUiLanguage, theme, setTheme, archives, on
           cursor:"default"
         }}
       >
-        687 Italy · version 1.0
+        687 Italy · Android/Web parity port · V1.01
       </div>
     </div>
   );
 }
 
-function DonutChart({ segments, centerLabel, centerValue, showPercent = false }) {
+function DonutChart({ segments, centerLabel, centerValue, showPercent = false, homeCurrency = "EUR" }) {
   // segments: [{label, value, color}]
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
   let acc = 0;
@@ -4778,7 +4880,7 @@ function DonutChart({ segments, centerLabel, centerValue, showPercent = false })
             <span className="legend-dot" style={{background: seg.color}}></span>
             <span className="legend-label">{seg.label}</span>
             <span className="legend-value">
-              €{Math.round(seg.value).toLocaleString()}
+              {formatCurrencyAmount(homeCurrency, Math.round(seg.value))}
               {showPercent && <span style={{fontSize:10, opacity:0.55, marginLeft:5}}>{Math.round((seg.value / total) * 100)}%</span>}
             </span>
           </div>
@@ -4810,7 +4912,7 @@ function totalSpent(data) {
   return (data.expenses || []).reduce((s, e) => s + e.amount, 0);
 }
 
-function LogExpenseForm({ dayNum, onAdd, onClose }) {
+function LogExpenseForm({ data, dayNum, onAdd, onClose }) {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("food");
   const [error, setError] = useState("");
@@ -4827,7 +4929,7 @@ function LogExpenseForm({ dayNum, onAdd, onClose }) {
       <div className="field">
         <label>Amount</label>
         <div className="budget-input-wrap">
-          <span className="currency-sym">€</span>
+          <span className="currency-sym">{currencySymbolFor(getHomeCurrency(data))}</span>
           <input type="number" placeholder="e.g. 18" value={amount} onChange={e => setAmount(e.target.value)} autoFocus />
         </div>
       </div>
@@ -4875,10 +4977,10 @@ function DayBudgetCard({ data, setData, dayNum, dailyAmount }) {
       <div className="dbc-top">
         <div>
           <div className="dbc-label">Today's budget</div>
-          <div className="dbc-amount">€{dailyAmount.toFixed(0)}</div>
+          <div className="dbc-amount">{formatHomeMoney(data, dailyAmount)}</div>
         </div>
         <div className={"dbc-status" + (over ? " over" : "")}>
-          {over ? `€${Math.abs(leftToday).toFixed(0)} over` : `€${leftToday.toFixed(0)} left`}
+          {over ? `${formatHomeMoney(data, Math.abs(leftToday))} over` : `${formatHomeMoney(data, leftToday)} left`}
         </div>
       </div>
       <div className="dash-bar-track" style={{background:"rgba(19,42,58,0.1)"}}>
@@ -4889,7 +4991,7 @@ function DayBudgetCard({ data, setData, dayNum, dailyAmount }) {
         <div className="dbc-warning">⚠️ You've used {pct}% of today's budget — pace yourself for the rest of the day.</div>
       )}
       {over && (
-        <div className="dbc-warning over">⚠️ You're over today's budget by €{Math.abs(leftToday).toFixed(0)}.</div>
+        <div className="dbc-warning over">⚠️ You're over today's budget by {formatHomeMoney(data, Math.abs(leftToday))}.</div>
       )}
 
       {dayExpenses.length > 0 && (
@@ -4899,7 +5001,7 @@ function DayBudgetCard({ data, setData, dayNum, dailyAmount }) {
             return (
               <div key={e.id} className="dbc-expense-row">
                 <span>{cat?.icon} {cat?.label}</span>
-                <span className="dbc-expense-amt">€{e.amount}</span>
+                <span className="dbc-expense-amt">{formatHomeMoney(data, e.amount, 2)}</span>
                 <span className="remove-stop" onClick={() => removeExpense(e.id)}>✕</span>
               </div>
             );
@@ -4917,7 +5019,7 @@ function DayBudgetCard({ data, setData, dayNum, dailyAmount }) {
       {!logging ? (
         <button className="btn-secondary" onClick={() => setLogging(true)}>+ Log an expense</button>
       ) : (
-        <LogExpenseForm dayNum={dayNum} onAdd={addExpense} onClose={() => setLogging(false)} />
+        <LogExpenseForm data={data} dayNum={dayNum} onAdd={addExpense} onClose={() => setLogging(false)} />
       )}
     </div>
   );
@@ -4963,9 +5065,9 @@ function TripRecap({ data, spent, dailyAmount }) {
   return (
     <div className="trip-recap-card">
       <div className="tr-eyebrow">🎉 Trip complete</div>
-      <div className="tr-h">{diff >= 0 ? `You came in €${diff.toFixed(0)} under budget` : `You went €${Math.abs(diff).toFixed(0)} over budget`}</div>
+      <div className="tr-h">{diff >= 0 ? `You came in ${formatHomeMoney(data, diff)} under budget` : `You went ${formatHomeMoney(data, Math.abs(diff))} over budget`}</div>
       <div className="tr-stats">
-        <div className="tr-stat"><div className="tr-stat-v">€{spent.toFixed(0)}</div><div className="tr-stat-l">Total spent on the ground</div></div>
+        <div className="tr-stat"><div className="tr-stat-v">{formatHomeMoney(data, spent)}</div><div className="tr-stat-l">Total spent on the ground</div></div>
         <div className="tr-stat"><div className="tr-stat-v">{totalDays}</div><div className="tr-stat-l">Days traveled</div></div>
         {topCatInfo && <div className="tr-stat"><div className="tr-stat-v">{topCatInfo.icon} {topCatInfo.label}</div><div className="tr-stat-l">Biggest category</div></div>}
       </div>
@@ -5015,7 +5117,7 @@ function DailyStatusDonut({ data, dailyAmount }) {
         <div className="daily-status-donut" style={{background}}>
           <div className="daily-status-hole">
             <div className="k">Daily target</div>
-            <div className="v">€{dailyAmount.toFixed(0)}</div>
+            <div className="v">{formatHomeMoney(data, dailyAmount)}</div>
           </div>
         </div>
 
@@ -5039,7 +5141,7 @@ function DailyStatusDonut({ data, dailyAmount }) {
         {statuses.map(s => (
           <div key={s.day} className={`day-status-chip ${s.status}`}>
             <div className="d1">Day {s.day}</div>
-            <div className="d2">{s.spent > 0 ? `€${s.spent.toFixed(0)}` : "—"}</div>
+            <div className="d2">{s.spent > 0 ? formatHomeMoney(data, s.spent) : "—"}</div>
           </div>
         ))}
       </div>
@@ -5059,7 +5161,7 @@ async function detectCurrentCountry() {
   const lng = pos.coords.longitude;
 
   // Country verification through OpenStreetMap reverse geocoding.
-  // For the owner test this distinguishes Romania vs Italy from real GPS.
+  // This distinguishes the current country from real GPS coordinates.
   const url = `https://nominatim.openstreetmap.org/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&format=json&zoom=3&addressdetails=1`;
   const res = await fetch(url, {headers:{"Accept-Language":"en"}});
   if (!res.ok) throw new Error("Country verification is temporarily unavailable.");
@@ -5113,8 +5215,8 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
           <span>{todayDiff > 0 ? "⚠️" : "✅"}</span>
           <span>
             {todayDiff > 0
-              ? `€${todayDiff.toFixed(0)} over today's budget`
-              : `€${Math.abs(todayDiff).toFixed(0)} left in today's budget`}
+              ? `${formatHomeMoney(data, todayDiff)} over today's budget`
+              : `${formatHomeMoney(data, Math.abs(todayDiff))} left in today's budget`}
           </span>
         </div>
       )}
@@ -5123,17 +5225,17 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
 
       <div className="dash-budget-card">
         <div className="dash-eyebrow">Remaining budget</div>
-        <div className="dash-remaining">€{remaining.toLocaleString()}</div>
+        <div className="dash-remaining">{formatHomeMoney(data, remaining)}</div>
         <div className="dash-bar-track">
           <div className="dash-bar-fill" style={{width: `${pctUsed}%`}}></div>
         </div>
-        <div className="dash-locked-note">€{lockedTotal.toLocaleString()} locked in · of €{(data.budget||0).toLocaleString()} total</div>
+        <div className="dash-locked-note">{formatHomeMoney(data, lockedTotal)} locked in · of {formatHomeMoney(data, data.budget||0)} total</div>
       </div>
 
       <div className="daily-budget-banner">
         <div className="dbb-icon">📅</div>
         <div className="dbb-text">
-          <div className="dbb-h">€{dailyAmount.toFixed(0)} / day</div>
+          <div className="dbb-h">{formatHomeMoney(data, dailyAmount)} / day</div>
           <div className="dbb-d">Original daily target from your ground budget, over {tripLengthDays(data)} days</div>
         </div>
       </div>
@@ -5141,13 +5243,13 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
       {groundSpent > 0 && remainingDays > 0 && (
         <div className={"budget-recalc-card" + (todayDiff > 0 ? " over" : "")}>
           <div className="budget-recalc-kicker">Updated after your spending</div>
-          <div className="budget-recalc-value">€{suggestedDaily.toFixed(0)} / day</div>
+          <div className="budget-recalc-value">{formatHomeMoney(data, suggestedDaily)} / day</div>
           <div className="budget-recalc-copy">
             Suggested average for the remaining {remainingDays} day{remainingDays !== 1 ? "s" : ""}.
             {todayDiff > 0
-              ? ` Today's €${todayDiff.toFixed(0)} overspend is automatically spread across the remaining days.`
+              ? ` Today's ${formatHomeMoney(data, todayDiff)} overspend is automatically spread across the remaining days.`
               : todayDiff < 0
-                ? ` Today's €${Math.abs(todayDiff).toFixed(0)} saving is automatically added back across the remaining days.`
+                ? ` Today's ${formatHomeMoney(data, Math.abs(todayDiff))} saving is automatically added back across the remaining days.`
                 : ""}
             Every expense you add recalculates this amount automatically.
           </div>
@@ -5167,8 +5269,9 @@ function DashOverview({ data, setData, flightTotal, hotelTotal, carTotal, locked
         <DonutChart
           segments={totalBudgetSegments}
           centerLabel="Total"
-          centerValue={`€${Math.round(data.budget || 0).toLocaleString()}`}
+          centerValue={formatHomeMoney(data, Math.round(data.budget || 0))}
           showPercent={true}
+          homeCurrency={getHomeCurrency(data)}
         />
       </div>
 
@@ -5492,7 +5595,7 @@ function DashTickets({ data, setData, flightTotal, docs, onAddDoc, onRemoveDoc }
           <div className="choice-text">
             <div className="h">Round trip to {airport?.city}</div>
             <div className="d">
-              {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people} traveler{data.people>1?"s":""} · €{flightTotal.toLocaleString()} total
+              {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people} traveler{data.people>1?"s":""} · {formatHomeMoney(data, flightTotal)} total
             </div>
           </div>
         </div>
@@ -5575,7 +5678,7 @@ function DashCar({ data, setData, carTotal, docs, onAddDoc, onRemoveDoc }) {
           <div className="choice-text">
             <div className="h">{data.car || "Rental car"}</div>
             <div className="d">
-              {AIRPORTS.find(a=>a.code===data.airport)?.city} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · €{carTotal.toLocaleString()} total
+              {AIRPORTS.find(a=>a.code===data.airport)?.city} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {formatHomeMoney(data, carTotal)} total
             </div>
           </div>
         </div>
@@ -5629,7 +5732,7 @@ function DashHouse({ data, hotelTotal, nights, docs, onAddDoc, onRemoveDoc }) {
           <div className="choice-text">
             <div className="h">{data.hotel || "Accommodation"}</div>
             <div className="d">
-              {stayCity} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {nights} nights · €{hotelTotal.toLocaleString()} total
+              {stayCity} · {formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {nights} nights · {formatHomeMoney(data, hotelTotal)} total
             </div>
           </div>
         </div>
@@ -7221,55 +7324,56 @@ function DashWeather({ data }) {
   );
 }
 
-function DashCurrency() {
-  const [amount, setAmount] = useState(50);
-  const [fromCurrency, setFromCurrency] = useState("USD");
-  const [rate, setRate] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [updatedAt, setUpdatedAt] = useState(null);
+function DashCurrency({ data }) {
+  const [homeCurrency, setHomeCurrency] = useState(() => getHomeCurrency(data));
+  const [eur, setEur] = useState("");
+  const [rate, setRate] = useState(homeCurrency === "EUR" ? 1 : null);
+  const [status, setStatus] = useState(homeCurrency === "EUR" ? "ok" : "idle");
 
-  const COMMON_CURRENCIES = ["USD", "GBP", "CAD", "AUD", "JPY", "CHF"];
-
+  React.useEffect(() => { setHomeCurrency(getHomeCurrency(data)); }, [data?.homeCurrency]);
   React.useEffect(() => {
-    setLoading(true);
-    setError("");
-    fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`)
-      .then(r => r.json())
-      .then(json => {
-        if (json.rates && json.rates.EUR) {
-          setRate(json.rates.EUR);
-          setUpdatedAt(json.date || null);
-        } else {
-          setError("Couldn't load exchange rate.");
-        }
-        setLoading(false);
-      })
-      .catch(() => { setError("Couldn't reach the currency service."); setLoading(false); });
-  }, [fromCurrency]);
+    let alive = true;
+    if (homeCurrency === "EUR") { setRate(1); setStatus("ok"); return () => { alive=false; }; }
+    setStatus("loading");
+    fetchCurrencyConversionRate("EUR", homeCurrency).then(v => {
+      if (!alive) return;
+      if (v) { setRate(v); setStatus("ok"); }
+      else { setRate(null); setStatus("error"); }
+    });
+    return () => { alive=false; };
+  }, [homeCurrency]);
 
+  const amount = Number(eur || 0);
+  const converted = rate && amount ? amount * rate : 0;
   return (
     <div className="field">
-      <label>Currency converter</label>
-      <div className="currency-from-row">
-        {COMMON_CURRENCIES.map(c => (
-          <div key={c} className={"currency-chip" + (fromCurrency === c ? " active" : "")} onClick={() => setFromCurrency(c)}>
-            {c}
-          </div>
-        ))}
+      <label>Italy currency</label>
+      <div className="choice-card selected" style={{cursor:"default", marginBottom:10}}>
+        <div className="choice-icon">💶</div>
+        <div className="choice-text">
+          <div className="h">Euro · EUR</div>
+          <div className="d">Enter a price in euros to estimate it in your home currency.</div>
+        </div>
       </div>
-      <div className="budget-input-wrap" style={{marginBottom:8, marginTop:10}}>
-        <span className="currency-sym">{fromCurrency}</span>
-        <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} />
+      <div style={{display:"grid",gridTemplateColumns:"1fr 110px",gap:8}}>
+        <div className="budget-input-wrap" style={{margin:0}}>
+          <span className="currency-sym" style={{fontSize:22}}>€</span>
+          <input type="number" inputMode="decimal" placeholder="e.g. 50" value={eur} onChange={e=>setEur(e.target.value)} style={{fontSize:24}} />
+        </div>
+        <select value={homeCurrency} onChange={e=>setHomeCurrency(e.target.value)} style={{border:"1.5px solid var(--line)",borderRadius:10,background:"#fff",fontFamily:"Sora, sans-serif",fontWeight:700,padding:"0 10px"}}>
+          {HOME_CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
+        </select>
       </div>
-      {loading && <p className="park-hint">Loading live rate…</p>}
-      {error && <p className="park-hint">{error}</p>}
-      {!loading && rate && (
-        <>
-          <div className="convert-result">≈ €{(amount * rate).toFixed(2)} EUR</div>
-          {updatedAt && <p className="park-hint" style={{marginTop:4}}>Live rate as of {updatedAt}</p>}
-        </>
-      )}
+      <div className="convert-result" style={{marginTop:10}}>
+        {amount > 0 && rate
+          ? `€${amount.toLocaleString()} ≈ ${converted.toLocaleString(undefined,{maximumFractionDigits:2})} ${homeCurrency}`
+          : amount > 0 && status === "loading"
+            ? "Loading reference exchange rate…"
+            : amount > 0
+              ? "Reference exchange rate unavailable right now."
+              : "Enter an amount in euros."}
+      </div>
+      <p className="park-hint" style={{marginTop:7}}>Reference conversion only. Card issuers, banks and cash exchanges may use different rates or fees.</p>
     </div>
   );
 }
@@ -7544,7 +7648,7 @@ function DashTools({ data, onDeleteLocalData }) {
   return (
     <div>
       <DashWeather data={data} />
-      <DashCurrency />
+      <DashCurrency data={data} />
       <div className="field">
         <label>Emergency numbers</label>
         <a href="tel:112" className="choice-card" style={{textDecoration:"none"}}>
@@ -7686,7 +7790,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
-        {section === "settings" && <DashSettings uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
+        {section === "settings" && <DashSettings data={data} setData={setData} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
         {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && <DashNearby data={data} setData={setData} />}
         {section === "drive" && data.wantsCar && <DashDrive data={data} setData={setData} />}
@@ -7786,6 +7890,7 @@ function loadSavedTrip() {
     const raw = localStorage.getItem("tripitaly_data");
     if (!raw) return null;
     const parsed = JSON.parse(raw);
+    if (parsed && parsed.budget && !parsed.homeCurrency) parsed.homeCurrency = "EUR";
     return parsed && parsed.budget ? parsed : null;
   } catch (e) {
     return null;
@@ -7797,7 +7902,7 @@ function App() {
   const savedUI = loadSavedUI();
   const [step, setStep] = useState(savedTrip ? (Number(savedUI.step) || 9) : 0);
   const [data, setData] = useState(savedTrip || {
-    budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null
+    budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null, homeCurrency: detectHomeCurrency()
   });
   const [archives, setArchives] = useState(() => loadTripArchive());
   // Shared Trip Engine UI preferences. Country-specific apps can reuse these
@@ -7876,7 +7981,8 @@ function App() {
     setData({
       budget:null, startDate:"", endDate:"", people:1, travelerType:"solo",
       mode:null, origin:"", airport:null,
-      homeTimeZone:Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+      homeTimeZone:Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      homeCurrency:detectHomeCurrency()
     });
     setStep(0);
   };
@@ -7899,6 +8005,7 @@ function App() {
     setArchives(remainingArchive);
 
     const restoredData = JSON.parse(JSON.stringify(item.data));
+    if (restoredData && restoredData.budget && !restoredData.homeCurrency) restoredData.homeCurrency = "EUR";
     setData(restoredData);
     try {
       localStorage.setItem("tripitaly_data", JSON.stringify(restoredData));
