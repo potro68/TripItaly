@@ -2411,193 +2411,27 @@
 
 
 <style id="v102-italy-intelligent-day">
-  .live-grid{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:10px;
-    margin:10px 0 16px;
-  }
-  .live-card{
-    border:1px solid rgba(0,0,0,.16);
-    background:#fff;
-    border-radius:14px;
-    padding:14px;
-  }
-  .live-card-h{
-    font-size:14px;
-    font-weight:800;
-    color:#111;
-    margin-bottom:4px;
-  }
-  .live-card-d{
-    font-size:11.5px;
-    color:#444;
-    line-height:1.45;
-  }
-  .live-action-row{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:10px;
-  }
-  .live-mini-btn{
-    border:1.5px solid #2E8B57;
-    border-radius:10px;
-    background:#FFFFFF;
-    color:#1F6B45;
-    -webkit-text-fill-color:#1F6B45;
-    padding:9px 10px;
-    font-family:'Sora',sans-serif;
-    font-size:11px;
-    font-weight:800;
-    cursor:pointer;
-  }
-  .live-mini-btn.primary{
-    background:#2E8B57 !important;
-    color:#FFFFFF !important;
-    border-color:#2E8B57 !important;
-    -webkit-text-fill-color:#FFFFFF !important;
-  }
-  .now-action-btn{
-    background:#2E8B57 !important;
-    color:#FFFFFF !important;
-    border:1.5px solid #2E8B57 !important;
-    font-weight:800 !important;
-    text-shadow:none !important;
-    -webkit-text-fill-color:#FFFFFF !important;
-  }
-  .now-action-btn *{
-    color:#FFFFFF !important;
-    -webkit-text-fill-color:#FFFFFF !important;
-  }
-  .now-action-btn:disabled{
-    background:#B9DCC8 !important;
-    border-color:#B9DCC8 !important;
-    color:#FFFFFF !important;
-    -webkit-text-fill-color:#FFFFFF !important;
-    opacity:1 !important;
-  }
-
-  .now-secondary-btn{
-    background:#FFFFFF !important;
-    color:#1F6B45 !important;
-    border:1.5px solid #2E8B57 !important;
-    font-weight:800 !important;
-    text-shadow:none !important;
-    -webkit-text-fill-color:#1F6B45 !important;
-  }
-  .now-secondary-btn *{
-    color:#1F6B45 !important;
-    -webkit-text-fill-color:#1F6B45 !important;
-  }
-
-  .now-neutral-btn{
-    background:#EAF5EF !important;
-    color:#244C38 !important;
-    border:1.5px solid #B5D5C3 !important;
-    font-weight:800 !important;
-    text-shadow:none !important;
-    -webkit-text-fill-color:#244C38 !important;
-  }
-  .now-neutral-btn *{
-    color:#244C38 !important;
-    -webkit-text-fill-color:#244C38 !important;
-  }
-  .live-suggestion{
-    display:flex;
-    gap:10px;
-    align-items:flex-start;
-    border-top:1px solid rgba(0,0,0,.10);
-    padding:10px 0;
-  }
-  .live-suggestion:first-of-type{border-top:none;}
-  .live-suggestion-icon{font-size:20px;line-height:1;}
-  .live-suggestion-main{flex:1;min-width:0;}
-  .live-suggestion-h{font-size:12.5px;font-weight:800;color:#111;}
-  .live-suggestion-d{font-size:11px;color:#555;line-height:1.4;margin-top:2px;}
-  .rescue-tabs{
-    display:flex;
-    gap:6px;
-    overflow-x:auto;
-    padding-bottom:3px;
-    margin:9px 0;
-  }
-  .rescue-chip{
-    flex:0 0 auto;
-    border:1.5px solid #2E8B57;
-    border-radius:999px;
-    padding:8px 10px;
-    background:#FFFFFF;
-    color:#1F6B45;
-    -webkit-text-fill-color:#1F6B45;
-    font-size:10.5px;
-    font-weight:800;
-    cursor:pointer;
-  }
-  .rescue-chip.active{
-    background:#2E8B57 !important;
-    color:#FFFFFF !important;
-    border-color:#2E8B57 !important;
-  }
-  .rescue-chip.active *{
-    color:#FFFFFF !important;
-  }
-
-  /* ---- Dashboard layout with sidebar ---- */
-  .dash-layout{
-    display:flex;
-<style id="v167-price-intelligence-style">
+.live-grid{display:grid;grid-template-columns:1fr;gap:10px;margin:10px 0 16px}
+.live-card{border:1px solid rgba(0,0,0,.16);background:#fff;border-radius:14px;padding:14px}
+.live-card-h{font-size:14px;font-weight:800;color:#111;margin-bottom:4px}
+.live-card-d{font-size:11.5px;color:#444;line-height:1.45}
+.live-action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.live-mini-btn{border:1.5px solid #2E8B57;border-radius:10px;background:#fff;color:#1F6B45;-webkit-text-fill-color:#1F6B45;padding:9px 10px;font-family:'Sora',sans-serif;font-size:11px;font-weight:800;cursor:pointer}
+.live-mini-btn.primary,.now-action-btn{background:#2E8B57!important;color:#fff!important;border:1.5px solid #2E8B57!important;font-weight:800!important;-webkit-text-fill-color:#fff!important}
+.now-action-btn *{color:#fff!important;-webkit-text-fill-color:#fff!important}
+.now-action-btn:disabled{background:#B9DCC8!important;border-color:#B9DCC8!important;color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important}
+.now-secondary-btn{background:#fff!important;color:#1F6B45!important;border:1.5px solid #2E8B57!important;font-weight:800!important;-webkit-text-fill-color:#1F6B45!important}
+.now-secondary-btn *{color:#1F6B45!important;-webkit-text-fill-color:#1F6B45!important}
+.now-neutral-btn{background:#EAF5EF!important;color:#244C38!important;border:1.5px solid #B5D5C3!important;font-weight:800!important;-webkit-text-fill-color:#244C38!important}
+.now-neutral-btn *{color:#244C38!important;-webkit-text-fill-color:#244C38!important}
+.live-suggestion{display:flex;gap:10px;align-items:flex-start;border-top:1px solid rgba(0,0,0,.10);padding:10px 0}
+.live-suggestion:first-of-type{border-top:none}.live-suggestion-icon{font-size:20px;line-height:1}.live-suggestion-main{flex:1;min-width:0}.live-suggestion-h{font-size:12.5px;font-weight:800;color:#111}.live-suggestion-d{font-size:11px;color:#555;line-height:1.4;margin-top:2px}
+.rescue-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;margin:9px 0}.rescue-chip{flex:0 0 auto;border:1.5px solid #2E8B57;border-radius:999px;padding:8px 10px;background:#fff;color:#1F6B45;-webkit-text-fill-color:#1F6B45;font-size:10.5px;font-weight:800;cursor:pointer}.rescue-chip.active{background:#2E8B57!important;color:#fff!important;border-color:#2E8B57!important}.rescue-chip.active *{color:#fff!important}
 .price-intel-badge{display:flex;align-items:center;flex-wrap:wrap;gap:3px 6px;width:fit-content;max-width:100%;padding:6px 9px;border-radius:12px;font-size:13px;line-height:1.2;font-weight:900;margin-top:5px;background:#F1F8F4;color:#1F6B45;border:1px solid rgba(46,139,87,.20);overflow-wrap:anywhere}
-.price-intel-badge.free{background:#eef9f0;color:#176b2c;border-color:rgba(23,107,44,.16)}
-.price-intel-badge.safe{background:#f3f8ff;color:#173b6b;border-color:rgba(23,59,107,.13)}
-.price-intel-badge.over{background:#fff1f1;color:#9d1427;border-color:rgba(157,20,39,.18)}
-.price-intel-note{font-size:11.5px;line-height:1.45;opacity:.78;margin-top:6px}
-.price-intel-source{display:block;flex-basis:100%;margin-left:22px;font-size:10px;line-height:1.2;font-weight:700;opacity:.72;text-transform:capitalize}
-
-/* V1.84 — isolated mobile layout ONLY for Show suggestions cards.
-   Smart Route and all other live-suggestion blocks remain untouched. */
-@media (max-width: 760px){
-  .now-place-suggestion{
-    flex-wrap:wrap;
-  }
-  .now-place-suggestion > .live-suggestion-main{
-    flex:1 1 calc(100% - 34px);
-    min-width:0;
-  }
-  .now-place-suggestion > .live-suggestion-main .price-intel-badge{
-    width:100%;
-    max-width:100%;
-    box-sizing:border-box;
-  }
-  .now-place-suggestion > div:last-child{
-    margin-left:30px;
-    width:calc(100% - 30px);
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-    justify-content:flex-start;
-  }
-}
-</style>
-<style id="v165-intelligent-budget-style">
-.iday-budget-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.iday-budget-value{font-size:24px;font-weight:900;letter-spacing:-.7px;margin-top:5px;color:var(--ink)}
-.iday-budget-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:9px}
-.iday-budget-mini-grid>div{background:rgba(255,255,255,.78);border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:9px 8px;min-width:0}
-.iday-budget-mini-grid span{display:block;font-size:9.5px;font-weight:800;opacity:.68;line-height:1.25}
-.iday-budget-mini-grid b{display:block;font-size:16px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.iday-budget-mini.low,.iday-budget-advice.low{border-color:#E0A400!important;background:#FFF9E8!important}
-.iday-budget-mini.over,.iday-budget-advice.over{border-color:#B3132B!important;background:#FFF0F2!important}
-body.theme-navy .iday-budget-value{color:#fff}
-body.theme-navy .iday-budget-mini-grid>div{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
-body.theme-navy .iday-budget-mini.low,body.theme-navy .iday-budget-advice.low{background:rgba(224,164,0,.13)!important}
-body.theme-navy .iday-budget-mini.over,body.theme-navy .iday-budget-advice.over{background:rgba(179,19,43,.18)!important}
+.price-intel-badge.free{background:#eef9f0;color:#176b2c;border-color:rgba(23,107,44,.16)}.price-intel-badge.safe{background:#f3f8ff;color:#173b6b;border-color:rgba(23,59,107,.13)}.price-intel-badge.over{background:#fff1f1;color:#9d1427;border-color:rgba(157,20,39,.18)}.price-intel-note{font-size:11.5px;line-height:1.45;opacity:.78;margin-top:6px}.price-intel-source{display:block;flex-basis:100%;margin-left:22px;font-size:10px;line-height:1.2;font-weight:700;opacity:.72;text-transform:capitalize}
+.iday-budget-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.iday-budget-value{font-size:24px;font-weight:900;letter-spacing:-.7px;margin-top:5px;color:var(--ink)}.iday-budget-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:9px}.iday-budget-mini-grid>div{background:rgba(255,255,255,.78);border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:9px 8px;min-width:0}.iday-budget-mini-grid span{display:block;font-size:9.5px;font-weight:800;opacity:.68;line-height:1.25}.iday-budget-mini-grid b{display:block;font-size:16px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){.now-place-suggestion{flex-wrap:wrap}.now-place-suggestion>.live-suggestion-main{flex:1 1 calc(100% - 34px);min-width:0}.now-place-suggestion>.live-suggestion-main .price-intel-badge{width:100%;max-width:100%;box-sizing:border-box}.now-place-suggestion>div:last-child{margin-left:30px;width:calc(100% - 30px);display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-start}}
 @media(max-width:560px){.iday-budget-grid{grid-template-columns:1fr 1fr}.iday-budget-mini-grid{grid-template-columns:1fr 1fr 1fr}.iday-budget-value{font-size:20px}}
-</style>
-
-</head>
-<body>
-<div id="root"></div>
 </style>
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -4946,7 +4780,7 @@ const TRIP_ENGINE_MENU_TRANSLATIONS = {
   de:{overview:"Übersicht",wallet:"Reise-Wallet",packing:"Gepäck",settings:"Einstellungen",live:"Intelligent Day",itinerary:"Reiseplan",nearby:"In der Nähe",drive:"Fahren",offline:"Offline",translate:"Übersetzen",tools:"Werkzeuge"},
   fr:{overview:"Aperçu",wallet:"Portefeuille",packing:"Bagages",settings:"Paramètres",live:"Intelligent Day",itinerary:"Itinéraire",nearby:"À proximité",drive:"Conduite",offline:"Hors ligne",translate:"Traduire",tools:"Outils"},
   es:{overview:"Resumen",wallet:"Cartera",packing:"Equipaje",settings:"Ajustes",live:"Intelligent Day",itinerary:"Itinerario",nearby:"Cerca de ti",drive:"Conducir",offline:"Sin conexión",translate:"Traducir",tools:"Herramientas"},
-  pt:{overview:"Visão geral",wallet:"Carteira",packing:"Bagagem",settings:"Definições",live:"Intelligent Day",itinerary:"Itinerário",nearby:"Perto de si",drive:"Conduzir",offline:"Offline",translate:"Traduzir",tools:"Ferpastatas"},
+  pt:{overview:"Visão geral",wallet:"Carteira",packing:"Bagagem",settings:"Definições",live:"Intelligent Day",itinerary:"Itinerário",nearby:"Perto de si",drive:"Conduzir",offline:"Offline",translate:"Traduzir",tools:"Ferramentas"},
   ja:{overview:"概要",wallet:"ウォレット",packing:"荷造り",settings:"設定",live:"Intelligent Day",itinerary:"旅程",nearby:"周辺",drive:"ドライブ",offline:"オフライン",translate:"翻訳",tools:"ツール"},
   th:{overview:"ภาพรวม",wallet:"กระเป๋าเดินทาง",packing:"จัดกระเป๋า",settings:"การตั้งค่า",live:"Intelligent Day",itinerary:"กำหนดการ",nearby:"ใกล้ฉัน",drive:"ขับรถ",offline:"ออฟไลน์",translate:"แปลภาษา",tools:"เครื่องมือ"},
 };
@@ -8624,13 +8458,13 @@ function DashLiveAssistant({ data, setData, onGoTo, dailyAmount }) {
   };
 
   const rescuePhrase = kind => ({
-    train:"電車に乗り遅れました。次の電車は何時ですか？",
-    flight:"フライトが遅延・欠航しました。どうすればいいですか？",
-    weather:"雨なので、近くの屋内で楽しめる場所を探しています。",
-    passport:"パスポートをなくしました。警察署と大使館に連絡したいです。",
-    doctor:"医師か薬局が必要です。助けてください。",
-    lost:"道に迷いました。現在地を確認するのを手伝ってください。"
-  })[kind] || "助けてください。";
+    train:"Ho perso il treno. A che ora parte il prossimo?",
+    flight:"Il mio volo è in ritardo o cancellato. Cosa devo fare?",
+    weather:"Piove. Cerco un posto al coperto interessante qui vicino.",
+    passport:"Ho perso il passaporto. Devo contattare la polizia e la mia ambasciata.",
+    doctor:"Ho bisogno di un medico o di una farmacia. Potete aiutarmi?",
+    lost:"Mi sono perso. Potete aiutarmi a capire dove mi trovo?"
+  })[kind] || "Aiutatemi, per favore.";
 
 
   const verifyItaly = async () => {
