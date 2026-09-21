@@ -1,8 +1,8 @@
-// 687 Italy Service Worker
-// Online: always loads the newest app version.
-// Offline: falls back to the last cached working version.
+// 687 Italy — canonical Service Worker V1.13.1
+// Single worker for app shell + Guardian push.
+// Online-first for app.html/manifest. Offline fallback to last good copy.
 
-const CACHE_NAME = "687-italy-shell-v3";
+const CACHE_NAME = "687-italy-shell-v1131";
 
 const APP_SHELL_URLS = [
   "/app.html",
@@ -11,77 +11,98 @@ const APP_SHELL_URLS = [
   "/icons/68t_italy_512.png",
   "https://unpkg.com/react@18/umd/react.production.min.js",
   "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js",
-  "https://unpkg.com/@babel/standalone/babel.min.js",
+  "https://unpkg.com/@babel/standalone/babel.min.js"
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL_URLS))
-  );
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+
+    // A single unavailable CDN/static resource must not abort SW installation.
+    await Promise.all(
+      APP_SHELL_URLS.map(async (url) => {
+        try {
+          await cache.add(url);
+        } catch (_) {}
+      })
+    );
+
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      )
-    )
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+
+    // Delete only legacy caches belonging to 687 Italy.
+    await Promise.all(
+      names
+        .filter((name) => name.startsWith("687-italy-") && name !== CACHE_NAME)
+        .map((name) => caches.delete(name))
+    );
+
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+
   const url = new URL(event.request.url);
 
   if (
     url.origin === self.location.origin &&
     (url.pathname === "/app.html" || url.pathname === "/manifest.json")
   ) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, copy);
-            });
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      try {
+        const request = new Request(event.request, { cache: "no-store" });
+        const response = await fetch(request);
+
+        if (response && response.ok) {
+          try { await cache.put(event.request, response.clone()); } catch (_) {}
+        }
+
+        return response;
+      } catch (err) {
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+        throw err;
+      }
+    })());
     return;
   }
 
-  const isStaticShell = APP_SHELL_URLS.some((shellUrl) =>
-    event.request.url.endsWith(shellUrl) || event.request.url === shellUrl
+  const isStaticShell = APP_SHELL_URLS.some(
+    (shellUrl) =>
+      event.request.url === shellUrl ||
+      event.request.url.endsWith(shellUrl)
   );
 
   if (!isStaticShell) return;
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (response && response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, copy);
-          });
-        }
-        return response;
-      });
-    })
-  );
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(event.request);
+    if (cached) return cached;
+
+    const response = await fetch(event.request);
+
+    if (response && response.ok) {
+      try { await cache.put(event.request, response.clone()); } catch (_) {}
+    }
+
+    return response;
+  })());
 });
 
-// Guardian push support — ported from 687 Japan.
+// Guardian push support.
 self.addEventListener("push", (event) => {
   let payload = {};
+
   try {
     payload = event.data ? event.data.json() : {};
   } catch (_) {
@@ -89,10 +110,9 @@ self.addEventListener("push", (event) => {
   }
 
   const title = payload.title || "687 Trip Guardian";
-  const target = ["today","now","prevent","guardian","signals","rescue"].includes(
-    String(payload.target || "").toLowerCase()
-  )
-    ? String(payload.target).toLowerCase()
+  const requestedTarget = String(payload.target || "").toLowerCase();
+  const target = ["today","now","prevent","guardian","signals","rescue"].includes(requestedTarget)
+    ? requestedTarget
     : "guardian";
 
   const options = {
