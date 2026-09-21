@@ -9054,7 +9054,11 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
       ? <ItalyIntelligentDayBudget data={data} dailyAmount={dailyAmount} onOpenItinerary={()=>onGoTo("itinerary")}/>
       : active==="prevent"
         ? <ItalyIntelligentDayPrevent data={data} onOpenNow={()=>setActive("now")}/>
-        : <div className="iday-card"><div className="iday-kicker">687 Italy · Intelligent Day</div><div className="iday-title">{titleMap[active]}</div><div className="iday-sub">This section will be connected in its dedicated porting step.</div></div>}</main></div>;
+        : <div className="iday-card">
+            <div className="iday-kicker">687 Italy · Intelligent Day</div>
+            <div className="iday-title">{titleMap[active]}</div>
+            <div className="iday-sub">This section will be connected in its dedicated porting step.</div>
+          </div>}</main></div>;
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
