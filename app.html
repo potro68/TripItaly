@@ -8864,9 +8864,12 @@ function ItalyIntelligentDayGuardian({data}){
 
     const sync=async()=>{
       try{
+        await pulseGuardianSubscribe(settings);
         await pulseGuardianSyncContext(data,settings);
-        if(alive) setMsg(m=>m||"Guardian context synced to 687 Pulse.");
-      }catch(_){}
+        if(alive) setMsg(m=>m||"Guardian connected to 687 Pulse.");
+      }catch(err){
+        if(alive) setMsg(m=>m||`Guardian sync issue: ${String(err?.message||err)}`);
+      }
     };
 
     sync();
@@ -8965,7 +8968,8 @@ function ItalyIntelligentDayGuardian({data}){
 
   const testBackendPush=async()=>{
     setMsg("Sending backend push test…");
-    try{
+
+    const runTest=async()=>{
       const r=await fetch(`${PULSE_API_BASE}/v1/push/test`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -8976,6 +8980,18 @@ function ItalyIntelligentDayGuardian({data}){
         })
       });
       const j=await r.json().catch(()=>null);
+      return {r,j};
+    };
+
+    try{
+      let {r,j}=await runTest();
+
+      if(!r.ok && r.status===404 && String(j?.error||"").toLowerCase().includes("no active push subscription")){
+        setMsg("Repairing Guardian push subscription…");
+        await pulseGuardianSubscribe({...settings,enabled:true});
+        ({r,j}=await runTest());
+      }
+
       if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
       setMsg("Backend push accepted by 687 Pulse. Minimize the app and check the notification.");
     }catch(err){
@@ -8995,7 +9011,7 @@ function ItalyIntelligentDayGuardian({data}){
     : "";
 
   return <div id="iday-guardian" className="iday-card iday-anchor">
-    <div className="iday-kicker">687 Trip Guardian · Build 1.13.1</div>
+    <div className="iday-kicker">687 Trip Guardian · Build 1.13.2</div>
     <div className="iday-title">Important information, even when you are not looking at NOW</div>
     <div className="iday-sub">
       Guardian is the notification layer of Intelligent Day. It uses the same itinerary, weather, route and Signals context — never a second plan.
