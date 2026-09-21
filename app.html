@@ -2579,6 +2579,37 @@
   .iday-budget-value{font-size:20px}
 }
 
+
+
+/* ---- Intelligent Day / Prevent — ported from 687 Japan V1.84 ---- */
+.iday-badge{
+  display:inline-block;border:1px solid #111;border-radius:999px;padding:5px 8px;
+  font-size:9.5px;font-weight:900;background:#fff;margin-top:8px
+}
+.iday-badge.good{background:#eef8f0;color:#245f35}
+.iday-badge.watch{background:#fff4d8;color:#745b00}
+.iday-badge.change{background:#ffe7ea;color:#8d1730}
+.iday-primary{
+  border:1px solid #111;border-radius:10px;background:#8f1734;color:#fff;
+  -webkit-text-fill-color:#fff;font-size:10.5px;font-weight:900;padding:9px 10px
+}
+.iday-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.iday-weather-wrap{margin-top:12px;padding-top:12px;border-top:1px solid #ddd}
+.iday-weather-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.iday-weather-auto{font-size:8.5px;color:#777;text-align:right;line-height:1.3;white-space:nowrap}
+.iday-hourly-strip{
+  display:flex;gap:7px;overflow-x:auto;padding:9px 1px 3px;scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch
+}
+.iday-hour-card{
+  flex:0 0 86px;border:1px solid #111;border-radius:12px;background:#fffafc;
+  padding:8px 6px;text-align:center;scroll-snap-align:start
+}
+.iday-hour-time{font-size:10px;font-weight:900;color:#111}
+.iday-hour-icon{font-size:22px;line-height:1.1;margin:5px 0 3px}
+.iday-hour-temp{font-size:15px;font-weight:900;color:#111}
+.iday-hour-meta{font-size:8.5px;color:#555;margin-top:3px;white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -8531,6 +8562,313 @@ function ItalyIntelligentToday({data,setData,dailyAmount,onGoTo}){
 }
 
 
+
+function italyPreventWeatherIcon(code){
+  const c=Number(code);
+  if(c===0) return "☀️";
+  if(c===1||c===2) return "🌤️";
+  if(c===3) return "☁️";
+  if(c===45||c===48) return "🌫️";
+  if((c>=51&&c<=67)||(c>=80&&c<=82)) return "🌧️";
+  if((c>=71&&c<=77)||(c>=85&&c<=86)) return "🌨️";
+  if(c>=95) return "⛈️";
+  return "🌤️";
+}
+
+function italyPreventHourLabel(iso){
+  const s=String(iso||"");
+  return s.includes("T") ? s.split("T")[1].slice(0,5) : s;
+}
+
+function ItalyIntelligentDayPrevent({ data, onOpenNow }){
+  const [state,setState]=React.useState({
+    loading:true,status:"good",title:"Checking today…",details:[],plan:[],hourly:[],updatedAt:""
+  });
+
+  const workingDay=italyIntelligentWorkingDay(data);
+  const plans=(data.dayPlans||{})[workingDay]||[];
+  const signalKey="tripitaly_live_signals_v1";
+
+  const activeRelevantSignals=()=>{
+    try{
+      const now=Date.now();
+      const all=JSON.parse(localStorage.getItem(signalKey)||"[]");
+      return (Array.isArray(all)?all:[])
+        .filter(x=>now<Number(x.expiresAt||0))
+        .filter(x=>x.scopeType==="route" || !x.target || plans.includes(x.target));
+    }catch(e){
+      return [];
+    }
+  };
+
+  const refresh=()=>{
+    setState(x=>({...x,loading:true,title:"Checking today…"}));
+    const localSignals=activeRelevantSignals();
+
+    if(!navigator.geolocation){
+      const details=localSignals.map(x=>`Traveler signal: ${x.label}${x.target?` · ${x.target}`:""}`);
+      setState({
+        loading:false,
+        status:details.length?"watch":"good",
+        title:details.length?"A traveler signal may affect today":"Your plan is ready",
+        details:details.length?details:["Location is unavailable, but your itinerary remains ready."],
+        plan:plans,hourly:[],updatedAt:""
+      });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const lat=pos.coords.latitude,lng=pos.coords.longitude;
+
+      try{
+        const url=
+          `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}`+
+          `&longitude=${encodeURIComponent(lng)}`+
+          `&current=temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m`+
+          `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,visibility`+
+          `&forecast_days=2&timezone=auto`;
+
+        const r=await fetch(url);
+        if(!r.ok) throw new Error("weather");
+        const w=await r.json();
+
+        const times=w.hourly?.time||[];
+        let startIndex=0;
+        const currentIso=String(w.current?.time||"");
+        if(currentIso && times.length){
+          const found=times.findIndex(t=>String(t)>=currentIso);
+          startIndex=found>=0?found:0;
+        }
+
+        const endIndex=Math.min(times.length,startIndex+12);
+        const probs=(w.hourly?.precipitation_probability||[])
+          .slice(startIndex,endIndex).map(Number).filter(Number.isFinite);
+        const gusts=(w.hourly?.wind_gusts_10m||[])
+          .slice(startIndex,endIndex).map(Number).filter(Number.isFinite);
+        const codes=(w.hourly?.weather_code||[])
+          .slice(startIndex,endIndex).map(Number).filter(Number.isFinite);
+        const visibility=(w.hourly?.visibility||[])
+          .slice(startIndex,endIndex).map(Number).filter(Number.isFinite);
+
+        const hourly=times.slice(startIndex,endIndex).map((time,i)=>({
+          time,
+          temp:Number((w.hourly?.temperature_2m||[])[startIndex+i]),
+          rain:Number((w.hourly?.precipitation_probability||[])[startIndex+i]),
+          precipitation:Number((w.hourly?.precipitation||[])[startIndex+i]),
+          code:Number((w.hourly?.weather_code||[])[startIndex+i]),
+          wind:Number((w.hourly?.wind_speed_10m||[])[startIndex+i]),
+          gust:Number((w.hourly?.wind_gusts_10m||[])[startIndex+i]),
+          visibility:Number((w.hourly?.visibility||[])[startIndex+i])
+        }));
+
+        const maxRain=probs.length?Math.max(...probs):0;
+        const maxGust=gusts.length?Math.max(...gusts):Number(w.current?.wind_gusts_10m||0);
+        const minVisibility=visibility.length?Math.min(...visibility):999999;
+
+        let minVisibilityIndex=-1;
+        if(visibility.length && Number.isFinite(minVisibility)){
+          const rel=visibility.findIndex(v=>Number(v)===Number(minVisibility));
+          if(rel>=0) minVisibilityIndex=startIndex+rel;
+        }
+
+        const minVisibilityTime=minVisibilityIndex>=0 ? times[minVisibilityIndex] : "";
+        const storm=codes.some(c=>c>=95);
+        const hail=codes.some(c=>c===96||c===99);
+
+        let status="good";
+        const details=[];
+
+        if(plans.length){
+          details.push(`${plans.length} stop${plans.length===1?"":"s"} planned today. Prevent is checking conditions against them.`);
+        }
+
+        if(hail||storm){
+          status="change";
+          details.push(
+            hail
+              ? "Hail or severe thunderstorm conditions are possible."
+              : "Thunderstorm conditions are possible today."
+          );
+        }
+
+        if(maxRain>=70){
+          status=status==="change"?status:"watch";
+          details.push(
+            `Rain probability reaches about ${Math.round(maxRain)}%. Outdoor parts of today's plan may need a change.`
+          );
+        }
+
+        if(maxGust>=55){
+          status=status==="change"?status:"watch";
+          details.push(`Wind gusts may reach about ${Math.round(maxGust)} km/h.`);
+        }
+
+        if(minVisibility<3000){
+          status=status==="change"?status:"watch";
+          const visKm=Math.max(0,minVisibility/1000);
+          const when=minVisibilityTime ? italyPreventHourLabel(minVisibilityTime) : "later";
+          details.push(
+            `Visibility may drop to about ${visKm.toFixed(1)} km around ${when}. `+
+            `This can affect viewpoints, long-distance views and some outdoor transfers even when the sky looks sunny.`
+          );
+        }
+
+        localSignals.forEach(x=>{
+          const critical=["closed","road_closed","accident","soldout"].includes(x.type);
+          if(critical) status="change";
+          else if(status==="good") status="watch";
+
+          details.push(
+            `Traveler signal: ${x.label}${x.target?` · ${x.target}`:" · on your route"}.`
+          );
+        });
+
+        if(details.length===(plans.length?1:0)){
+          details.push("No major weather or traveler-signal problem detected for the next part of the day.");
+        }
+
+        setState({
+          loading:false,
+          status,
+          title:
+            status==="good"
+              ? "Today looks good"
+              : status==="watch"
+                ? "Something may affect your day"
+                : "Your day may need a change",
+          details,
+          plan:plans,
+          hourly,
+          updatedAt:new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})
+        });
+
+      }catch(e){
+        const details=localSignals.map(
+          x=>`Traveler signal: ${x.label}${x.target?` · ${x.target}`:""}`
+        );
+
+        setState({
+          loading:false,
+          status:"watch",
+          title:"Live weather check unavailable",
+          details:details.length
+            ? details
+            : ["Your itinerary remains available. Live weather could not be loaded right now."],
+          plan:plans,
+          hourly:[],
+          updatedAt:""
+        });
+      }
+
+    },()=>{
+      setState({
+        loading:false,
+        status:"watch",
+        title:"Location permission needed",
+        details:["Allow location for automatic weather and route-risk checks. Your itinerary remains available."],
+        plan:plans,
+        hourly:[],
+        updatedAt:""
+      });
+    },{
+      enableHighAccuracy:true,
+      timeout:12000,
+      maximumAge:120000
+    });
+  };
+
+  React.useEffect(()=>{
+    refresh();
+    const id=setInterval(refresh,10*60*1000);
+    return ()=>clearInterval(id);
+  },[]);
+
+  return <div>
+    <div id="iday-prevent" className="iday-card iday-anchor">
+      <div className="iday-kicker">687 Prevent</div>
+      <div className="iday-title">{state.title}</div>
+
+      {state.status==="change"
+        ? <button
+            type="button"
+            className={`iday-badge ${state.status}`}
+            onClick={onOpenNow}
+            title="Fix this in NOW"
+          >
+            {state.status.toUpperCase()}
+          </button>
+        : <span className={`iday-badge ${state.status}`}>
+            {state.status.toUpperCase()}
+          </span>
+      }
+
+      <div className="iday-sub" style={{marginTop:8}}>
+        Prevent checks weather and active traveler reports against today's itinerary before they become a problem.
+      </div>
+
+      <div style={{marginTop:8}}>
+        {state.details.map((d,i)=>
+          <div className="iday-row" key={i}>
+            <div>{state.status==="good"?"✅":"⚠️"}</div>
+            <div className="iday-row-main">
+              <div className="iday-row-d">{d}</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {state.hourly.length>0 && (
+        <div className="iday-weather-wrap">
+          <div className="iday-weather-head">
+            <div>
+              <div className="iday-kicker">Next hours</div>
+              <div className="iday-title" style={{fontSize:"14px"}}>
+                Weather through your day
+              </div>
+            </div>
+            <div className="iday-weather-auto">
+              {state.updatedAt ? `Updated ${state.updatedAt}` : ""}
+              <br/>
+              Auto updates
+            </div>
+          </div>
+
+          <div className="iday-hourly-strip">
+            {state.hourly.map((h,i)=>
+              <div className="iday-hour-card" key={`${h.time}-${i}`}>
+                <div className="iday-hour-time">{italyPreventHourLabel(h.time)}</div>
+                <div className="iday-hour-icon">{italyPreventWeatherIcon(h.code)}</div>
+                <div className="iday-hour-temp">
+                  {Number.isFinite(h.temp)?`${Math.round(h.temp)}°`:"—"}
+                </div>
+                <div className="iday-hour-meta">
+                  🌧 {Number.isFinite(h.rain)?`${Math.round(h.rain)}%`:"—"}
+                </div>
+                <div className="iday-hour-meta">
+                  💨 {Number.isFinite(h.gust)?`${Math.round(h.gust)} km/h`:"—"}
+                </div>
+                {Number.isFinite(h.visibility) && h.visibility<3000 &&
+                  <div className="iday-hour-meta" style={{fontWeight:800}}>
+                    👁 {(h.visibility/1000).toFixed(1)} km
+                  </div>
+                }
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="iday-actions">
+        {state.status!=="good" &&
+          <button className="iday-primary" onClick={onOpenNow}>
+            ✨ Fix in NOW
+          </button>
+        }
+      </div>
+    </div>
+  </div>;
+}
+
 function ItalyIntelligentDayBudget({ data, dailyAmount, onOpenItinerary, compact=false }){
   const workingDay = italyIntelligentWorkingDay(data);
   const totalDays = tripLengthDays(data);
@@ -8714,7 +9052,9 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
     ? <ItalyDashNow data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
     : active==="budget"
       ? <ItalyIntelligentDayBudget data={data} dailyAmount={dailyAmount} onOpenItinerary={()=>onGoTo("itinerary")}/>
-      : <div className="iday-card"><div className="iday-kicker">687 Italy · Intelligent Day</div><div className="iday-title">{titleMap[active]}</div><div className="iday-sub">This section will be connected in its dedicated porting step.</div></div>}</main></div>;
+      : active==="prevent"
+        ? <ItalyIntelligentDayPrevent data={data} onOpenNow={()=>setActive("now")}/>
+        : <div className="iday-card"><div className="iday-kicker">687 Italy · Intelligent Day</div><div className="iday-title">{titleMap[active]}</div><div className="iday-sub">This section will be connected in its dedicated porting step.</div></div>}</main></div>;
 }
 
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
