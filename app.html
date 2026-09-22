@@ -6620,8 +6620,32 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
     setData({...data, dayPlans: {...dayPlans, [dayNum]: [...current, stop]}});
   };
   const removeStop = (dayNum, idx) => {
-    const current = dayPlans[dayNum] || [];
-    setData({...data, dayPlans: {...dayPlans, [dayNum]: current.filter((_, i) => i !== idx)}});
+    setData(prev => {
+      const plans = {...(prev.dayPlans || {})};
+      const current = plans[dayNum] || [];
+      const removedName = String(current[idx] || "").trim();
+      const nextStops = current.filter((_, i) => i !== idx);
+
+      if (nextStops.length) plans[dayNum] = nextStops;
+      else delete plans[dayNum];
+
+      const smart = {...(prev.smartDayPlans || {})};
+      const nextSmart = (smart[dayNum] || []).filter(
+        stop => String(stop?.name || "").trim().toLowerCase() !== removedName.toLowerCase()
+      );
+      if (nextStops.length && nextSmart.length) smart[dayNum] = nextSmart;
+      else delete smart[dayNum];
+
+      const completed = {...(prev.completedStops || {})};
+      if (removedName) delete completed[`${dayNum}|${removedName}`];
+
+      return {
+        ...prev,
+        dayPlans: plans,
+        smartDayPlans: smart,
+        completedStops: completed
+      };
+    });
   };
 
   const handlePrint = () => printTripItinerary(data);
@@ -8582,7 +8606,8 @@ function ItalyIntelligentToday({data,setData,dailyAmount,onGoTo}){
     setData(prev=>{
       const plans={...(prev.dayPlans||{})}; delete plans[workingDay];
       const completed={...(prev.completedStops||{})}; Object.keys(completed).forEach(k=>{if(String(k).startsWith(`${workingDay}|`)) delete completed[k];});
-      return {...prev,dayPlans:plans,completedStops:completed};
+      const smart={...(prev.smartDayPlans||{})}; delete smart[workingDay];
+      return {...prev,dayPlans:plans,completedStops:completed,smartDayPlans:smart};
     });
   };
   const openMaps=stop=>{const q=String(stop||"").trim(); if(q) window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}&travelmode=${data.wantsCar?"driving":"walking"}`,"_blank","noopener,noreferrer");};
@@ -10140,7 +10165,7 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
   const nav=[["today","☀️","Today"],["now","⚡","NOW"],["budget","👛","Budget"],["prevent","🛡️","Prevent"],["guardian","🔔","Guardian"],["signals","📡","Signals"],["rescue","🆘","Rescue"]];
   const titleMap={today:"Today",now:"NOW · What can I do now?",budget:"Budget",prevent:"Prevent",guardian:"Trip Guardian",signals:"Live Signals",rescue:"Rescue"};
   const subtitleMap={today:"",now:"What makes sense right now.",budget:"What is safe to spend today.",prevent:"Check conditions before they become a problem.",guardian:"Important trip notifications.",signals:"Live reports around your trip.",rescue:"Fast help when something has already gone wrong."};
-  return <div className="iday-shell"><aside className="iday-side"><button className="iday-back" onClick={()=>onGoTo("overview")}>← Dashboard</button>{nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}</aside><main className="iday-main"><div className="iday-head"><h1>{titleMap[active]}</h1>{subtitleMap[active]&&<p>{subtitleMap[active]}</p>}</div>{active==="today"
+  return <div className="iday-shell"><aside className="iday-side">{nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}</aside><main className="iday-main"><div className="iday-head"><h1>{titleMap[active]}</h1>{subtitleMap[active]&&<p>{subtitleMap[active]}</p>}</div>{active==="today"
   ? <ItalyIntelligentToday data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
   : active==="now"
     ? <ItalyDashNow data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
@@ -10161,17 +10186,33 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
                 </div>}</main></div>;
 }
 
-function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
+function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive, onSectionChange }) {
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
     ? (savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet")
     : savedDashboardSectionRaw;
   const [section, setSection] = useState(savedDashboardSection || "overview");
+  const previousSectionRef = React.useRef(savedDashboardSection && savedDashboardSection !== "live" ? savedDashboardSection : "overview");
 
   const goSection = (id) => {
+    if (id === "live" && section !== "live") previousSectionRef.current = section;
     setSection(id);
     saveUIState({step:9, section:id});
   };
+
+  React.useEffect(() => {
+    if (typeof onSectionChange === "function") onSectionChange(section);
+  }, [section, onSectionChange]);
+
+  React.useEffect(() => {
+    const backHandler = () => {
+      if (section === "live") {
+        goSection(previousSectionRef.current || "overview");
+      }
+    };
+    window.addEventListener("tripitaly-dashboard-back", backHandler);
+    return () => window.removeEventListener("tripitaly-dashboard-back", backHandler);
+  }, [section]);
 
   React.useEffect(() => {
     const handler = (e) => {
@@ -10370,6 +10411,7 @@ function App() {
   const savedTrip = loadSavedTrip();
   const savedUI = loadSavedUI();
   const [step, setStep] = useState(savedTrip ? (Number(savedUI.step) || 9) : 0);
+  const [dashboardSection, setDashboardSection] = useState(loadSavedUI().section || "overview");
   const [data, setData] = useState(savedTrip || {
     budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null, homeCurrency: detectHomeCurrency()
   });
@@ -10510,11 +10552,18 @@ function App() {
     return (
       <div className="app">
         <div className="topbar" style={{paddingBottom:20, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-          <div className="dash-back-btn" onClick={() => { saveUIState({step:4, anchor:""}); setStep(4); }}>← Back</div>
+          <div className="dash-back-btn" onClick={() => {
+            if (dashboardSection === "live") {
+              window.dispatchEvent(new CustomEvent("tripitaly-dashboard-back"));
+            } else {
+              saveUIState({step:4, anchor:""});
+              setStep(4);
+            }
+          }}>← Back</div>
           <div className="brand">687 <span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
-        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={restoreArchivedTrip} onDeleteArchive={deleteArchivedTrip} />
+        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={restoreArchivedTrip} onDeleteArchive={deleteArchivedTrip} onSectionChange={setDashboardSection} />
       </div>
     );
   }
