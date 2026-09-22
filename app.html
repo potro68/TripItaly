@@ -18,13 +18,13 @@
     --sun:#F4B93E;
     --majolica:#2E8B8B;
     --whitewash:#F8F4EC;
-    --paper:#EAF5F8;
+    --paper:#F7FBFD;
     --line:rgba(19,42,58,0.12);
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
     font-family:'Sora', sans-serif;
-    background:#D7EEF5;
+    background:#E8F5F9;
     color:var(--ink);
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
@@ -818,6 +818,7 @@
     padding:24px 20px 40px;
     overflow-y:auto;
     min-width:0;
+    background:#F7FBFD;
   }
 
   /* ---- Donut chart ---- */
@@ -2553,9 +2554,34 @@
 .smart-route-time{display:inline-flex;align-items:center;gap:4px;margin-top:5px;padding:4px 7px;border:1px solid #e2bfd0;border-radius:999px;background:#fff7fb;font-size:8.8px;font-weight:900;color:#8f1734}
 .smart-route-actions{display:flex;flex-direction:column;gap:5px}
 .smart-route-actions button{padding:6px 7px;font-size:8.5px}
-.day-plan-stop-card{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;gap:10px;align-items:center}
-.day-plan-stop-card .choice-text{min-width:0}
-.day-plan-stop-card .choice-text .h{line-height:1.25;word-break:break-word}
+.day-plan-stop-card{
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:start;
+  background:#fff !important;
+  padding:14px 14px;
+}
+.day-plan-stop-card .choice-icon{grid-row:1 / span 2}
+.day-plan-stop-card .choice-text{min-width:0;padding-top:2px}
+.day-plan-stop-card .choice-text .h{
+  line-height:1.28;
+  word-break:normal;
+  overflow-wrap:anywhere;
+  font-size:15px;
+}
+.day-plan-stop-card .remove-stop{
+  grid-column:3;
+  grid-row:1;
+  align-self:start;
+  justify-self:end;
+}
+.day-plan-stop-card .stop-go-btn{
+  grid-column:2;
+  grid-row:2;
+  justify-self:start;
+  margin:6px 0 0 0;
+}
 .day-plan-add-row{align-items:stretch}
 .iday-now-grid{display:grid;grid-template-columns:105px 1fr;gap:8px;margin-top:10px}
 .iday-now-grid input{
@@ -2567,10 +2593,12 @@
   .smart-route-row{grid-template-columns:28px minmax(0,1fr)}
   .smart-route-actions{grid-column:2;flex-direction:row;flex-wrap:wrap}
   .day-plan-stop-card{grid-template-columns:38px minmax(0,1fr) auto}
-  .day-plan-stop-card .stop-go-btn{grid-column:2;justify-self:start;margin-right:0;margin-top:6px}
-  .day-plan-stop-card .remove-stop{grid-column:3;align-self:start;justify-self:end}
+  .day-plan-stop-card .choice-icon{grid-row:1 / span 2}
+  .day-plan-stop-card .choice-text{grid-column:2;grid-row:1}
+  .day-plan-stop-card .stop-go-btn{grid-column:2;grid-row:2;justify-self:start;margin:6px 0 0 0}
+  .day-plan-stop-card .remove-stop{grid-column:3;grid-row:1;align-self:start;justify-self:end}
   .day-plan-add-row{flex-wrap:wrap}
-  .day-plan-add-row .route-city-input{width:100%}
+  .day-plan-add-row .route-city-input{width:100%;flex-basis:100%}
   .day-plan-add-row .btn-secondary{width:100% !important}
 }
 
@@ -3332,7 +3360,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
           <label>Your route · {tripDays} days total</label>
           <p className="park-hint">e.g. Day 4 Naples, Day 8 Turin — day 1 is always {firstCity || "your first city"}.</p>
 
-          <div className="choice-card selected day-plan-stop-card">
+          <div className="choice-card selected">
             <div className="choice-icon">📍</div>
             <div className="choice-text">
               <div className="h">Day 1{stopsWithRange[0] ? "–" + (sortedStops[0] ? sortedStops[0].day - 1 : tripDays) : "–" + tripDays} · {firstCity || "Your first city"}</div>
@@ -6545,7 +6573,7 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
           </div>
         )}
         {plannedStops && plannedStops.map((s, i) => (
-          <div key={i} className="choice-card selected">
+          <div key={i} className="choice-card selected day-plan-stop-card">
             <div className="choice-icon">📍</div>
             <div className="choice-text"><div className="h">{s}</div></div>
             <NavigateButton
