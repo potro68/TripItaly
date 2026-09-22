@@ -1,8 +1,8 @@
-// 687 Italy — canonical Service Worker V1.13.1
+// 687 Italy — canonical Service Worker V1.13.6C
 // Single worker for app shell + Guardian push.
 // Online-first for app.html/manifest. Offline fallback to last good copy.
 
-const CACHE_NAME = "687-italy-shell-v1131";
+const CACHE_NAME = "687-italy-shell-v1136c";
 
 const APP_SHELL_URLS = [
   "/app.html",

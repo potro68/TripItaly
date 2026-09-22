@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- 687 Italy Android/Web V1.13.6C — NAV/UI + forced SW refresh -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>687 Italy</title>
@@ -18,13 +19,13 @@
     --sun:#F4B93E;
     --majolica:#2E8B8B;
     --whitewash:#F8F4EC;
-    --paper:#DCEEF5;
+    --paper:#F7FBFD;
     --line:rgba(19,42,58,0.12);
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
     font-family:'Sora', sans-serif;
-    background:#BFE0EC;
+    background:#E8F5F9;
     color:var(--ink);
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
@@ -34,6 +35,7 @@
     margin:0 auto;
     min-height:100vh;
     background-color:var(--paper);
+    border-left:1px solid rgba(19,42,58,0.04);
     background-image:
       linear-gradient(180deg, rgba(191,224,236,0.6), rgba(220,238,245,0.97) 220px),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='%231C5A7A' fill-opacity='0.055'%3E%3Cpath d='M70 15c1.5 0 2.7 1 3.1 2.4l4 14 18-10.4c1-.6 2.3-.2 2.8.8.4.8.3 1.7-.3 2.4l-14 15.7 14.6 4.2c1 .3 1.7 1.3 1.6 2.4-.1 1.2-1.1 2-2.3 2l-16.8-.3-2.3 21.6 8.6 12c.6.9.4 2.1-.5 2.8-.7.5-1.6.5-2.3 0l-11.8-8.3-11.8 8.3c-.7.5-1.6.5-2.3 0-.9-.7-1.1-1.9-.5-2.8l8.6-12-2.3-21.6-16.8.3c-1.2 0-2.2-.8-2.3-2-.1-1.1.6-2.1 1.6-2.4l14.6-4.2-14-15.7c-.6-.7-.7-1.6-.3-2.4.5-1 1.8-1.4 2.8-.8l18 10.4 4-14c.4-1.4 1.6-2.4 3.1-2.4z'/%3E%3C/g%3E%3C/svg%3E");
@@ -817,6 +819,7 @@
     padding:24px 20px 40px;
     overflow-y:auto;
     min-width:0;
+    background:#F7FBFD;
   }
 
   /* ---- Donut chart ---- */
@@ -2543,14 +2546,44 @@
 .price-intel-badge.over{border-color:#e6a0a0;background:#fff5f5}
 .price-intel-source{font-weight:700;color:#777}
 .smart-route-row{
-  display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:8px;align-items:start;
-  border-top:1px solid #eee;padding:9px 0
+  display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:start;
+  border-top:1px solid #eee;padding:10px 0
 }
 .smart-route-row:first-of-type{border-top:none}
-.smart-route-time{font-size:9.5px;font-weight:900;color:#8f1734}
+.smart-route-icon{font-size:22px;line-height:1.1}
 .smart-route-main{min-width:0}
+.smart-route-time{display:inline-flex;align-items:center;gap:4px;margin-top:5px;padding:4px 7px;border:1px solid #e2bfd0;border-radius:999px;background:#fff7fb;font-size:8.8px;font-weight:900;color:#8f1734}
 .smart-route-actions{display:flex;flex-direction:column;gap:5px}
 .smart-route-actions button{padding:6px 7px;font-size:8.5px}
+.day-plan-stop-card{
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:start;
+  background:#fff !important;
+  padding:14px 14px;
+}
+.day-plan-stop-card .choice-icon{grid-row:1 / span 2}
+.day-plan-stop-card .choice-text{min-width:0;padding-top:2px}
+.day-plan-stop-card .choice-text .h{
+  line-height:1.28;
+  word-break:normal;
+  overflow-wrap:anywhere;
+  font-size:15px;
+}
+.day-plan-stop-card .remove-stop{
+  grid-column:3;
+  grid-row:1;
+  align-self:start;
+  justify-self:end;
+}
+.day-plan-stop-card .stop-go-btn{
+  grid-column:2;
+  grid-row:2;
+  justify-self:start;
+  margin:6px 0 0 0;
+}
+.day-plan-add-row{align-items:stretch}
 .iday-now-grid{display:grid;grid-template-columns:105px 1fr;gap:8px;margin-top:10px}
 .iday-now-grid input{
   width:100%;box-sizing:border-box;border:1px solid #bbb;border-radius:10px;padding:9px;font-size:11px;background:#fff
@@ -2558,8 +2591,16 @@
 @media(max-width:520px){
   .live-suggestion{grid-template-columns:28px minmax(0,1fr)}
   .live-suggestion>div:last-child{grid-column:2;display:flex!important;flex-wrap:wrap}
-  .smart-route-row{grid-template-columns:46px minmax(0,1fr)}
+  .smart-route-row{grid-template-columns:28px minmax(0,1fr)}
   .smart-route-actions{grid-column:2;flex-direction:row;flex-wrap:wrap}
+  .day-plan-stop-card{grid-template-columns:38px minmax(0,1fr) auto}
+  .day-plan-stop-card .choice-icon{grid-row:1 / span 2}
+  .day-plan-stop-card .choice-text{grid-column:2;grid-row:1}
+  .day-plan-stop-card .stop-go-btn{grid-column:2;grid-row:2;justify-self:start;margin:6px 0 0 0}
+  .day-plan-stop-card .remove-stop{grid-column:3;grid-row:1;align-self:start;justify-self:end}
+  .day-plan-add-row{flex-wrap:wrap}
+  .day-plan-add-row .route-city-input{width:100%;flex-basis:100%}
+  .day-plan-add-row .btn-secondary{width:100% !important}
 }
 
 
@@ -2655,6 +2696,35 @@
 .rescue-msg{margin-top:9px;font-size:10.5px;font-weight:800;color:#222}
 .rescue-note{margin-top:10px;font-size:9.5px;line-height:1.45;color:#666}
 
+
+
+  /* ---- V1.13.6B readability pass: stronger secondary text on light surfaces ---- */
+  body:not(.theme-navy) p.subtitle,
+  body:not(.theme-navy) .ac-sub,
+  body:not(.theme-navy) .date-mini-label,
+  body:not(.theme-navy) .showcase-text .d,
+  body:not(.theme-navy) .park-hint,
+  body:not(.theme-navy) .arrival-toggle-d,
+  body:not(.theme-navy) .nearby-filter-desc,
+  body:not(.theme-navy) .nearby-permission-text,
+  body:not(.theme-navy) .map-tap-hint,
+  body:not(.theme-navy) .choice-text .d,
+  body:not(.theme-navy) .offline-card-d,
+  body:not(.theme-navy) .iday-head p,
+  body:not(.theme-navy) .iday-sub,
+  body:not(.theme-navy) .iday-row-d,
+  body:not(.theme-navy) .live-sub,
+  body:not(.theme-navy) .live-card-d,
+  body:not(.theme-navy) .live-suggestion-d,
+  body:not(.theme-navy) .price-intel-source,
+  body:not(.theme-navy) .iday-weather-auto,
+  body:not(.theme-navy) .iday-hour-meta,
+  body:not(.theme-navy) .iday-guardian-note,
+  body:not(.theme-navy) .rescue-note {
+    color:#243746 !important;
+    opacity:1 !important;
+    font-weight:700;
+  }
 </style>
 </head>
 <body>
@@ -6428,9 +6498,7 @@ function NavigateButton({ destination, label, className }) {
         <>
           <div className="navigate-menu-backdrop" onClick={() => setOpen(false)}></div>
           <div className="navigate-menu">
-            {isIOSDevice() && (
-              <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🗺️ Apple Maps</a>
-            )}
+            <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🗺️ Apple Maps</a>
             <a href={links.google} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>📍 Google Maps</a>
             <a href={links.waze} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🚗 Waze</a>
             {isIOSDevice() && (
@@ -6533,7 +6601,7 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
           </div>
         )}
         {plannedStops && plannedStops.map((s, i) => (
-          <div key={i} className="choice-card selected">
+          <div key={i} className="choice-card selected day-plan-stop-card">
             <div className="choice-icon">📍</div>
             <div className="choice-text"><div className="h">{s}</div></div>
             <NavigateButton
@@ -6544,7 +6612,7 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
             <div className="remove-stop" onClick={() => onRemoveStop(i)}>✕</div>
           </div>
         ))}
-        <div className="route-add-row">
+        <div className="route-add-row day-plan-add-row">
           <input
             type="text"
             className="route-city-input"
@@ -6608,8 +6676,32 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
     setData({...data, dayPlans: {...dayPlans, [dayNum]: [...current, stop]}});
   };
   const removeStop = (dayNum, idx) => {
-    const current = dayPlans[dayNum] || [];
-    setData({...data, dayPlans: {...dayPlans, [dayNum]: current.filter((_, i) => i !== idx)}});
+    setData(prev => {
+      const plans = {...(prev.dayPlans || {})};
+      const current = plans[dayNum] || [];
+      const removedName = String(current[idx] || "").trim();
+      const nextStops = current.filter((_, i) => i !== idx);
+
+      if (nextStops.length) plans[dayNum] = nextStops;
+      else delete plans[dayNum];
+
+      const smart = {...(prev.smartDayPlans || {})};
+      const nextSmart = (smart[dayNum] || []).filter(
+        stop => String(stop?.name || "").trim().toLowerCase() !== removedName.toLowerCase()
+      );
+      if (nextStops.length && nextSmart.length) smart[dayNum] = nextSmart;
+      else delete smart[dayNum];
+
+      const completed = {...(prev.completedStops || {})};
+      if (removedName) delete completed[`${dayNum}|${removedName}`];
+
+      return {
+        ...prev,
+        dayPlans: plans,
+        smartDayPlans: smart,
+        completedStops: completed
+      };
+    });
   };
 
   const handlePrint = () => printTripItinerary(data);
@@ -7759,15 +7851,6 @@ function DashWallet({ data, setData, documents, onAddDoc, onRemoveDoc, flightTot
 
 function DashDrive({ data, setData }) {
   const blocks = (data.routeBlocks && data.routeBlocks.length) ? data.routeBlocks : [];
-  const navTo = (destination) => {
-    if (!destination) return "#";
-    const params = new URLSearchParams({
-      api: "1",
-      destination: `${destination}, Italy`,
-      travelmode: "driving",
-    });
-    return `https://www.google.com/maps/dir/?${params.toString()}`;
-  };
 
   // Every city change saved in Your Route becomes a driving day here.
   // Repeated cities are intentionally kept (e.g. Milan → Turin → Milan).
@@ -7804,13 +7887,19 @@ function DashDrive({ data, setData }) {
                 <div className="offline-card-h" style={{marginTop:3}}>🚗 {leg.from} → {leg.to}</div>
               </div>
             </div>
-            <a href={navTo(leg.to)} target="_blank" rel="noopener noreferrer" className="booking-link-btn" style={{marginTop:0}}>
-              <span className="blb-icon">🧭</span>
-              <span className="blb-text">
-                <span className="blb-h">Navigate to {leg.to}</span>
-                <span className="blb-d">Current location → {leg.to} ↗</span>
-              </span>
-            </a>
+            <NavigateButton
+              destination={leg.to}
+              className="booking-link-btn"
+              label={(
+                <>
+                  <span className="blb-icon">🧭</span>
+                  <span className="blb-text">
+                    <span className="blb-h">Navigate to {leg.to}</span>
+                    <span className="blb-d">Choose Apple Maps, Google Maps or Waze</span>
+                  </span>
+                </>
+              )}
+            />
           </div>
         )) : (
           <div className="choice-card">
@@ -7826,8 +7915,8 @@ function DashDrive({ data, setData }) {
       <div className="field">
         <label>Quick stops</label>
         <div className="drive-quick-grid">
-          <a className="drive-quick-link" href="https://www.google.com/maps/search/?api=1&query=gas+station" target="_blank" rel="noopener noreferrer">⛽ Fuel near me</a>
-          <a className="drive-quick-link" href="https://www.google.com/maps/search/?api=1&query=parking" target="_blank" rel="noopener noreferrer">🅿️ Parking near me</a>
+          <NavigateButton destination="gas station near me" label="⛽ Fuel near me" className="drive-quick-link" />
+          <NavigateButton destination="parking near me" label="🅿️ Parking near me" className="drive-quick-link" />
         </div>
       </div>
 
@@ -8405,6 +8494,9 @@ function ItalyDashNow({data,setData,onGoTo,dailyAmount}){
       return {...prev,dayPlans:plans,smartDayPlans:smart};
     });
     setSmartDayMessage(`${route.length} stop${route.length===1?"":"s"} planned from now${commitment.time?` before ${commitment.label||commitment.time}`:""}.`);
+    setTimeout(()=>{
+      document.getElementById("iday-smart-route-result")?.scrollIntoView({behavior:"smooth",block:"start"});
+    },160);
   };
 
   const removeSmartStop=stop=>setData(prev=>{
@@ -8443,10 +8535,11 @@ function ItalyDashNow({data,setData,onGoTo,dailyAmount}){
       <div className="live-card-h">Smart route from now</div>
       <div className="live-card-d">Built from your current location, time, weather, budget and verified nearby results.</div>
       {smartRoute.map((stop,i)=><div className="smart-route-row" key={`${stop.id||stop.name}-${i}`}>
-        <div className="smart-route-time">{stop.start}<br/>↓<br/>{stop.end}</div>
+        <div className="smart-route-icon">{italyNowCategoryIcon(stop.category)}</div>
         <div className="smart-route-main">
-          <div className="live-suggestion-h">{italyNowCategoryIcon(stop.category)} {stop.name}</div>
-          <div className="live-suggestion-d">{italyNowCategoryLabel(stop.category)} · {stop.km!=null?`${Number(stop.km).toFixed(1)} km · `:""}{stop.travelMin} min travel · {stop.visitMin} min visit</div>
+          <div className="live-suggestion-h">{stop.name}</div>
+          <div className="live-suggestion-d">{italyNowCategoryLabel(stop.category)} · {stop.km!=null?`${Number(stop.km).toFixed(1)} km · `:""}{stop.travelMin} min away · {stop.visitMin} min stop</div>
+          <div className="smart-route-time">🕒 {stop.start} → {stop.end}</div>
           {(()=>{const pf=italyNowFormatVerifiedPrice(stop,homeCurrency,eurToHome);return <div className="price-intel-badge">{pf.exact?"💶":"🏷️"} {pf.text}{pf.approxText?<span className="price-intel-source">· {pf.approxText}</span>:null}</div>;})()}
         </div>
         <div className="smart-route-actions">
@@ -8566,7 +8659,8 @@ function ItalyIntelligentToday({data,setData,dailyAmount,onGoTo}){
     setData(prev=>{
       const plans={...(prev.dayPlans||{})}; delete plans[workingDay];
       const completed={...(prev.completedStops||{})}; Object.keys(completed).forEach(k=>{if(String(k).startsWith(`${workingDay}|`)) delete completed[k];});
-      return {...prev,dayPlans:plans,completedStops:completed};
+      const smart={...(prev.smartDayPlans||{})}; delete smart[workingDay];
+      return {...prev,dayPlans:plans,completedStops:completed,smartDayPlans:smart};
     });
   };
   const openMaps=stop=>{const q=String(stop||"").trim(); if(q) window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}&travelmode=${data.wantsCar?"driving":"walking"}`,"_blank","noopener,noreferrer");};
@@ -8608,7 +8702,9 @@ function ItalyIntelligentToday({data,setData,dailyAmount,onGoTo}){
 
 
 
-function italyPreventWeatherIcon(code){
+function italyPreventWeatherIcon(code, visibility){
+  const v=Number(visibility);
+  if(Number.isFinite(v) && v<3000) return "🌫️";
   const c=Number(code);
   if(c===0) return "☀️";
   if(c===1||c===2) return "🌤️";
@@ -8676,7 +8772,7 @@ async function guardianEnsureServiceWorker(){
   if(!("serviceWorker" in navigator)) throw new Error("Service Worker unavailable");
 
   const registration = await navigator.serviceWorker.register(
-    "/service-worker.js",
+    "/service-worker.js?v=1136c",
     { scope:"/", updateViaCache:"none" }
   );
 
@@ -8864,9 +8960,12 @@ function ItalyIntelligentDayGuardian({data}){
 
     const sync=async()=>{
       try{
+        await pulseGuardianSubscribe(settings);
         await pulseGuardianSyncContext(data,settings);
-        if(alive) setMsg(m=>m||"Guardian context synced to 687 Pulse.");
-      }catch(_){}
+        if(alive) setMsg(m=>m||"Guardian connected to 687 Pulse.");
+      }catch(err){
+        if(alive) setMsg(m=>m||`Guardian sync issue: ${String(err?.message||err)}`);
+      }
     };
 
     sync();
@@ -8965,7 +9064,8 @@ function ItalyIntelligentDayGuardian({data}){
 
   const testBackendPush=async()=>{
     setMsg("Sending backend push test…");
-    try{
+
+    const runTest=async()=>{
       const r=await fetch(`${PULSE_API_BASE}/v1/push/test`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -8976,6 +9076,18 @@ function ItalyIntelligentDayGuardian({data}){
         })
       });
       const j=await r.json().catch(()=>null);
+      return {r,j};
+    };
+
+    try{
+      let {r,j}=await runTest();
+
+      if(!r.ok && r.status===404 && String(j?.error||"").toLowerCase().includes("no active push subscription")){
+        setMsg("Repairing Guardian push subscription…");
+        await pulseGuardianSubscribe({...settings,enabled:true});
+        ({r,j}=await runTest());
+      }
+
       if(!r.ok || !j?.ok) throw new Error(j?.error || `Pulse ${r.status}`);
       setMsg("Backend push accepted by 687 Pulse. Minimize the app and check the notification.");
     }catch(err){
@@ -8995,7 +9107,7 @@ function ItalyIntelligentDayGuardian({data}){
     : "";
 
   return <div id="iday-guardian" className="iday-card iday-anchor">
-    <div className="iday-kicker">687 Trip Guardian · Build 1.13.1</div>
+    <div className="iday-kicker">687 Trip Guardian · Build 1.13.2</div>
     <div className="iday-title">Important information, even when you are not looking at NOW</div>
     <div className="iday-sub">
       Guardian is the notification layer of Intelligent Day. It uses the same itinerary, weather, route and Signals context — never a second plan.
@@ -9589,7 +9701,7 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
           const visKm=Math.max(0,minVisibility/1000);
           const when=minVisibilityTime ? italyPreventHourLabel(minVisibilityTime) : "later";
           details.push(
-            `Visibility may drop to about ${visKm.toFixed(1)} km around ${when}. `+
+            `Reduced visibility: about ${visKm.toFixed(1)} km around ${when}. `+
             `This can affect viewpoints, long-distance views and some outdoor transfers even when the sky looks sunny.`
           );
         }
@@ -9615,7 +9727,9 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
             status==="good"
               ? "Today looks good"
               : status==="watch"
-                ? "Something may affect your day"
+                ? (minVisibility<3000 && maxRain<70 && maxGust<55 && !storm && !hail && !localSignals.length
+                    ? "Reduced visibility"
+                    : "Something may affect your day")
                 : "Your day may need a change",
           details,
           plan:plans,
@@ -9718,7 +9832,7 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
             {state.hourly.map((h,i)=>
               <div className="iday-hour-card" key={`${h.time}-${i}`}>
                 <div className="iday-hour-time">{italyPreventHourLabel(h.time)}</div>
-                <div className="iday-hour-icon">{italyPreventWeatherIcon(h.code)}</div>
+                <div className="iday-hour-icon">{italyPreventWeatherIcon(h.code,h.visibility)}</div>
                 <div className="iday-hour-temp">
                   {Number.isFinite(h.temp)?`${Math.round(h.temp)}°`:"—"}
                 </div>
@@ -9730,7 +9844,7 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
                 </div>
                 {Number.isFinite(h.visibility) && h.visibility<3000 &&
                   <div className="iday-hour-meta" style={{fontWeight:800}}>
-                    👁 {(h.visibility/1000).toFixed(1)} km
+                    👁 Reduced visibility · {(h.visibility/1000).toFixed(1)} km
                   </div>
                 }
               </div>
@@ -10108,7 +10222,7 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
   const nav=[["today","☀️","Today"],["now","⚡","NOW"],["budget","👛","Budget"],["prevent","🛡️","Prevent"],["guardian","🔔","Guardian"],["signals","📡","Signals"],["rescue","🆘","Rescue"]];
   const titleMap={today:"Today",now:"NOW · What can I do now?",budget:"Budget",prevent:"Prevent",guardian:"Trip Guardian",signals:"Live Signals",rescue:"Rescue"};
   const subtitleMap={today:"",now:"What makes sense right now.",budget:"What is safe to spend today.",prevent:"Check conditions before they become a problem.",guardian:"Important trip notifications.",signals:"Live reports around your trip.",rescue:"Fast help when something has already gone wrong."};
-  return <div className="iday-shell"><aside className="iday-side"><button className="iday-back" onClick={()=>onGoTo("overview")}>← Dashboard</button>{nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}</aside><main className="iday-main"><div className="iday-head"><h1>{titleMap[active]}</h1>{subtitleMap[active]&&<p>{subtitleMap[active]}</p>}</div>{active==="today"
+  return <div className="iday-shell"><aside className="iday-side">{nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}</aside><main className="iday-main"><div className="iday-head"><h1>{titleMap[active]}</h1>{subtitleMap[active]&&<p>{subtitleMap[active]}</p>}</div>{active==="today"
   ? <ItalyIntelligentToday data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
   : active==="now"
     ? <ItalyDashNow data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
@@ -10129,17 +10243,33 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
                 </div>}</main></div>;
 }
 
-function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
+function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive, onSectionChange }) {
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
     ? (savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet")
     : savedDashboardSectionRaw;
   const [section, setSection] = useState(savedDashboardSection || "overview");
+  const previousSectionRef = React.useRef(savedDashboardSection && savedDashboardSection !== "live" ? savedDashboardSection : "overview");
 
   const goSection = (id) => {
+    if (id === "live" && section !== "live") previousSectionRef.current = section;
     setSection(id);
     saveUIState({step:9, section:id});
   };
+
+  React.useEffect(() => {
+    if (typeof onSectionChange === "function") onSectionChange(section);
+  }, [section, onSectionChange]);
+
+  React.useEffect(() => {
+    const backHandler = () => {
+      if (section === "live") {
+        goSection(previousSectionRef.current || "overview");
+      }
+    };
+    window.addEventListener("tripitaly-dashboard-back", backHandler);
+    return () => window.removeEventListener("tripitaly-dashboard-back", backHandler);
+  }, [section]);
 
   React.useEffect(() => {
     const handler = (e) => {
@@ -10338,6 +10468,7 @@ function App() {
   const savedTrip = loadSavedTrip();
   const savedUI = loadSavedUI();
   const [step, setStep] = useState(savedTrip ? (Number(savedUI.step) || 9) : 0);
+  const [dashboardSection, setDashboardSection] = useState(loadSavedUI().section || "overview");
   const [data, setData] = useState(savedTrip || {
     budget: null, startDate: "", endDate: "", people: 1, travelerType: "solo", mode: null, origin: "", airport: null, homeCurrency: detectHomeCurrency()
   });
@@ -10478,11 +10609,18 @@ function App() {
     return (
       <div className="app">
         <div className="topbar" style={{paddingBottom:20, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-          <div className="dash-back-btn" onClick={() => { saveUIState({step:4, anchor:""}); setStep(4); }}>← Back</div>
+          <div className="dash-back-btn" onClick={() => {
+            if (dashboardSection === "live") {
+              window.dispatchEvent(new CustomEvent("tripitaly-dashboard-back"));
+            } else {
+              saveUIState({step:4, anchor:""});
+              setStep(4);
+            }
+          }}>← Back</div>
           <div className="brand">687 <span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
-        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={restoreArchivedTrip} onDeleteArchive={deleteArchivedTrip} />
+        <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={restoreArchivedTrip} onDeleteArchive={deleteArchivedTrip} onSectionChange={setDashboardSection} />
       </div>
     );
   }
@@ -10526,7 +10664,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
       try {
         // One canonical service worker for 687 Italy.
         const registration = await navigator.serviceWorker.register(
-          "/service-worker.js",
+          "/service-worker.js?v=1136c",
           { scope: "/", updateViaCache: "none" }
         );
 
@@ -10539,7 +10677,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
             names
               .filter((name) =>
                 name.startsWith("687-italy-") &&
-                name !== "687-italy-shell-v1131"
+                name !== "687-italy-shell-v1136c"
               )
               .map((name) => caches.delete(name))
           );
