@@ -8677,7 +8677,9 @@ function ItalyIntelligentToday({data,setData,dailyAmount,onGoTo}){
 
 
 
-function italyPreventWeatherIcon(code){
+function italyPreventWeatherIcon(code, visibility){
+  const v=Number(visibility);
+  if(Number.isFinite(v) && v<3000) return "🌫️";
   const c=Number(code);
   if(c===0) return "☀️";
   if(c===1||c===2) return "🌤️";
@@ -9674,7 +9676,7 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
           const visKm=Math.max(0,minVisibility/1000);
           const when=minVisibilityTime ? italyPreventHourLabel(minVisibilityTime) : "later";
           details.push(
-            `Visibility may drop to about ${visKm.toFixed(1)} km around ${when}. `+
+            `Reduced visibility: about ${visKm.toFixed(1)} km around ${when}. `+
             `This can affect viewpoints, long-distance views and some outdoor transfers even when the sky looks sunny.`
           );
         }
@@ -9700,7 +9702,9 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
             status==="good"
               ? "Today looks good"
               : status==="watch"
-                ? "Something may affect your day"
+                ? (minVisibility<3000 && maxRain<70 && maxGust<55 && !storm && !hail && !localSignals.length
+                    ? "Reduced visibility"
+                    : "Something may affect your day")
                 : "Your day may need a change",
           details,
           plan:plans,
@@ -9803,7 +9807,7 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
             {state.hourly.map((h,i)=>
               <div className="iday-hour-card" key={`${h.time}-${i}`}>
                 <div className="iday-hour-time">{italyPreventHourLabel(h.time)}</div>
-                <div className="iday-hour-icon">{italyPreventWeatherIcon(h.code)}</div>
+                <div className="iday-hour-icon">{italyPreventWeatherIcon(h.code,h.visibility)}</div>
                 <div className="iday-hour-temp">
                   {Number.isFinite(h.temp)?`${Math.round(h.temp)}°`:"—"}
                 </div>
@@ -9815,7 +9819,7 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
                 </div>
                 {Number.isFinite(h.visibility) && h.visibility<3000 &&
                   <div className="iday-hour-meta" style={{fontWeight:800}}>
-                    👁 {(h.visibility/1000).toFixed(1)} km
+                    👁 Reduced visibility · {(h.visibility/1000).toFixed(1)} km
                   </div>
                 }
               </div>
