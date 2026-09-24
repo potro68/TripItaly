@@ -1,12 +1,17 @@
-// 687 Italy — canonical Service Worker V1.13.6C
+// 687 Italy — canonical Service Worker V1.13.6E
 // Single worker for app shell + Guardian push.
 // Online-first for app.html/manifest. Offline fallback to last good copy.
 
-const CACHE_NAME = "687-italy-shell-v1136c";
+const CACHE_NAME = "687-italy-shell-v1136e";
 
 const APP_SHELL_URLS = [
+  "/",
+  "/index.html",
   "/app.html",
   "/manifest.json",
+  "/privacy.html",
+  "/terms.html",
+  "/support.html",
   "/icons/68t_italy_192.png",
   "/icons/68t_italy_512.png",
   "https://unpkg.com/react@18/umd/react.production.min.js",
@@ -53,7 +58,7 @@ self.addEventListener("fetch", (event) => {
 
   if (
     url.origin === self.location.origin &&
-    (url.pathname === "/app.html" || url.pathname === "/manifest.json")
+    (["/", "/index.html", "/app.html", "/manifest.json"].includes(url.pathname))
   ) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);

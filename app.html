@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 687 Italy Android/Web V1.13.6D — Rescue copy cleanup + forced SW refresh -->
+<!-- 687 Italy Android/Web V1.13.6E — Complete Web/PWA baseline -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>687 Italy</title>
@@ -5124,7 +5124,7 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRe
         <button
           className="btn-secondary"
           style={{width:"100%", textAlign:"left", padding:"14px 16px"}}
-          onClick={() => openExternalWebsite("https://go687.com/687-italy-user-guide.pdf", {step:9, section:"settings"})}
+          onClick={() => openExternalWebsite("/687-italy-user-guide.pdf", {step:9, section:"settings"})}
         >
           📖 User Guide
           <span style={{display:"block", fontSize:12, fontWeight:500, opacity:.72, marginTop:4}}>
@@ -5171,7 +5171,7 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRe
           cursor:"default"
         }}
       >
-        687 Italy · Android/Web parity port · V1.05 Nearby Price
+        687 Italy · Web/Android baseline · V1.13.6E
       </div>
     </div>
   );
@@ -8106,20 +8106,20 @@ function DashTools({ data, onDeleteLocalData }) {
         <div className="legal-links">
           <a
             className="legal-link"
-            href="https://go687.com/privacy.html"
-            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/privacy.html", {step:9, section:"tools"}); }}
+            href="/privacy.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("/privacy.html", {step:9, section:"tools"}); }}
             rel="noopener noreferrer"
           >Privacy</a>
           <a
             className="legal-link"
-            href="https://go687.com/terms.html"
-            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/terms.html", {step:9, section:"tools"}); }}
+            href="/terms.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("/terms.html", {step:9, section:"tools"}); }}
             rel="noopener noreferrer"
           >Terms</a>
           <a
             className="legal-link"
-            href="https://go687.com/support.html"
-            onClick={(e) => { e.preventDefault(); openExternalWebsite("https://go687.com/support.html", {step:9, section:"tools"}); }}
+            href="/support.html"
+            onClick={(e) => { e.preventDefault(); openExternalWebsite("/support.html", {step:9, section:"tools"}); }}
             rel="noopener noreferrer"
           >Support</a>
         </div>
@@ -8772,7 +8772,7 @@ async function guardianEnsureServiceWorker(){
   if(!("serviceWorker" in navigator)) throw new Error("Service Worker unavailable");
 
   const registration = await navigator.serviceWorker.register(
-    "/service-worker.js?v=1136c",
+    "/service-worker.js?v=1136e",
     { scope:"/", updateViaCache:"none" }
   );
 
@@ -10664,7 +10664,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
       try {
         // One canonical service worker for 687 Italy.
         const registration = await navigator.serviceWorker.register(
-          "/service-worker.js?v=1136c",
+          "/service-worker.js?v=1136e",
           { scope: "/", updateViaCache: "none" }
         );
 
@@ -10677,7 +10677,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
             names
               .filter((name) =>
                 name.startsWith("687-italy-") &&
-                name !== "687-italy-shell-v1136c"
+                name !== "687-italy-shell-v1136e"
               )
               .map((name) => caches.delete(name))
           );
