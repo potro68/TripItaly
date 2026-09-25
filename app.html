@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 687 Italy Android/Web V1.13.6E — Complete Web/PWA baseline -->
+<!-- 687 Italy Android/Web V1.13.6F — Complete Web/PWA baseline -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>687 Italy</title>
@@ -5171,7 +5171,7 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRe
           cursor:"default"
         }}
       >
-        687 Italy · Web/Android baseline · V1.13.6E
+        687 Italy · Web/Android baseline · V1.13.6F
       </div>
     </div>
   );
@@ -6498,7 +6498,9 @@ function NavigateButton({ destination, label, className }) {
         <>
           <div className="navigate-menu-backdrop" onClick={() => setOpen(false)}></div>
           <div className="navigate-menu">
-            <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🗺️ Apple Maps</a>
+            {isIOSDevice() && (
+              <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🗺️ Apple Maps</a>
+            )}
             <a href={links.google} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>📍 Google Maps</a>
             <a href={links.waze} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🚗 Waze</a>
             {isIOSDevice() && (
@@ -7538,6 +7540,36 @@ function LiveTranslator() {
         </div>
       )}
 
+      <div className="field" style={{marginBottom:10}}>
+        <div className="date-mini-label" style={{fontSize:13.5,fontWeight:800,marginBottom:7}}>Quick phrases for Italy</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {[
+            ["Excuse me", "Mi scusi"],
+            ["Thank you", "Grazie"],
+            ["Where is the station?", "Dov’è la stazione?"],
+            ["I need help", "Ho bisogno di aiuto"],
+            ["Does this train go to…?", "Questo treno va a…?"],
+            ["No meat, please", "Senza carne, per favore"],
+            ["How much is it?", "Quanto costa?"],
+            ["Where is the toilet?", "Dov’è il bagno?"]
+          ].map(([en,it]) => (
+            <button
+              type="button"
+              key={en}
+              className="live-mini-btn"
+              onClick={() => {
+                manualTypingRef.current = false;
+                setInputText(en);
+                setTranslated(it);
+                setDetectedLang("en");
+              }}
+            >
+              {en}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <textarea
         className="translator-input"
         placeholder="Type a phrase in your language..."
@@ -7895,7 +7927,7 @@ function DashDrive({ data, setData }) {
                   <span className="blb-icon">🧭</span>
                   <span className="blb-text">
                     <span className="blb-h">Navigate to {leg.to}</span>
-                    <span className="blb-d">Choose Apple Maps, Google Maps or Waze</span>
+                    <span className="blb-d">{isIOSDevice() ? "Choose Apple Maps, Google Maps or Waze" : "Choose Google Maps or Waze"}</span>
                   </span>
                 </>
               )}
@@ -8772,7 +8804,7 @@ async function guardianEnsureServiceWorker(){
   if(!("serviceWorker" in navigator)) throw new Error("Service Worker unavailable");
 
   const registration = await navigator.serviceWorker.register(
-    "/service-worker.js?v=1136e",
+    "/service-worker.js?v=1136f",
     { scope:"/", updateViaCache:"none" }
   );
 
@@ -10664,7 +10696,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
       try {
         // One canonical service worker for 687 Italy.
         const registration = await navigator.serviceWorker.register(
-          "/service-worker.js?v=1136e",
+          "/service-worker.js?v=1136f",
           { scope: "/", updateViaCache: "none" }
         );
 
@@ -10677,7 +10709,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
             names
               .filter((name) =>
                 name.startsWith("687-italy-") &&
-                name !== "687-italy-shell-v1136e"
+                name !== "687-italy-shell-v1136f"
               )
               .map((name) => caches.delete(name))
           );
