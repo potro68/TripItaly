@@ -7562,6 +7562,7 @@ function LiveTranslator() {
                 setInputText(en);
                 setTranslated(it);
                 setDetectedLang("en");
+                speakItalianText(it);
               }}
             >
               {en}
@@ -10709,7 +10710,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
             names
               .filter((name) =>
                 name.startsWith("687-italy-") &&
-                name !== "687-italy-shell-v1136f"
+                name !== "687-italy-shell-v1136g"
               )
               .map((name) => caches.delete(name))
           );

@@ -2,7 +2,7 @@
 // Single worker for app shell + Guardian push.
 // Online-first for app.html/manifest. Offline fallback to last good copy.
 
-const CACHE_NAME = "687-italy-shell-v1136f";
+const CACHE_NAME = "687-italy-shell-v1136g";
 
 const APP_SHELL_URLS = [
   "/",
