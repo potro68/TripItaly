@@ -1,0 +1,5 @@
+# 687 Italy — search engine policy
+# The app itself is excluded from search results via meta robots in index.html and app.html.
+# Keep crawling allowed so search engines can see the noindex directive.
+User-agent: *
+Allow: /
