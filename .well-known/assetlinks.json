@@ -1,11 +1,14 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.go687.italy",
       "sha256_cert_fingerprints": [
-        "53:4F:C2:2B:6A:1D:82:F8:7F:BD:08:2D:2F:48:E8:35:2E:8A:5B:DC:B8:02:4A:E7:D4:4D:F3:E2:51:C0:63:E5"
+        "53:4F:C2:2B:6A:1D:82:F8:7F:BD:08:2D:2F:48:E8:35:2E:8A:5B:DC:B8:02:4A:E7:D4:4D:F3:E2:51:C0:63:E5",
+        "D9:B1:57:17:96:D8:2C:86:40:47:FB:E7:4D:BD:59:12:66:20:70:86:ED:CB:34:7E:70:80:CA:B1:BD:81:F3:EC"
       ]
     }
   }
