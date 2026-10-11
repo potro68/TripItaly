@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.5 — Voice Assistant: Intelligent Day opening command -->
+<!-- 687 Italy V1.14.6 — Voice Assistant: resilient Intelligent Day recognition + transcript diagnostics -->
 <html lang="en">
 <head>
 <!-- 687 Italy TEST V1.14.1 — High-priority parity fixes: driving chooser, Voice Assistant navigation, Nearby flag -->
@@ -10997,6 +10997,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
   const [panelOpen, setPanelOpen] = React.useState(false);
   const [quickMenuOpen, setQuickMenuOpen] = React.useState(false);
   const [heard, setHeard] = React.useState("");
+  const [showUnrecognizedTranscript, setShowUnrecognizedTranscript] = React.useState(false);
   const panelCloseTimerRef = React.useRef(null);
   const dockRef = React.useRef(null);
   const dockDragRef = React.useRef(null);
@@ -11056,7 +11057,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
       ["Nearby search",["Find restaurants nearby","Find restaurants on foot","Find restaurants by car","Find a public toilet","Find a pharmacy","Find an ATM","Find a station"]],
       ["Nearby results",["Go to the first one","Go to the second one","Go to the third one","Add the first one to my itinerary","Add the second one to my itinerary","Add the third one to my itinerary"]],
       ["My trip",["Open itinerary","Open budget","Open packing list","Open Wallet","Open Translate"]],
-      ["Intelligent Day & safety",["What should I do now?","Open Guardian","Show Signals","Open Prevent","Open Rescue"]],
+      ["Intelligent Day & safety",["Open Intelligent Day","What should I do now?","Open Guardian","Show Signals","Open Prevent","Open Rescue"]],
       ["App navigation",["Open Nearby","Open Settings","Open Tools","Open Drive","Open Offline","Open Overview"]]
     ]},
     it:{title:"Cosa posso dire?",subtitle:"Parla normalmente: non devi usare il nome esatto del pulsante.",groups:[
@@ -11064,7 +11065,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
       ["Nelle vicinanze",["Cerca ristoranti vicino a me","Cerca ristoranti a piedi","Cerca ristoranti in macchina","Cerca un bagno pubblico","Cerca una farmacia","Cerca un bancomat","Cerca una stazione"]],
       ["Risultati Nearby",["Vai al primo","Vai al secondo","Vai al terzo","Aggiungi il primo all’itinerario","Aggiungi il secondo all’itinerario","Aggiungi il terzo all’itinerario"]],
       ["Il mio viaggio",["Apri itinerario","Apri budget","Apri lista bagaglio","Apri Wallet","Apri Traduci"]],
-      ["Giornata intelligente e sicurezza",["Cosa posso fare adesso?","Apri Guardian","Mostra Signals","Apri Prevent","Apri Soccorso"]],
+      ["Giornata intelligente e sicurezza",["Apri Giornata intelligente","Cosa posso fare adesso?","Apri Guardian","Mostra Signals","Apri Prevent","Apri Soccorso"]],
       ["Navigazione app",["Apri Nelle vicinanze","Apri Impostazioni","Apri Strumenti","Apri Guida","Apri Offline","Apri Panoramica"]]
     ]},
     ja:{title:"何と言えばいい？",subtitle:"自然に話してください。ボタン名を正確に言う必要はありません。",groups:[
@@ -11104,7 +11105,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
       ["附近搜索",["找附近的餐厅","步行找餐厅","开车找餐厅","找公共厕所","找药店","找 ATM","找车站"]],
       ["附近搜索结果",["导航到第一个","导航到第二个","导航到第三个","把第一个加入行程","把第二个加入行程","把第三个加入行程"]],
       ["我的行程",["打开行程","打开预算","打开行李清单","打开旅行钱包","打开翻译"]],
-      ["智能行程与安全",["我现在可以做什么？","打开 Guardian","显示 Signals","打开 Prevent","打开救援"]],
+      ["智能行程与安全",["打开智能行程","我现在可以做什么？","打开 Guardian","显示 Signals","打开 Prevent","打开救援"]],
       ["应用导航",["打开附近","打开设置","打开工具","打开驾车","打开离线","打开概览"]]
     ]},
     ko:{title:"무엇이라고 말할 수 있나요?",subtitle:"버튼 이름을 정확히 말할 필요 없이 자연스럽게 말하세요.",groups:[
@@ -11112,7 +11113,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
       ["주변 검색",["근처 식당 찾아줘","걸어서 식당 찾아줘","차로 식당 찾아줘","공중화장실 찾아줘","약국 찾아줘","ATM 찾아줘","역 찾아줘"]],
       ["주변 검색 결과",["첫 번째로 안내해 줘","두 번째로 안내해 줘","세 번째로 안내해 줘","첫 번째를 일정에 추가해 줘","두 번째를 일정에 추가해 줘","세 번째를 일정에 추가해 줘"]],
       ["내 여행",["일정 열어줘","예산 열어줘","짐 꾸리기 목록 열어줘","지갑 열어줘","번역 열어줘"]],
-      ["스마트 데이와 안전",["지금 뭐 하면 돼?","Guardian 열어줘","Signals 보여줘","Prevent 열어줘","구조 열어줘"]],
+      ["스마트 데이와 안전",["스마트 데이 열어줘","지금 뭐 하면 돼?","Guardian 열어줘","Signals 보여줘","Prevent 열어줘","구조 열어줘"]],
       ["앱 이동",["주변 열어줘","설정 열어줘","도구 열어줘","운전 열어줘","오프라인 열어줘","개요 열어줘"]]
     ]}
   };
@@ -11313,6 +11314,16 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
     if (t.includes("vrbo")) return {intent:"vrbo",confidence:1000};
     if (t.includes("agoda")) return {intent:"agoda",confidence:1000};
 
+    // V1.14.6: Chrome/Android ASR can transcribe "Intelligent Day" as
+    // "intelligence day", "intelligent date/dei/they", or drop "day".
+    // Accept these only in app-navigation contexts (or for the name alone),
+    // preserving the existing higher-priority provider/nearby rules.
+    const intelligentName = /\b(?:intellig[a-z]*|intelig[a-z]*)\b/.test(t);
+    const dayOrNavigate = /\b(?:day|days|date|dei|dai|they|go|goto|open|show|launch|navigate|take|bring|switch|enter|access|vai|apri|mostra|ouvrir|ouvre|aller|abre|abrir|offne|oeffne|zeige)\b/.test(t);
+    if (intelligentName && (dayOrNavigate || /^\s*(?:intellig[a-z]*|intelig[a-z]*)\s*$/.test(t))) {
+      return {intent:"live",confidence:950};
+    }
+
     let best=null;
     for (const [intent,phrases] of Object.entries(INTENTS)) {
       let score=0;
@@ -11394,6 +11405,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
     if (!text) return;
     setHelpOpen(false);
     setHeard(text);
+    setShowUnrecognizedTranscript(false);
     const requestedNearbyMode = detectNearbyTravelMode(text);
     const resolved=resolveIntent(text);
     if (!resolved) {
@@ -11402,9 +11414,10 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
         return;
       }
       setMessage(copy.nomatch + " " + copy.suggest);
+      setShowUnrecognizedTranscript(true);
       speakReply(copy.nomatch);
       setPanelOpen(true);
-      closePanelSoon(1800);
+      closePanelSoon(6500);
       return;
     }
     const intent=resolved.intent;
@@ -11451,14 +11464,16 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
     if (intent==="nearby") { openNearby("",copy.opening.nearby,requestedNearbyMode); return; }
 
     setMessage(copy.nomatch + " " + copy.suggest);
+    setShowUnrecognizedTranscript(true);
     speakReply(copy.nomatch);
     setPanelOpen(true);
-    closePanelSoon(1800);
+    closePanelSoon(6500);
   };
 
   const startListening = (mode = "normal") => {
     const lang = langCfg.recognition;
     setHelpOpen(false);
+    setShowUnrecognizedTranscript(false);
     if (mode !== "hotelProvider") setAwaitingHotelProvider(false);
     setPanelOpen(true);
     if (isIOSDevice()) {
@@ -11524,7 +11539,12 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
         </div>
       </> : <div style={{display:"flex",alignItems:"center",gap:8,minHeight:22}}>
         <span aria-hidden="true" style={{fontSize:15}}>{listening?"🎤":"✦"}</span>
-        <div style={{fontSize:12.5,fontWeight:listening?850:700,lineHeight:1.25}}>{message}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:4,maxWidth:"min(310px, calc(100vw - 80px))"}}>
+          <div style={{fontSize:12.5,fontWeight:listening?850:700,lineHeight:1.25}}>{message}</div>
+          {showUnrecognizedTranscript && heard && <div style={{fontSize:11.5,lineHeight:1.35,fontWeight:600,color:"#364152",overflowWrap:"anywhere"}}>
+            {({en:"Heard",it:"Ho sentito",ja:"認識した言葉",es:"He oído",de:"Erkannt",fr:"J'ai entendu",zh:"识别内容",ko:"인식된 말"}[voiceLanguage] || "Heard")}: “{heard}”
+          </div>}
+        </div>
       </div>}
     </div>}
 
