@@ -1308,7 +1308,7 @@
   }
   .map-frame{
     width:100%;
-    height:190px;
+    height:240px;
     border:none;
     display:block;
     object-fit:cover;
@@ -6305,7 +6305,7 @@ function LiveLocationMap({ data, compact }) {
     setStatus("loading");
     try {
       const loc = await detectCurrentCountry();
-      if (loc.countryCode !== "IT") {
+      if (!(String(loc.countryCode||"").toUpperCase()==="IT")) {
         setStatus("outsideItaly");
         return;
       }
@@ -6326,10 +6326,11 @@ function LiveLocationMap({ data, compact }) {
       shouldAutoLocate = sessionStorage.getItem("tripitaly_voice_itinerary_autolocate") === "1";
       if (shouldAutoLocate) sessionStorage.removeItem("tripitaly_voice_itinerary_autolocate");
     } catch (_) {}
-
     let timer = null;
     if (shouldAutoLocate) timer = window.setTimeout(() => locate(), 120);
 
+    // V1.89.4: when Itinerary is already open, the map component remains
+    // mounted, so consume the same direct voice event used by CityMap.
     const onVoiceShowMap = () => {
       try { sessionStorage.removeItem("tripitaly_voice_itinerary_autolocate"); } catch (_) {}
       locate();
@@ -6340,7 +6341,6 @@ function LiveLocationMap({ data, compact }) {
         } catch (_) {}
       }, 140);
     };
-
     window.addEventListener("tripitaly-voice-itinerary-show-map", onVoiceShowMap);
     return () => {
       if (timer) window.clearTimeout(timer);
@@ -6428,7 +6428,7 @@ function LiveLocationMap({ data, compact }) {
   if (hotelCoords) googleMarkers.push(`color:blue|${hotelCoords.lat},${hotelCoords.lng}`);
   if (carCoords) googleMarkers.push(`color:green|${carCoords.lat},${carCoords.lng}`);
   const zoom = compact ? 15 : 13;
-  const h = compact ? 160 : 220;
+  const h = compact ? 160 : 240;
   const mapParams = new URLSearchParams({
     action: "staticmap",
     center: `${coords.lat},${coords.lng}`,
@@ -6457,9 +6457,9 @@ function LiveLocationMap({ data, compact }) {
         <div className="map-tap-hint">Tap to open in Google Maps ↗</div>
       </a>
       <div className="map-legend">
-        <div className="map-legend-item"><span className="map-dot" style={{background:"#C0392B"}}></span> You</div>
+        <div className="map-legend-item"><span className="map-dot" style={{background:"#BC002D"}}></span> You</div>
         {data.hotel && <div className="map-legend-item"><span className="map-dot" style={{background:"#2255AA"}}></span> {data.hotel}</div>}
-        {data.wantsCar && !compact && <div className="map-legend-item"><span className="map-dot" style={{background:"#2E8B57"}}></span> Car pickup (airport)</div>}
+        {data.wantsCar && !compact && <div className="map-legend-item"><span className="map-dot" style={{background:"#E8A9BA"}}></span> Car pickup (airport)</div>}
       </div>
       {!compact && (hotelCoords || carCoords) && (
         <div className="map-directions-row">
@@ -6486,7 +6486,6 @@ function LiveLocationMap({ data, compact }) {
     </div>
   );
 }
-
 
 function isSameDate(d1, d2) {
   return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
@@ -6516,7 +6515,7 @@ function CityMap({ city }) {
 
       // The itinerary live map is intentionally available only while
       // the traveller is physically in Italy.
-      if (loc.countryCode !== "IT") {
+      if (!(String(loc.countryCode||"").toUpperCase()==="IT")) {
         setCoords(null);
         setStatus("outsideItaly");
         return;
@@ -6534,6 +6533,33 @@ function CityMap({ city }) {
       }
     }
   };
+
+  React.useEffect(() => {
+    let shouldAutoLocate = false;
+    try {
+      shouldAutoLocate = sessionStorage.getItem("tripitaly_voice_itinerary_autolocate") === "1";
+      if (shouldAutoLocate) sessionStorage.removeItem("tripitaly_voice_itinerary_autolocate");
+    } catch (_) {}
+    let timer = null;
+    if (shouldAutoLocate) timer = window.setTimeout(() => showMyCurrentLocation(), 120);
+
+    // Also react while the Itinerary screen is already open.
+    const onVoiceShowMap = () => {
+      try { sessionStorage.removeItem("tripitaly_voice_itinerary_autolocate"); } catch (_) {}
+      showMyCurrentLocation();
+      window.setTimeout(() => {
+        try {
+          const node = document.querySelector('.map-frame-wrap, .map-placeholder, .nearby-permission-card');
+          if (node && node.scrollIntoView) node.scrollIntoView({behavior:"smooth", block:"center"});
+        } catch (_) {}
+      }, 120);
+    };
+    window.addEventListener("tripitaly-voice-itinerary-show-map", onVoiceShowMap);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener("tripitaly-voice-itinerary-show-map", onVoiceShowMap);
+    };
+  }, []);
 
   if (status === "idle") {
     return (
@@ -6577,7 +6603,7 @@ function CityMap({ city }) {
     action: "staticmap",
     center: `${coords.lat},${coords.lng}`,
     zoom: "15",
-    size: "440x160",
+    size: "440x240",
     markers: `color:red|${coords.lat},${coords.lng}`,
     device_id: getTripDeviceId(),
   }).toString()}`;
@@ -6588,7 +6614,7 @@ function CityMap({ city }) {
       target="_blank" rel="noopener noreferrer"
       className="map-frame-wrap"
     >
-      <img className="map-frame" style={{height:160}} src={src} alt="Your current location" />
+      <img className="map-frame" style={{height:240}} src={src} alt="Your current location" />
       <div className="map-you-badge">📍 You are here</div>
       <div className="map-tap-hint">Tap to open in Google Maps ↗</div>
     </a>
@@ -6773,19 +6799,21 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
             </div>
           </div>
           <div className="route-add-row" style={{alignItems:"stretch"}}>
-            {transfer.trainUrl ? (
-              <a href={transfer.trainUrl} target="_blank" rel="noopener noreferrer sponsored" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>🚆 Check trains</a>
-            ) : (
-              <a href={TRENITALIA_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>🚆 Check trains</a>
-            )}
+            <a href={transfer.trainUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>🚆 Official train booking</a>
             {transfer.flightUrl && (
               <a href={transfer.flightUrl} target="_blank" rel="noopener noreferrer sponsored" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>✈️ Check flights</a>
             )}
             {data.wantsCar && (
-              <a href={buildDrivingLink(transfer.from, transfer.to)} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{marginTop:0,textAlign:"center",textDecoration:"none",flex:1}}>🚗 Navigate</a>
+              <DriveRouteNavigateButton
+                fromCity={transfer.from}
+                toCity={transfer.to}
+                label="🚗 Navigate"
+                className="btn-secondary"
+                style={{flex:1}}
+              />
             )}
           </div>
-          {!transfer.trainUrl && <p className="park-hint" style={{marginTop:7}}>Train search opens Trenitalia; route/date are shown here so you can enter them quickly.</p>}
+          {transfer.trainProvider && <p className="park-hint" style={{marginTop:7}}>Official rail booking: {transfer.trainProvider}. Open the service and enter the route/date shown above.</p>}
         </div>
       )}
 
@@ -6814,6 +6842,15 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
           )}
         </div>
       )}
+
+      {data.hotel && (
+        <NavigateButton
+          destination={data.hotel}
+          label={`🏨 Directions to ${data.hotel} ↗`}
+          className="hotel-directions-btn"
+        />
+      )}
+
 
     </div>
   );
@@ -6874,7 +6911,6 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
     const d = tripDateForDay(data, i);
     if (d && isSameDate(d, today)) { defaultDay = i; break; }
   }
-
   const savedItineraryDay = Number(loadSavedUI().itineraryDay || 0);
   const intelligentDay = italyIntelligentWorkingDay(data);
   const [activeDay, setActiveDay] = useState(
@@ -6882,7 +6918,6 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
       ? savedItineraryDay
       : (intelligentDay >= 1 && intelligentDay <= totalDays ? intelligentDay : defaultDay)
   );
-
   const activeDate = tripDateForDay(data, activeDay);
   const isTodayActive = !!(activeDate && isSameDate(activeDate, today));
 
@@ -6894,12 +6929,10 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
   const setCityOverride = (dayNum, city) => {
     setData({...data, dayCityOverrides: {...dayOverrides, [dayNum]: city}});
   };
-
   const addStop = (dayNum, stop) => {
     const current = dayPlans[dayNum] || [];
     setData({...data, dayPlans: {...dayPlans, [dayNum]: [...current, stop]}});
   };
-
   const removeStop = (dayNum, idx) => {
     setData(prev => {
       const plans = {...(prev.dayPlans || {})};
@@ -6941,6 +6974,9 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
       from,
       to,
       trainUrl: buildItaloLink(from, to, dateISO, data.people),
+      trainProvider: "Italo / official rail",
+      trainAction: "Open official rail booking",
+      trainNote: "",
       flightUrl: buildInternalFlightLink(from, to, dateISO, data.people),
     };
   })() : null;
@@ -6966,6 +7002,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
         <button className="btn-secondary" onClick={handlePrint}>📄 Save itinerary as PDF</button>
       </div>
 
+      {/* Print-only version: full itinerary, hidden on screen, shown when printing */}
       <div className="print-only">
         <h1 className="print-title">687 Italy — {data.itinerary}</h1>
         <p className="print-sub">{formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people} traveler{data.people>1?"s":""}</p>
@@ -6976,11 +7013,13 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
           )}
           {data.parkingNote && <div><strong>Rental car in Italy:</strong> {data.parkingNote}</div>}
         </div>
-
         {Array.from({length: totalDays}, (_, i) => i + 1).map(dayNum => {
           const date = tripDateForDay(data, dayNum);
           const city = dayOverrides[dayNum] || cityForDay(days, dayNum);
           const stops = dayPlans[dayNum] || [];
+
+          // Figure out if today is the first day of a new city block, and
+          // if so, how the user planned to travel there (train/flight/drive).
           const blockIndex = days.findIndex(b => b.days.includes(dayNum));
           const isArrivalDay = blockIndex > 0 && days[blockIndex].days[0] === dayNum;
           const transportId = isArrivalDay ? (data.legTransport || {})[blockIndex - 1] : null;
@@ -7013,14 +7052,12 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
             <div className="d">When you move to another city, tap that day to see train, flight and driving options for the transfer.</div>
           </div>
         </div>
-
         <div className="day-strip">
           {Array.from({length: totalDays}, (_, i) => i + 1).map(dayNum => {
             const date = tripDateForDay(data, dayNum);
             const f = date ? formatDayStrip(date) : { weekday: "", dayNum: dayNum, month: "" };
             const isToday = !!(date && isSameDate(date, today));
             const city = dayOverrides[dayNum] || cityForDay(days, dayNum);
-
             return (
               <div
                 key={dayNum}
@@ -7052,6 +7089,7 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
         onGoTo={onGoTo}
         dailyAmount={dailyAmount}
         transfer={transfer}
+       
       />
     </div>
   );
@@ -7137,59 +7175,153 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
+const NEARBY_FILTERS = [
+  { id: "food", label: "🍜 Food", desc: "🍜 Restaurants · ☕ Cafés · 🍣 Sushi · 🍱 Local food" },
+  { id: "toilets", label: "🚻 Toilets", desc: "🚻 Verified public toilets near you" },
+  { id: "culture", label: "⛩️ Culture", desc: "⛩️ Shrines · 🛕 Temples · 🏯 Castles · 🏛️ Museums" },
+  { id: "nature", label: "🌿 Nature", desc: "🌿 Gardens · 🌸 Parks · 🗻 Viewpoints · 🏖️ Beaches" },
+  { id: "onsen", label: "♨️ Onsen", desc: "♨️ Onsen · Public baths · Wellness" },
+  { id: "anime", label: "🎮 Anime", desc: "🎮 Anime · Manga · Arcades · Electronics" },
+  { id: "shopping", label: "🛍️ Shopping", desc: "🏬 Malls · 🛍️ Shopping streets · 🏪 Convenience stores" },
+  { id: "services", label: "🚉 Practical", desc: "🚉 Stations · 🏥 Hospital · 💊 Pharmacy · 🏧 ATM · 🅿️ Parking" },
+];
+
+// Maps our simple filter categories to one or more Google place types.
+// A filter can cover multiple Google types (e.g. "shopping" covers
+// supermarkets, malls and pharmacies) — we query each in parallel.
+const NEARBY_CATEGORY_TYPES = {
+  food: ["restaurant", "cafe"],
+  toilets: ["public_bathroom"],
+  culture: ["tourist_attraction", "museum", "place_of_worship"],
+  nature: ["park", "tourist_attraction"],
+  onsen: ["spa"],
+  anime: ["shopping_mall", "electronics_store", "tourist_attraction"],
+  shopping: ["shopping_mall", "convenience_store", "supermarket"],
+  services: ["train_station", "subway_station", "bus_station", "hospital", "pharmacy", "atm", "parking"],
+};
+
+const PLACE_TYPE_ICON = {
+  restaurant: "🍜", cafe: "☕", public_bathroom: "🚻", public_bath: "🚻", tourist_attraction: "📍", museum: "🏛️",
+  place_of_worship: "⛩️", park: "🌿", spa: "♨️",
+  shopping_mall: "🏬", electronics_store: "🎮", convenience_store: "🏪",
+  supermarket: "🛒", pharmacy: "💊", parking: "🅿️", atm: "🏧",
+  hospital: "🏥", train_station: "🚉", subway_station: "🚇", bus_station: "🚌",
+};
+
 function buildNearbyNavLinks(place, mode="walk") {
   const hasCoords = Number.isFinite(Number(place?.lat)) && Number.isFinite(Number(place?.lng));
-  const destination = hasCoords ? `${Number(place.lat)},${Number(place.lng)}` : String(place?.address || place?.name || "").trim();
+  const destination = hasCoords
+    ? `${Number(place.lat)},${Number(place.lng)}`
+    : String(place?.address || place?.name || "").trim();
   const q = encodeURIComponent(destination);
+  const appleFlag = mode === "car" ? "d" : "w";
+  const googleMode = mode === "car" ? "driving" : "walking";
   return {
-    apple:`https://maps.apple.com/?daddr=${q}&dirflg=${mode==="car"?"d":"w"}`,
-    google:`https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=${mode==="car"?"driving":"walking"}`,
-    waze:hasCoords ? `https://waze.com/ul?ll=${encodeURIComponent(destination)}&navigate=yes` : `https://waze.com/ul?q=${q}&navigate=yes`,
+    apple: `https://maps.apple.com/?daddr=${q}&dirflg=${appleFlag}`,
+    google: `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=${googleMode}`,
+    waze: hasCoords
+      ? `https://waze.com/ul?ll=${encodeURIComponent(destination)}&navigate=yes`
+      : `https://waze.com/ul?q=${q}&navigate=yes`,
   };
 }
 
 function NearbyNavigateButton({ place, mode }) {
-  const [open,setOpen]=useState(false);
-  const links=buildNearbyNavLinks(place,mode);
-  return <div className="navigate-btn-wrap nearby-go-row" onClick={e=>e.stopPropagation()}>
-    <button type="button" className="btn-secondary nearby-go-btn" onClick={()=>setOpen(v=>!v)}>GO</button>
-    {open && <>
-      <div className="navigate-menu-backdrop" onClick={()=>setOpen(false)}></div>
-      <div className="navigate-menu">
-        {isIOSDevice() && <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={()=>setOpen(false)}>🗺️ Apple Maps</a>}
-        <a href={links.google} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={()=>setOpen(false)}>📍 Google Maps</a>
-        <a href={links.waze} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={()=>setOpen(false)}>🚗 Waze</a>
-      </div>
-    </>}
-  </div>;
+  const [open, setOpen] = useState(false);
+  const links = buildNearbyNavLinks(place, mode);
+  return (
+    <div className="navigate-btn-wrap nearby-go-row" onClick={e => e.stopPropagation()}>
+      <button type="button" className="btn-secondary nearby-go-btn" onClick={() => setOpen(o => !o)}>
+        GO
+      </button>
+      {open && (
+        <>
+          <div className="navigate-menu-backdrop" onClick={() => setOpen(false)}></div>
+          <div className="navigate-menu">
+            {isIOSDevice() && (
+              <a href={links.apple} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🗺️ Apple Maps</a>
+            )}
+            <a href={links.google} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>📍 Google Maps</a>
+            <a href={links.waze} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🚗 Waze</a>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 function NearbyResultsMap({ coords, results, filter, selectedPlace }) {
-  if (!coords || !Array.isArray(results) || !results.length) return null;
-  const points=results.filter(p=>Number.isFinite(Number(p?.lat))&&Number.isFinite(Number(p?.lng))).slice(0,10);
+  if (!coords || !Array.isArray(results) || results.length === 0) return null;
+  const points = results
+    .filter(p => Number.isFinite(Number(p?.lat)) && Number.isFinite(Number(p?.lng)))
+    .slice(0, 10);
   if (!points.length) return null;
-  const params=new URLSearchParams({action:"staticmap",center:`${coords.lat},${coords.lng}`,zoom:"15",size:"440x240",device_id:getTripDeviceId()});
-  params.append("markers",`color:red|${coords.lat},${coords.lng}`);
-  const resultColor=filter==="toilets"?"purple":"blue";
-  points.forEach(p=>params.append("markers",`${selectedPlace&&p.id===selectedPlace.id?"color:green":`color:${resultColor}`}|${Number(p.lat)},${Number(p.lng)}`));
-  const src=`${PROXY_URL}?${params.toString()}`;
-  return <div className="nearby-map-block">
-    <div className="nearby-map-title">Map</div>
-    <div className="nearby-map-wrap">
-      <img className="nearby-map-img" src={src} alt="Nearby results map"/>
-      <div className="nearby-map-badge">📍 You + nearby results</div>
+
+  const params = new URLSearchParams({
+    action: "staticmap",
+    center: `${coords.lat},${coords.lng}`,
+    zoom: "15",
+    size: "440x240",
+    device_id: getTripDeviceId(),
+  });
+  params.append("markers", `color:red|${coords.lat},${coords.lng}`);
+  const resultColor = filter === "toilets" ? "purple" : "blue";
+  points.forEach(p => {
+    const selected = selectedPlace && p.id === selectedPlace.id;
+    params.append("markers", `${selected ? "color:green" : `color:${resultColor}`}|${Number(p.lat)},${Number(p.lng)}`);
+  });
+
+  // Lightweight route preview: dotted straight guide from the user's GPS point
+  // to the selected Nearby result. Real turn-by-turn routing remains in GO.
+  if (selectedPlace && Number.isFinite(Number(selectedPlace.lat)) && Number.isFinite(Number(selectedPlace.lng))) {
+    const endLat = Number(selectedPlace.lat);
+    const endLng = Number(selectedPlace.lng);
+    const dots = 9;
+    for (let i = 1; i < dots; i++) {
+      const t = i / dots;
+      const lat = Number(coords.lat) + (endLat - Number(coords.lat)) * t;
+      const lng = Number(coords.lng) + (endLng - Number(coords.lng)) * t;
+      params.append("markers", `size:tiny|color:0xBC002D|${lat.toFixed(6)},${lng.toFixed(6)}`);
+    }
+  }
+
+  const src = `${PROXY_URL}?${params.toString()}`;
+
+  return (
+    <div className="nearby-map-block">
+      <div className="nearby-map-title">Nearby map</div>
+      <div className="nearby-map-wrap">
+        <img className="nearby-map-img" src={src} alt="Map view of nearby results" />
+        <div className="nearby-map-badge">
+          {selectedPlace ? `🧭 Route preview · ${selectedPlace.name}` : `📍 You + ${points.length} nearby`}
+        </div>
+      </div>
+      <div className="nearby-map-legend">
+        <span><span className="nearby-map-dot" style={{background:"#BC002D"}}></span>You</span>
+        <span><span className="nearby-map-dot" style={{background:filter === "toilets" ? "#7B3FA1" : "#2255AA"}}></span>{filter === "toilets" ? "Public toilets" : "Results"}</span>
+        {selectedPlace && <span><span className="nearby-map-dot" style={{background:"#2f8f46"}}></span>Selected</span>}
+      </div>
+      {selectedPlace && (
+        <div className="park-hint" style={{marginTop:7}}>
+          Dotted line is a lightweight direction preview. Tap GO for real turn-by-turn navigation.
+        </div>
+      )}
     </div>
-    <div className="nearby-map-legend">
-      <span><span className="nearby-map-dot" style={{background:"#C0392B"}}></span>You</span>
-      <span><span className="nearby-map-dot" style={{background:filter==="toilets"?"#7E22CE":"#2563EB"}}></span>{filter==="toilets"?"Public toilets":"Results"}</span>
-      {selectedPlace && <span><span className="nearby-map-dot" style={{background:"#16A34A"}}></span>Selected</span>}
-    </div>
-  </div>;
+  );
 }
 
 function DashNearby({ data, setData }) {
-  const [mode, setMode] = useState(data.wantsCar === true ? "car" : "walk");
+  const homeCurrency = getHomeCurrency(data);
+  const eurToHome = italyNowUseEurToCurrencyRate(homeCurrency);
+  const [mode, setMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tripitaly_nearby_mode");
+      if (saved === "walk") return "walk";
+      if (saved === "car" && data.wantsCar === true) return "car";
+    } catch (_) {}
+    return data.wantsCar === true ? "car" : "walk";
+  });
   const [filter, setFilter] = useState("food");
+  React.useEffect(() => { try { localStorage.setItem("tripitaly_nearby_mode", mode); } catch (_) {} }, [mode]);
   const [coords, setCoords] = useState(null);
   const [locStatus, setLocStatus] = useState("idle"); // idle | loading | ok | outsideItaly | denied | error | unsupported
   const [results, setResults] = useState([]);
@@ -7197,27 +7329,9 @@ function DashNearby({ data, setData }) {
   const [error, setError] = useState("");
   const [addedIds, setAddedIds] = useState({});
   const [selectedPlace, setSelectedPlace] = useState(null);
-  const [eurToHomeRate, setEurToHomeRate] = useState(null);
-  const nearbyHomeCurrency = getHomeCurrency(data);
 
-  React.useEffect(() => {
-    let cancelled = false;
-    if (nearbyHomeCurrency === "EUR") { setEurToHomeRate(1); return () => { cancelled = true; }; }
-    fetchCurrencyConversionRate("EUR", nearbyHomeCurrency).then(rate => {
-      if (!cancelled) setEurToHomeRate(rate);
-    });
-    return () => { cancelled = true; };
-  }, [nearbyHomeCurrency]);
-
-  // Same "which day counts as today" logic used in the Itinerary tab —
-  // real calendar date match, or Day 1 once the user has marked arrival.
-  const today = new Date();
-  const totalDays = tripLengthDays(data);
-  let todayDayNum = null;
-  for (let i = 1; i <= totalDays; i++) {
-    const d = tripDateForDay(data, i);
-    if (d && isSameDate(d, today)) { todayDayNum = i; break; }
-  }
+  // Nearby, Today, NOW and Itinerary must write/read the SAME active day.
+  const todayDayNum = italyIntelligentWorkingDay(data);
 
   const addToItinerary = (place) => {
     if (!todayDayNum) return;
@@ -7227,40 +7341,11 @@ function DashNearby({ data, setData }) {
       if (current.includes(place.name)) return prev;
       return {...prev, dayPlans: {...dayPlans, [todayDayNum]: [...current, place.name]}};
     });
+    // When the user opens Itinerary after adding from Nearby,
+    // show the exact same day where the place was saved.
+    saveUIState({itineraryDay: todayDayNum});
     setAddedIds(prev => ({...prev, [place.id]: true}));
   };
-
-
-  React.useEffect(() => {
-    const openHandler = (e) => {
-      const detail=e?.detail||{};
-      if (detail.mode==="walk" || detail.mode==="car") setMode(detail.mode);
-      if (detail.filter && NEARBY_CATEGORY_TYPES[detail.filter]) setFilter(detail.filter);
-      if (locStatus==="idle" || locStatus==="outsideItaly" || locStatus==="denied" || locStatus==="error") locate();
-    };
-    const resultHandler = (e) => {
-      const detail=e?.detail||{};
-      const index=Math.max(0,Number(detail.index)||0);
-      const place=results[index];
-      if (!place) return;
-      setSelectedPlace(place);
-      if (detail.action==="add") {
-        addToItinerary(place);
-        return;
-      }
-      if (detail.action==="go") {
-        const links=buildNearbyNavLinks(place,mode);
-        const href=isIOSDevice()?links.apple:links.google;
-        window.location.href=href;
-      }
-    };
-    window.addEventListener("tripitaly-nearby-voice",openHandler);
-    window.addEventListener("tripitaly-nearby-result-action",resultHandler);
-    return () => {
-      window.removeEventListener("tripitaly-nearby-voice",openHandler);
-      window.removeEventListener("tripitaly-nearby-result-action",resultHandler);
-    };
-  }, [locStatus,results,mode,todayDayNum]);
 
   const locate = async () => {
     if (!("geolocation" in navigator)) { setLocStatus("unsupported"); return; }
@@ -7271,7 +7356,7 @@ function DashNearby({ data, setData }) {
     setError("");
     try {
       const loc = await detectCurrentCountry();
-      if (loc.countryCode !== "IT") {
+      if (String(loc.countryCode||"").toUpperCase() !== "IT") {
         setLocStatus("outsideItaly");
         return;
       }
@@ -7286,15 +7371,128 @@ function DashNearby({ data, setData }) {
     }
   };
 
+  const voiceRequestedFilterRef = React.useRef("");
+  const voiceRequestedModeRef = React.useRef("");
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const runVoiceNearbySearch = async (rawRequested, rawMode) => {
+      const requested = String(rawRequested || "");
+      const validRequested = requested && NEARBY_FILTERS.some(f => f.id === requested) ? requested : "";
+      const requestedMode = String(rawMode || "");
+      const validMode = requestedMode === "car" || requestedMode === "walk" ? requestedMode : "";
+      if (validMode) {
+        voiceRequestedModeRef.current = validMode;
+        setMode(validMode);
+      }
+      if (validRequested) {
+        // Remember the exact requested category for the next Places request.
+        // This ref prevents React timing from ever falling back to the old Food tab.
+        voiceRequestedFilterRef.current = validRequested;
+        setFilter(validRequested);
+      }
+      setSelectedPlace(null);
+      setResults([]);
+      setError("");
+      setCoords(null);
+      if (!("geolocation" in navigator)) { setLocStatus("unsupported"); return; }
+      setLocStatus("loading");
+      try {
+        const loc = await detectCurrentCountry();
+        if (cancelled) return;
+        if (String(loc.countryCode||"").toUpperCase() !== "IT") {
+          setLocStatus("outsideItaly");
+          return;
+        }
+        // Carry the requested category with this GPS result as a second safety
+        // net. The fetch effect below uses it even if a React render is delayed.
+        setCoords({ lat: loc.lat, lng: loc.lng, _voiceFilter: validRequested || undefined, _voiceMode: validMode || undefined, _voiceToken: Date.now() });
+        setLocStatus("ok");
+        window.setTimeout(() => {
+          try {
+            const node = document.querySelector('.nearby-map-block, .nearby-permission-card, .map-placeholder, .nearby-filter-row');
+            if (node && node.scrollIntoView) node.scrollIntoView({behavior:"smooth", block:"center"});
+          } catch (_) {}
+        }, 120);
+      } catch (e) {
+        if (cancelled) return;
+        if (e && Number(e.code) === 1) setLocStatus("denied");
+        else {
+          setLocStatus("error");
+          setError(e?.message || "Couldn't verify your location.");
+        }
+      }
+    };
+
+    let requestedFilter = "";
+    let requestedMode = "";
+    let autoLocate = false;
+    try {
+      requestedFilter = sessionStorage.getItem("tripitaly_voice_nearby_filter") || "";
+      requestedMode = sessionStorage.getItem("tripitaly_voice_nearby_mode") || "";
+      autoLocate = sessionStorage.getItem("tripitaly_voice_nearby_autolocate") === "1";
+      sessionStorage.removeItem("tripitaly_voice_nearby_filter");
+      sessionStorage.removeItem("tripitaly_voice_nearby_mode");
+      sessionStorage.removeItem("tripitaly_voice_nearby_autolocate");
+    } catch (_) {}
+    let timer = null;
+    if (autoLocate) timer = window.setTimeout(() => runVoiceNearbySearch(requestedFilter, requestedMode), 80);
+
+    const onVoiceNearbySearch = (e) => runVoiceNearbySearch(e?.detail?.filter || "", e?.detail?.mode || "");
+    window.addEventListener("tripitaly-voice-nearby-search", onVoiceNearbySearch);
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener("tripitaly-voice-nearby-search", onVoiceNearbySearch);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      const action = e?.detail?.action;
+      const index = Math.max(0, Number(e?.detail?.index || 0));
+      const place = results[index];
+      if (!place) {
+        setError(translateGlobalUiString("No Nearby result is available for that voice command yet.",getVoiceAssistantLanguage()));
+        return;
+      }
+      setSelectedPlace(place);
+      if (action === "add") {
+        if (todayDayNum && !addedIds[place.id]) addToItinerary(place);
+        return;
+      }
+      if (action === "go") {
+        const links = buildNearbyNavLinks(place, mode);
+        // Voice GO intentionally opens the device-native/default navigator directly.
+        window.location.href = isIOSDevice() ? links.apple : links.google;
+      }
+    };
+    window.addEventListener("tripitaly-nearby-context-action", handler);
+    return () => window.removeEventListener("tripitaly-nearby-context-action", handler);
+  }, [results, mode, todayDayNum, addedIds]);
+
   // Live Nearby is available only when real GPS confirms Italy.
   // Outside Italy no Google Places request is sent.
 
   React.useEffect(() => {
     if (!coords) return;
-    const types = NEARBY_CATEGORY_TYPES[filter] || ["restaurant"];
-    const searchRadius = filter === "toilets"
-      ? (mode === "car" ? "5000" : "1800")
-      : (mode === "car" ? (filter === "attractions" ? "30000" : "8000") : "2000");
+    setSelectedPlace(null);
+    const forcedVoiceFilter = String(coords?._voiceFilter || voiceRequestedFilterRef.current || "");
+    const effectiveFilter = forcedVoiceFilter && NEARBY_FILTERS.some(f => f.id === forcedVoiceFilter) ? forcedVoiceFilter : filter;
+    const forcedVoiceMode = String(coords?._voiceMode || voiceRequestedModeRef.current || "");
+    const effectiveMode = forcedVoiceMode === "car" || forcedVoiceMode === "walk" ? forcedVoiceMode : mode;
+    // The UI must reflect the exact category and travel mode the voice request is actually querying.
+    if (effectiveFilter !== filter) setFilter(effectiveFilter);
+    if (effectiveMode !== mode) setMode(effectiveMode);
+    voiceRequestedFilterRef.current = "";
+    voiceRequestedModeRef.current = "";
+    const types = NEARBY_CATEGORY_TYPES[effectiveFilter] || ["restaurant"];
+    const searchRadius = effectiveFilter === "toilets"
+      ? (effectiveMode === "car" ? "5000" : "1800")
+      : (effectiveMode === "car"
+          ? (["culture","nature"].includes(effectiveFilter) ? "30000" : "8000")
+          : "2000");
 
     // Nearby cost protection:
     // - one Google request per visible category (multiple includedTypes in one request)
@@ -7302,7 +7500,7 @@ function DashNearby({ data, setData }) {
     const CACHE_TTL = 10 * 60 * 1000;
     const latBucket = Number(coords.lat).toFixed(3);
     const lngBucket = Number(coords.lng).toFixed(3);
-    const cacheKey = `687_it_nearby_v4_pro_${latBucket}_${lngBucket}_${filter}_${mode}`;
+    const cacheKey = `687_nearby_v7_pro_${latBucket}_${lngBucket}_${effectiveFilter}_${effectiveMode}`;
     try {
       const cachedRaw = localStorage.getItem(cacheKey);
       if (cachedRaw) {
@@ -7350,25 +7548,35 @@ function DashNearby({ data, setData }) {
           setLoading(false);
           return;
         }
-        const raw = (response.success && Array.isArray(response.data) ? response.data : []);
-        const strict = filter === "toilets"
-          ? raw.filter(place => {
-              const placeTypes = Array.isArray(place?.types) ? place.types.map(t=>String(t).toLowerCase()) : [];
-              const primary = String(place?.primaryType || place?.primary_type || "").toLowerCase();
-              return placeTypes.includes("public_bathroom") || primary === "public_bathroom";
+        const rawNearby = (response.success && Array.isArray(response.data) ? response.data : []);
+        const strictNearby = effectiveFilter === "toilets"
+          ? rawNearby.filter(place => {
+              const placeTypes = Array.isArray(place?.types) ? place.types.map(t => String(t).toLowerCase()) : [];
+              const primaryType = String(place?.primaryType || place?.primary_type || "").toLowerCase();
+              return placeTypes.includes("public_bathroom") || primaryType === "public_bathroom";
             })
-          : raw;
-        const unique = strict
-          .map(place => ({...place, _type: place.matchedType || types[0] || "restaurant", _distanceKm:haversineKm(coords.lat, coords.lng, place.lat, place.lng)}))
+          : rawNearby;
+        const unique = strictNearby
+          .map(place => {
+            const distanceKm = haversineKm(coords.lat, coords.lng, place.lat, place.lng);
+            return {...place, _type: place.matchedType || types[0] || "restaurant", _distanceKm: distanceKm};
+          })
           .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i)
-          .sort((a,b)=>(Number.isFinite(Number(a._distanceKm))?Number(a._distanceKm):999999)-(Number.isFinite(Number(b._distanceKm))?Number(b._distanceKm):999999));
+          .sort((a, b) => {
+            const da = Number.isFinite(Number(a._distanceKm)) ? Number(a._distanceKm) : 999999;
+            const db = Number.isFinite(Number(b._distanceKm)) ? Number(b._distanceKm) : 999999;
+            return da - db;
+          });
         setResults(unique);
-        if (unique.length === 0) setError(filter === "toilets" ? "No verified public toilets found nearby." : "No results found nearby for this category.");
+        if (unique.length === 0) {
+          if (effectiveFilter === "toilets") setError(translateGlobalUiString("No verified public toilets found nearby.",getVoiceAssistantLanguage()));
+          else setError(translateGlobalUiString("No results found nearby for this category.",getVoiceAssistantLanguage()));
+        }
         try { localStorage.setItem(cacheKey, JSON.stringify({time: Date.now(), data: unique})); } catch (_) {}
         setLoading(false);
       })
       .catch(() => {
-        setError("Couldn't reach nearby search right now.");
+        setError(translateGlobalUiString("Couldn't reach nearby search right now.",getVoiceAssistantLanguage()));
         setLoading(false);
       });
   }, [coords, filter, mode]);
@@ -7390,11 +7598,11 @@ function DashNearby({ data, setData }) {
   if (locStatus === "outsideItaly") {
     return (
       <div className="nearby-permission-card">
-        <div className="nearby-permission-icon">🇮🇹</div>
+        <div className="nearby-permission-icon">🇯🇵</div>
         <div className="nearby-permission-title">Live Nearby is available in Italy</div>
         <p className="nearby-permission-text">
           Your GPS confirms that you are currently outside Italy, so no live Nearby search has been sent.
-          When you arrive in Italy, tap again to find restaurants, cafés, public toilets, attractions, pharmacies, parking, stations and more around you.
+          When you arrive in Italy, tap again to find restaurants, cafés, attractions, pharmacies, parking, stations and more around you.
         </p>
         <button className="btn-secondary" style={{marginTop:12}} onClick={locate}>Check location again</button>
       </div>
@@ -7405,15 +7613,15 @@ function DashNearby({ data, setData }) {
     <div>
       <div className="field">
         <div className="mode-toggle">
-          <div className={"mode-opt" + (mode==="walk"?" active":"")} onClick={() => setMode("walk")}>🚶 On foot</div>
-          {data.wantsCar && <div className={"mode-opt" + (mode==="car"?" active":"")} onClick={() => setMode("car")}>🚗 By car</div>}
+          <div className={"mode-opt" + (mode==="walk"?" active":"")} onClick={() => { voiceRequestedModeRef.current=""; setCoords(prev => prev ? {...prev,_voiceMode:undefined} : prev); setMode("walk"); }}>🚶 On foot</div>
+          {data.wantsCar && <div className={"mode-opt" + (mode==="car"?" active":"")} onClick={() => { voiceRequestedModeRef.current=""; setCoords(prev => prev ? {...prev,_voiceMode:undefined} : prev); setMode("car"); }}>🚗 By car</div>}
         </div>
       </div>
 
       <div className="field">
         <div className="nearby-filter-row">
           {NEARBY_FILTERS.map(f => (
-            <div key={f.id} className={"nearby-filter-chip" + (filter === f.id ? " active" : "")} onClick={() => setFilter(f.id)}>
+            <div key={f.id} className={"nearby-filter-chip" + (filter === f.id ? " active" : "")} onClick={() => { voiceRequestedFilterRef.current=""; voiceRequestedModeRef.current=""; setCoords(prev => prev ? {...prev,_voiceFilter:undefined,_voiceMode:undefined} : prev); setFilter(f.id); }}>
               {f.label}
             </div>
           ))}
@@ -7446,21 +7654,40 @@ function DashNearby({ data, setData }) {
       {loading && <p className="park-hint">Searching nearby…</p>}
       {error && !loading && <p className="park-hint">{error}</p>}
 
-      {!loading && results.length > 0 && (
-        <NearbyResultsMap coords={coords} results={results} filter={filter} selectedPlace={selectedPlace} />
-      )}
+      {!loading && results.length > 0 && <NearbyResultsMap coords={coords} results={results} filter={filter} selectedPlace={selectedPlace} />}
 
       {!loading && results.length > 0 && (
         <div className="field">
           <label>Near you now</label>
+          <p className="park-hint" style={{marginTop:-4,marginBottom:10}}>Tap a place to preview the direction on the map.</p>
           {results.map(p => (
-            <div key={p.id} className="nearby-result-card" onClick={()=>setSelectedPlace(p)} style={{cursor:"pointer",borderColor:selectedPlace?.id===p.id?"#1C5A7A":undefined}}>
+            <div key={p.id} className={"nearby-result-card" + (selectedPlace?.id === p.id ? " selected" : "")} onClick={() => setSelectedPlace(prev => prev?.id === p.id ? null : p)} style={{cursor:"pointer"}}>
               <div className="nearby-result-top">
                 <div className="choice-icon">{PLACE_TYPE_ICON[p._type] || "📍"}</div>
                 <div className="choice-text">
-                  <div className="h">{p.name}</div>
-                  <div className="d">{p.address}</div>
-                  {Number.isFinite(Number(p._distanceKm)) && <div className="nearby-distance">{Number(p._distanceKm)<1 ? `${Math.round(Number(p._distanceKm)*1000)} m away` : `${Number(p._distanceKm).toFixed(1)} km away`}</div>}
+                  <div className="h">
+                    {p.name}
+                    {p.rating && <span style={{opacity:0.6, fontWeight:500}}> · ⭐ {p.rating} ({p.ratingCount})</span>}
+                  </div>
+                  <div className="d">
+                    {p.address}
+                    {p.openNow === true && <span style={{color:"#E8A9BA", fontWeight:700}}> · Open now</span>}
+                    {p.openNow === false && <span style={{color:"#BC002D", fontWeight:700}}> · Closed</span>}
+                  </div>
+                  {(() => {
+                    const pf = formatVerifiedItalyPrice(p,homeCurrency,eurToHome);
+                    if (!pf || pf.text === "Price unavailable") return null;
+                    return <div className="price-intel-badge" style={{marginTop:7}}>
+                      {pf.exact ? "💴" : "🏷️"} {pf.text}
+                      {pf.approxText ? <span className="price-intel-source">· {pf.approxText}</span> : null}
+                      {pf.source ? <span className="price-intel-source">· {pf.source}</span> : null}
+                    </div>;
+                  })()}
+                  {Number.isFinite(Number(p._distanceKm)) && (
+                    <div className="nearby-distance">
+                      📍 {Number(p._distanceKm) < 1 ? `${Math.max(1, Math.round(Number(p._distanceKm) * 1000))} m away` : `${Number(p._distanceKm).toFixed(1)} km away`}
+                    </div>
+                  )}
                 </div>
               </div>
               <NearbyNavigateButton place={p} mode={mode} />
@@ -7484,9 +7711,16 @@ function DashNearby({ data, setData }) {
         </div>
       )}
 
+
+      {filter === "toilets" && (
+        <p className="park-hint" style={{marginTop:10}}>
+          🚻 Only verified public-bathroom place types are shown here. Navigation and distance remain available; extra paid place details are intentionally not loaded in the base Nearby search.
+        </p>
+      )}
+
       {filter === "services" && (
         <p className="park-hint" style={{marginTop:10}}>
-          ⚠️ ZTL (restricted traffic zones) aren't covered by this search — always check official signage or the city's ZTL map before driving into a historic centre.
+          ⚠️ Nearby does not replace official road, parking or local traffic rules. Always check local signs and restrictions before driving.
         </p>
       )}
     </div>
