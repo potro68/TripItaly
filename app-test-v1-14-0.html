@@ -6321,6 +6321,34 @@ function LiveLocationMap({ data, compact }) {
   };
 
   React.useEffect(() => {
+    let shouldAutoLocate = false;
+    try {
+      shouldAutoLocate = sessionStorage.getItem("tripitaly_voice_itinerary_autolocate") === "1";
+      if (shouldAutoLocate) sessionStorage.removeItem("tripitaly_voice_itinerary_autolocate");
+    } catch (_) {}
+
+    let timer = null;
+    if (shouldAutoLocate) timer = window.setTimeout(() => locate(), 120);
+
+    const onVoiceShowMap = () => {
+      try { sessionStorage.removeItem("tripitaly_voice_itinerary_autolocate"); } catch (_) {}
+      locate();
+      window.setTimeout(() => {
+        try {
+          const node = document.querySelector('.map-frame-wrap, .map-placeholder, .nearby-permission-card');
+          if (node && node.scrollIntoView) node.scrollIntoView({behavior:"smooth", block:"center"});
+        } catch (_) {}
+      }, 140);
+    };
+
+    window.addEventListener("tripitaly-voice-itinerary-show-map", onVoiceShowMap);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener("tripitaly-voice-itinerary-show-map", onVoiceShowMap);
+    };
+  }, []);
+
+  React.useEffect(() => {
     if (status !== "ok") {
       setHotelCoords(null);
       setCarCoords(null);
@@ -6728,7 +6756,6 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
   const dateLabel = date ? date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : `Day ${dayNum}`;
   const [editingCity, setEditingCity] = useState(false);
   const [cityDraft, setCityDraft] = useState(city || "");
-  const [stopInput, setStopInput] = useState("");
 
   return (
     <div className="day-panel">
@@ -6788,65 +6815,45 @@ function DayDetailPanel({ data, setData, dayNum, date, isToday, city, plannedSto
         </div>
       )}
 
-      <>
-        {isToday
-          ? <LiveLocationMap data={data} compact />
-          : <CityMap city={city} />
-        }
+    </div>
+  );
+}
 
-        {data.hotel && (
-          <NavigateButton
-            destination={data.hotel}
-            label={`🏨 Directions to ${data.hotel} ↗`}
-            className="hotel-directions-btn"
-          />
-        )}
-      </>
-
-      <div className="field">
-        <label>Your plan for this day</label>
-        {(!plannedStops || plannedStops.length === 0) && (
-          <div className="choice-card" style={{opacity:0.55}}>
-            <div className="choice-icon">📭</div>
-            <div className="choice-text"><div className="h">Nothing planned yet</div></div>
-          </div>
-        )}
-        {plannedStops && plannedStops.map((s, i) => (
-          <div key={i} className="choice-card selected day-plan-stop-card">
-            <div className="choice-icon">📍</div>
-            <div className="choice-text"><div className="h">{s}</div></div>
-            <NavigateButton
-              destination={s}
-              label="Go ↗"
-              className="stop-go-btn"
-            />
-            <div className="remove-stop" onClick={() => onRemoveStop(i)}>✕</div>
-          </div>
-        ))}
-        <div className="route-add-row day-plan-add-row">
-          <input
-            type="text"
-            className="route-city-input"
-            placeholder="Add a note or a place you already know"
-            value={stopInput}
-            onChange={e => setStopInput(e.target.value)}
-          />
-          <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { if(stopInput.trim()){ onAddStop(stopInput.trim()); setStopInput(""); } }}>+ Add</button>
+function ItineraryPlanBlock({ plannedStops, onAddStop, onRemoveStop, onGoTo }) {
+  const [stopInput, setStopInput] = useState("");
+  return (
+    <div className="field">
+      <label>Your plan for this day</label>
+      {(!plannedStops || plannedStops.length === 0) && (
+        <div className="choice-card" style={{opacity:0.55}}>
+          <div className="choice-icon">📭</div>
+          <div className="choice-text"><div className="h">Nothing planned yet</div></div>
         </div>
-
-        <button
-            type="button"
-            onClick={() => onGoTo("nearby")}
-            className="booking-link-btn"
-            style={{width:"100%", border:"none", cursor:"pointer", textAlign:"left", marginTop:12}}
-          >
-            <span className="blb-icon">📍</span>
-            <span className="blb-text">
-              <span className="blb-h">Find real places with Nearby</span>
-              <span className="blb-d">Live search around you when your GPS confirms you are in Italy →</span>
-            </span>
-          </button>
+      )}
+      {plannedStops && plannedStops.map((s, i) => (
+        <div key={i} className="choice-card selected day-stop-card">
+          <div className="choice-icon">📍</div>
+          <div className="choice-text day-stop-text">
+            <div className="h">{s}</div>
+            <div className="d">Saved in your plan for today</div>
+          </div>
+          <div className="day-stop-actions">
+            <NavigateButton destination={s} label="Go ↗" className="stop-go-btn" />
+            <button type="button" className="remove-stop-btn" aria-label={`Remove ${s} from today`} onClick={() => onRemoveStop(i)}>✕</button>
+          </div>
+        </div>
+      ))}
+      <div className="route-add-row">
+        <input type="text" className="route-city-input" placeholder="Add a note or place" value={stopInput} onChange={e => setStopInput(e.target.value)} />
+        <button className="btn-secondary" style={{width:"auto", padding:"10px 16px", marginTop:0}} onClick={() => { if(stopInput.trim()){ onAddStop(stopInput.trim()); setStopInput(""); } }}>+ Add</button>
       </div>
+      <button type="button" onClick={() => onGoTo("nearby")} className="booking-link-btn" style={{width:"100%", border:"none", cursor:"pointer", textAlign:"left", marginTop:12}}>
+        <span className="blb-icon">📍</span>
+        <span className="blb-text">
+          <span className="blb-h">Find real places with Nearby</span>
+          <span className="blb-d">Live search around you when your GPS confirms you are in Italy →</span>
+        </span>
+      </button>
     </div>
   );
 }
@@ -6867,10 +6874,15 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
     const d = tripDateForDay(data, i);
     if (d && isSameDate(d, today)) { defaultDay = i; break; }
   }
+
   const savedItineraryDay = Number(loadSavedUI().itineraryDay || 0);
+  const intelligentDay = italyIntelligentWorkingDay(data);
   const [activeDay, setActiveDay] = useState(
-    savedItineraryDay >= 1 && savedItineraryDay <= totalDays ? savedItineraryDay : defaultDay
+    savedItineraryDay >= 1 && savedItineraryDay <= totalDays
+      ? savedItineraryDay
+      : (intelligentDay >= 1 && intelligentDay <= totalDays ? intelligentDay : defaultDay)
   );
+
   const activeDate = tripDateForDay(data, activeDay);
   const isTodayActive = !!(activeDate && isSameDate(activeDate, today));
 
@@ -6882,10 +6894,12 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
   const setCityOverride = (dayNum, city) => {
     setData({...data, dayCityOverrides: {...dayOverrides, [dayNum]: city}});
   };
+
   const addStop = (dayNum, stop) => {
     const current = dayPlans[dayNum] || [];
     setData({...data, dayPlans: {...dayPlans, [dayNum]: [...current, stop]}});
   };
+
   const removeStop = (dayNum, idx) => {
     setData(prev => {
       const plans = {...(prev.dayPlans || {})};
@@ -6933,11 +6947,25 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
 
   return (
     <div>
+      <div className="field no-print" style={{marginTop:0}}>
+        <label>Map</label>
+        {isTodayActive
+          ? <LiveLocationMap data={data} />
+          : <CityMap city={activeCity} />
+        }
+      </div>
+
+      <ItineraryPlanBlock
+        plannedStops={activeStops}
+        onAddStop={(s) => addStop(activeDay, s)}
+        onRemoveStop={(i) => removeStop(activeDay, i)}
+        onGoTo={onGoTo}
+      />
+
       <div className="field no-print">
         <button className="btn-secondary" onClick={handlePrint}>📄 Save itinerary as PDF</button>
       </div>
 
-      {/* Print-only version: full itinerary, hidden on screen, shown when printing */}
       <div className="print-only">
         <h1 className="print-title">687 Italy — {data.itinerary}</h1>
         <p className="print-sub">{formatDateEN(data.startDate)} → {formatDateEN(data.endDate)} · {data.people} traveler{data.people>1?"s":""}</p>
@@ -6948,13 +6976,11 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
           )}
           {data.parkingNote && <div><strong>Rental car in Italy:</strong> {data.parkingNote}</div>}
         </div>
+
         {Array.from({length: totalDays}, (_, i) => i + 1).map(dayNum => {
           const date = tripDateForDay(data, dayNum);
           const city = dayOverrides[dayNum] || cityForDay(days, dayNum);
           const stops = dayPlans[dayNum] || [];
-
-          // Figure out if today is the first day of a new city block, and
-          // if so, how the user planned to travel there (train/flight/drive).
           const blockIndex = days.findIndex(b => b.days.includes(dayNum));
           const isArrivalDay = blockIndex > 0 && days[blockIndex].days[0] === dayNum;
           const transportId = isArrivalDay ? (data.legTransport || {})[blockIndex - 1] : null;
@@ -6987,12 +7013,14 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
             <div className="d">When you move to another city, tap that day to see train, flight and driving options for the transfer.</div>
           </div>
         </div>
+
         <div className="day-strip">
           {Array.from({length: totalDays}, (_, i) => i + 1).map(dayNum => {
             const date = tripDateForDay(data, dayNum);
             const f = date ? formatDayStrip(date) : { weekday: "", dayNum: dayNum, month: "" };
             const isToday = !!(date && isSameDate(date, today));
             const city = dayOverrides[dayNum] || cityForDay(days, dayNum);
+
             return (
               <div
                 key={dayNum}
@@ -7024,39 +7052,11 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
         onGoTo={onGoTo}
         dailyAmount={dailyAmount}
         transfer={transfer}
-       
       />
     </div>
   );
 }
 
-const NEARBY_FILTERS = [
-  { id: "food", label: "🍝 Food", desc: "🍝 Restaurants · ☕ Cafés · 🍦 Ice cream" },
-  { id: "toilets", label: "🚻 Toilets", desc: "🚻 Verified public toilets near you" },
-  { id: "attractions", label: "🏛️ Attractions", desc: "🏛️ Tourist attractions · Museums" },
-  { id: "shopping", label: "🛒 Shopping", desc: "🛒 Supermarkets · 🏬 Malls · 💊 Pharmacies" },
-  { id: "services", label: "🅿️ Practical", desc: "🅿️ Parking · ⛽ Gas · 🏧 ATM · 🏥 Hospital · 🚉 Station" },
-];
-
-// Maps our simple filter categories to one or more Google place types.
-// A filter can cover multiple Google types (e.g. "shopping" covers
-// supermarkets, malls and pharmacies) — we query each in parallel.
-const NEARBY_CATEGORY_TYPES = {
-  food: ["restaurant", "cafe", "ice_cream"],
-  toilets: ["public_bathroom"],
-  attractions: ["attraction", "museum"],
-  shopping: ["supermarket", "shopping_mall", "pharmacy"],
-  services: ["parking", "gas_station", "atm", "hospital", "train_station", "bus_station"],
-};
-
-const PLACE_TYPE_ICON = {
-  restaurant: "🍝", cafe: "☕", ice_cream: "🍦", public_bathroom: "🚻", public_bath: "🚻", attraction: "🏛️", museum: "🏛️",
-  supermarket: "🛒", shopping_mall: "🏬", pharmacy: "💊", parking: "🅿️",
-  gas_station: "⛽", atm: "🏧", hospital: "🏥", train_station: "🚉", bus_station: "🚌",
-};
-
-
-// ---- Verified local price helpers (ported from 687 Japan V1.84; Italy local currency = EUR) ----
 function priceMoneyToNumber(money) {
   if (!money || typeof money !== "object") return null;
   const units = Number(money.units ?? 0);
@@ -10520,14 +10520,14 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection, onUiLanguageCha
   const [voiceLanguage,setVoiceLanguageState]=useState(getVoiceAssistantLanguage());
 
   const COPY={
-    en:{heard:"I heard",ready:"Ready",unsupported:"Voice recognition is not available on this browser.",help:"What can I say?",settings:"Voice settings",reset:"RESET TO ENGLISH"},
-    it:{heard:"Ho sentito",ready:"Pronto",unsupported:"Il riconoscimento vocale non è disponibile in questo browser.",help:"Cosa posso dire?",settings:"Impostazioni voce",reset:"TORNA ALL’INGLESE"},
-    ja:{heard:"聞き取り",ready:"準備完了",unsupported:"このブラウザでは音声認識を利用できません。",help:"何と言えばいい？",settings:"音声設定",reset:"英語に戻す"},
-    es:{heard:"He oído",ready:"Listo",unsupported:"El reconocimiento de voz no está disponible en este navegador.",help:"¿Qué puedo decir?",settings:"Ajustes de voz",reset:"VOLVER AL INGLÉS"},
-    de:{heard:"Verstanden",ready:"Bereit",unsupported:"Spracherkennung ist in diesem Browser nicht verfügbar.",help:"Was kann ich sagen?",settings:"Spracheinstellungen",reset:"AUF ENGLISCH ZURÜCKSETZEN"},
-    fr:{heard:"J’ai entendu",ready:"Prêt",unsupported:"La reconnaissance vocale n’est pas disponible dans ce navigateur.",help:"Que puis-je dire ?",settings:"Réglages vocaux",reset:"REVENIR À L’ANGLAIS"},
-    zh:{heard:"我听到",ready:"准备好了",unsupported:"此浏览器不支持语音识别。",help:"我可以说什么？",settings:"语音设置",reset:"重置为英语"},
-    ko:{heard:"들었어요",ready:"준비됨",unsupported:"이 브라우저에서는 음성 인식을 사용할 수 없습니다.",help:"무엇을 말할 수 있나요?",settings:"음성 설정",reset:"영어로 재설정"},
+    en:{heard:"I heard",ready:"Ready",unsupported:"Voice recognition is not available on this browser.",help:"What can I say?",settings:"Voice settings",reset:"RESET TO ENGLISH",opening:{itinerary:"Opening your itinerary."}},
+    it:{heard:"Ho sentito",ready:"Pronto",unsupported:"Il riconoscimento vocale non è disponibile in questo browser.",help:"Cosa posso dire?",settings:"Impostazioni voce",reset:"TORNA ALL’INGLESE",opening:{itinerary:"Apro il tuo itinerario."}},
+    ja:{heard:"聞き取り",ready:"準備完了",unsupported:"このブラウザでは音声認識を利用できません。",help:"何と言えばいい？",settings:"音声設定",reset:"英語に戻す",opening:{itinerary:"旅程を開きます。"}},
+    es:{heard:"He oído",ready:"Listo",unsupported:"El reconocimiento de voz no está disponible en este navegador.",help:"¿Qué puedo decir?",settings:"Ajustes de voz",reset:"VOLVER AL INGLÉS",opening:{itinerary:"Abriendo tu itinerario."}},
+    de:{heard:"Verstanden",ready:"Bereit",unsupported:"Spracherkennung ist in diesem Browser nicht verfügbar.",help:"Was kann ich sagen?",settings:"Spracheinstellungen",reset:"AUF ENGLISCH ZURÜCKSETZEN",opening:{itinerary:"Öffne deinen Reiseplan."}},
+    fr:{heard:"J’ai entendu",ready:"Prêt",unsupported:"La reconnaissance vocale n’est pas disponible dans ce navigateur.",help:"Que puis-je dire ?",settings:"Réglages vocaux",reset:"REVENIR À L’ANGLAIS",opening:{itinerary:"J’ouvre votre itinéraire."}},
+    zh:{heard:"我听到",ready:"准备好了",unsupported:"此浏览器不支持语音识别。",help:"我可以说什么？",settings:"语音设置",reset:"重置为英语",opening:{itinerary:"正在打开你的行程。"}},
+    ko:{heard:"들었어요",ready:"준비됨",unsupported:"이 브라우저에서는 음성 인식을 사용할 수 없습니다.",help:"무엇을 말할 수 있나요?",settings:"음성 설정",reset:"영어로 재설정",opening:{itinerary:"일정을 엽니다."}},
   };
   const c=COPY[voiceLanguage]||COPY.en;
   const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim();
@@ -10541,6 +10541,27 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection, onUiLanguageCha
     onGoTo("nearby");
     setTimeout(()=>window.dispatchEvent(new CustomEvent("tripitaly-nearby-voice",{detail:{filter,mode}})),180);
     say(c.ready);
+  };
+
+  const openItineraryMap=(spoken)=>{
+    try { sessionStorage.setItem("tripitaly_voice_itinerary_autolocate","1"); } catch (_) {}
+    setMessage(spoken);
+    speak687Text(spoken);
+
+    if(currentSection==="itinerary"){
+      setTimeout(()=>{
+        try { window.dispatchEvent(new CustomEvent("tripitaly-voice-itinerary-show-map",{detail:{source:"same-screen"}})); } catch (_) {}
+      },20);
+      setTimeout(()=>setMessage(""),1200);
+      return;
+    }
+
+    onGoTo("itinerary");
+    setTimeout(()=>{ try { window.scrollTo({top:0,left:0,behavior:"smooth"}); } catch(_) {} },80);
+    setTimeout(()=>{
+      try { window.dispatchEvent(new CustomEvent("tripitaly-voice-itinerary-show-map",{detail:{source:"cross-screen"}})); } catch (_) {}
+    },320);
+    setTimeout(()=>setMessage(""),1200);
   };
 
   const handleCommand=(raw)=>{
@@ -10578,8 +10599,12 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection, onUiLanguageCha
     }
 
     // App navigation.
+    if(has(s,["open itinerary","show itinerary","my itinerary","itinerary","itinerario","apri itinerario","mostra itinerario","reiseplan","itineraire","itinéraire","旅程","行程","일정"])){
+      openItineraryMap(c.opening?.itinerary || "Opening your itinerary.");
+      return;
+    }
+
     const nav=[
-      ["itinerary",["itinerary","itinerario","reiseplan","itineraire","旅程","行程","일정"]],
       ["nearby",["nearby","vicino","nelle vicinanze","cerca de ti","in der nahe","a proximite","周辺","附近","주변"]],
       ["wallet",["wallet","portafoglio","cartera","brieftasche","portefeuille","ウォレット","钱包","지갑"]],
       ["packing",["packing","bagaglio","equipaje","gepack","bagages","荷造り","行李","짐"]],
