@@ -3333,22 +3333,48 @@ function buildVrboSearchLink(data, cityOverride) {
   return `https://www.stay22.com/allez/vrbo?${params.toString()}`;
 }
 
+// V1.14.2 — Save a partially entered itinerary/booking route between visits.
+// A draft is only restored for the same trip dates, airport and travel mode.
+const ROUTE_DRAFT_PREFIX = "tripitaly_route_draft_v1_";
+function routeDraftSignature(data){
+  return [data?.startDate || "", data?.endDate || "", data?.airport || "", data?.mode || ""].join("|");
+}
+function loadRouteDraft(data, kind){
+  try{
+    const raw=localStorage.getItem(ROUTE_DRAFT_PREFIX + kind);
+    if(!raw)return null;
+    const draft=JSON.parse(raw);
+    return draft && draft.signature===routeDraftSignature(data) ? draft : null;
+  }catch(_){return null;}
+}
+function saveRouteDraft(data, kind, draft){
+  try{
+    localStorage.setItem(ROUTE_DRAFT_PREFIX + kind,JSON.stringify({signature:routeDraftSignature(data),savedAt:Date.now(),...draft}));
+  }catch(_){}
+}
+function clearRouteDraft(kind){
+  try{localStorage.removeItem(ROUTE_DRAFT_PREFIX + kind);}catch(_){}
+}
+
 function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
   const tripDays = tripLengthDays(data);
-
-  const [multiCity, setMultiCity] = useState(data.routeCustom || false);
+  const routeDraft = React.useMemo(()=>loadRouteDraft(data,"itinerary"),[]);
+  const [multiCity, setMultiCity] = useState(routeDraft ? !!routeDraft.multiCity : (data.routeCustom || false));
   const [firstCity, setFirstCity] = useState(
-    (data.routeBlocks && data.routeBlocks[0] && data.routeBlocks[0].city) || ""
+    routeDraft?.firstCity ?? ((data.routeBlocks && data.routeBlocks[0] && data.routeBlocks[0].city) || "")
   );
   const [stops, setStops] = useState(
-    data.routeBlocks && data.routeCustom
-      ? data.routeBlocks.map(b => ({ city: b.city, day: b.days[0] }))
-      : []
+    Array.isArray(routeDraft?.stops) ? routeDraft.stops :
+    (data.routeBlocks && data.routeCustom ? data.routeBlocks.map(b=>({city:b.city,day:b.days[0]})) : [])
   );
-  const [cityInput, setCityInput] = useState("");
-  const [dayInput, setDayInput] = useState("2");
-  const [legTransport, setLegTransport] = useState(data.legTransport || {});
+  const [cityInput, setCityInput] = useState(routeDraft?.cityInput || "");
+  const [dayInput, setDayInput] = useState(routeDraft?.dayInput || "2");
+  const [legTransport, setLegTransport] = useState(routeDraft?.legTransport || data.legTransport || {});
   const [routeError, setRouteError] = useState("");
+
+  React.useEffect(()=>{
+    saveRouteDraft(data,"itinerary",{multiCity,firstCity,stops,cityInput,dayInput,legTransport});
+  },[multiCity,firstCity,stops,cityInput,dayInput,legTransport]);
 
   const allStops = multiCity ? stops : [];
   const sortedStops = [...allStops].sort((a, b) => a.day - b.day);
@@ -3390,6 +3416,7 @@ function ScreenItineraryOnly({ data, setData, onNext, onBack }) {
       update.routeCustom = false;
       update.itinerary = `${firstCity.trim()} (${tripDays} days)`;
     }
+    clearRouteDraft("itinerary");
     setData(update);
     onNext();
   };
@@ -3651,17 +3678,20 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
     }, 120);
   }, []);
   const arrivalCity = primaryCityName(AIRPORTS.find(a => a.code === data.airport)?.city) || "Arrival city";
-
-  const [multiCity, setMultiCity] = useState(data.routeCustom || false);
+  const routeDraft = React.useMemo(()=>loadRouteDraft(data,"bookings"),[]);
+  const [multiCity, setMultiCity] = useState(routeDraft ? !!routeDraft.multiCity : (data.routeCustom || false));
   const [stops, setStops] = useState(
-    data.routeBlocks && data.routeCustom
-      ? data.routeBlocks.map(b => ({ city: b.city, day: b.days[0] }))
-      : [{ city: arrivalCity, day: 1 }]
+    Array.isArray(routeDraft?.stops) ? routeDraft.stops :
+    (data.routeBlocks && data.routeCustom ? data.routeBlocks.map(b=>({city:b.city,day:b.days[0]})) : [{city:arrivalCity,day:1}])
   );
-  const [cityInput, setCityInput] = useState("");
-  const [dayInput, setDayInput] = useState("2");
-  const [legTransport, setLegTransport] = useState(data.legTransport || {});
+  const [cityInput, setCityInput] = useState(routeDraft?.cityInput || "");
+  const [dayInput, setDayInput] = useState(routeDraft?.dayInput || "2");
+  const [legTransport, setLegTransport] = useState(routeDraft?.legTransport || data.legTransport || {});
   const [routeError, setRouteError] = useState("");
+
+  React.useEffect(()=>{
+    saveRouteDraft(data,"bookings",{multiCity,stops,cityInput,dayInput,legTransport});
+  },[multiCity,stops,cityInput,dayInput,legTransport]);
 
   const sortedStops = [...stops].sort((a, b) => a.day - b.day);
 
@@ -3703,6 +3733,7 @@ function ScreenBookings({ data, setData, onNext, onBack }) {
       update.routeCustom = false;
       update.itinerary = `${arrivalCity} (${tripDays} days)`;
     }
+    clearRouteDraft("bookings");
     setData(update);
     onNext();
   };
@@ -7123,7 +7154,9 @@ function DashItinerary({ data, setData, onGoTo, dailyAmount }) {
 
 function priceMoneyToNumber(money) {
   if (!money || typeof money !== "object") return null;
-  const units = Number(money.units ?? 0);
+  const rawUnits = money.units ?? money.unit ?? money.value;
+  if (rawUnits == null || rawUnits === "") return null;
+  const units = Number(rawUnits);
   const nanos = Number(money.nanos ?? 0);
   if (!Number.isFinite(units)) return null;
   return units + (Number.isFinite(nanos) ? nanos / 1e9 : 0);
@@ -7150,10 +7183,12 @@ function verifiedPlacePrice(place) {
     }
   }
   const c = normalizePriceCurrency(place.verifiedPriceCurrency || place.priceCurrency || place.currency);
-  const min = Number(place.verifiedPriceMin ?? place.priceMin);
-  const max = Number(place.verifiedPriceMax ?? place.priceMax ?? min);
-  if (c && Number.isFinite(min) && min >= 0) {
-    const hi = Number.isFinite(max) ? Math.max(min, max) : min;
+  const minRaw = place.verifiedPriceMin ?? place.priceMin;
+  const maxRaw = place.verifiedPriceMax ?? place.priceMax;
+  if (c && minRaw != null && minRaw !== "" && Number.isFinite(Number(minRaw)) && Number(minRaw) >= 0) {
+    const min = Number(minRaw);
+    const max = maxRaw != null && maxRaw !== "" && Number.isFinite(Number(maxRaw)) ? Number(maxRaw) : min;
+    const hi = Math.max(min, max);
     return {known:true, free:hi===0, min, max:hi, currency:c, source:String(place.verifiedPriceSource || place.priceSource || "verified source")};
   }
   return {known:false, free:false, min:null, max:null, currency:"", source:""};
@@ -8873,9 +8908,11 @@ function italyNowUseEurToCurrencyRate(currency){
 function italyNowConvertVerifiedPrice(price,homeCurrency,eurToHome){
   if(!price?.known)return null;
   const target=String(homeCurrency||"EUR").toUpperCase();
+  // Zero is zero in every currency; no FX rate is necessary for explicitly verified free entry.
+  if(price.free)return {...price,budgetMin:0,budgetMax:0,budgetCurrency:target};
   if(price.currency===target)return{...price,budgetMin:price.min,budgetMax:price.max,budgetCurrency:target};
   if(price.currency==="EUR"&&target==="EUR")return{...price,budgetMin:price.min,budgetMax:price.max,budgetCurrency:"EUR"};
-  if(price.currency==="EUR"&&Number.isFinite(Number(eurToHome))&&Number(eurToHome)>0){
+  if(price.currency==="EUR"&&eurToHome!=null&&Number.isFinite(Number(eurToHome))&&Number(eurToHome)>0){
     return{...price,budgetMin:price.min*Number(eurToHome),budgetMax:price.max*Number(eurToHome),budgetCurrency:target};
   }
   return null;
@@ -8906,6 +8943,23 @@ function italyNowFormatVerifiedPrice(place,homeCurrency,eurToHome){
   }
   return{text,exact:true,source:p.source,approxText};
 }
+// V1.14.2 — Sum only actual provider monetary prices. Descriptive price levels
+// and prices that cannot be converted are never counted as an exact trip cost.
+function italyNowSummarizeVerifiedRouteCost(route,homeCurrency,eurToHome){
+  const stops=Array.isArray(route)?route:[];
+  let min=0,max=0,known=0,missing=0,unconverted=0;
+  stops.forEach(stop=>{
+    const raw=verifiedPlacePrice(stop);
+    if(!raw.known){missing++;return;}
+    const converted=italyNowConvertVerifiedPrice(raw,homeCurrency,eurToHome);
+    if(!converted){unconverted++;return;}
+    min+=Number(converted.budgetMin||0);
+    max+=Number(converted.budgetMax??converted.budgetMin??0);
+    known++;
+  });
+  return {min,max,known,missing,unconverted,total:stops.length};
+}
+
 function italyNowPriceScoreAdjustment(place,budgetLeft,homeCurrency,eurToHome){
   const a=italyNowPriceAffordability(place,budgetLeft,homeCurrency,eurToHome);
   if(a.status==="free")return 55;
@@ -8945,7 +8999,11 @@ function italyNowBuildSmartRoute(candidates,options={}){
       id:pick.place.id||`smart-${Date.now()}-${step}`,name:pick.place.name,lat:pick.place.lat,lng:pick.place.lng,
       category:pick.place.category,km:Math.round(pick.km*10)/10,travelMin:pick.travel,visitMin:pick.visit,
       start:italyNowMinutesToClock(arrival),end:italyNowMinutesToClock(finish),matchedType:pick.place.matchedType||"",
-      priceRange:pick.place.priceRange||pick.place.price_range||null,priceLevel:pick.place.priceLevel??pick.place.price_level??null
+      priceRange:pick.place.priceRange||pick.place.price_range||null,priceLevel:pick.place.priceLevel??pick.place.price_level??null,
+      verifiedPriceMin:pick.place.verifiedPriceMin??pick.place.priceMin??null,
+      verifiedPriceMax:pick.place.verifiedPriceMax??pick.place.priceMax??null,
+      verifiedPriceCurrency:pick.place.verifiedPriceCurrency||pick.place.priceCurrency||pick.place.currency||"",
+      verifiedPriceSource:pick.place.verifiedPriceSource||pick.place.priceSource||""
     });
     usedCategories.add(pick.place.category);clock=finish;
     if(Number.isFinite(Number(pick.place.lat))&&Number.isFinite(Number(pick.place.lng))){currentLat=Number(pick.place.lat);currentLng=Number(pick.place.lng);}
@@ -9094,6 +9152,75 @@ function ItalyDashNow({data,setData,onGoTo,dailyAmount}){
     },160);
   };
 
+  const replaceSmartStop = stop => {
+    if(!livePlaces.length){
+      setSmartDayMessage("Tap Show suggestions first to find a live replacement.");
+      return;
+    }
+    const route=(data.smartDayPlans||{})[workingDay]||[];
+    const position=route.findIndex(x=>x.id===stop.id&&x.name===stop.name);
+    if(position<0)return;
+    const used=new Set(route.map(x=>String(x.name||"").trim().toLowerCase()));
+    const currentFrom=position>0?route[position-1]:liveCoords;
+    const oldTravel=Math.max(5,Number(stop.travelMin)||20);
+    const oldVisit=Math.max(15,Number(stop.visitMin)||60);
+    const candidates=livePlaces.filter(p=>p&&p.name&&p.fits!==false&&p.openNow!==false)
+      .filter(p=>!used.has(String(p.name).trim().toLowerCase()))
+      .filter(p=>!weatherInfo?.wet||italyNowIndoorCategory(italyNowPlaceCategory(p)))
+      .map(p=>{
+        const category=italyNowPlaceCategory(p);
+        let km=null;
+        const coords=[currentFrom?.lat,currentFrom?.lng,p.lat,p.lng];
+        if(coords.every(v=>v!=null&&Number.isFinite(Number(v)))){
+          km=italyNowHaversineKm(...coords);
+        }
+        if(km==null && p.km!=null && Number.isFinite(Number(p.km)))km=Number(p.km);
+        if(km==null || km<0)return null;
+        const travel=italyNowTravelMinutesForKm(km);
+        const visit=italyNowCategoryDurationMinutes(category);
+        // A replacement must fit approximately in the original leg's travel allowance
+        // without extending the time of following stops.
+        if(travel>oldTravel+10||visit>oldVisit+15)return null;
+        const score=italyNowPriceScoreAdjustment(p,budgetLeft,homeCurrency,eurToHome)
+          -Math.max(0,travel-oldTravel)*4 - Math.min(50,Number(km||0)*2)
+          +(category===stop.category?22:0);
+        return {p,category,km,travel,visit,score};
+      }).filter(Boolean).sort((a,b)=>b.score-a.score);
+    const pick=candidates[0];
+    if(!pick){
+      setSmartDayMessage("No different open stop fits this time slot. Tap Show suggestions to refresh nearby places.");
+      return;
+    }
+    const p=pick.p;
+    const replacement={
+      ...stop,
+      id:p.id||`replace-${Date.now()}`,
+      name:p.name,lat:p.lat,lng:p.lng,category:pick.category,
+      km:Math.round(Number(pick.km||0)*10)/10,
+      travelMin:pick.travel,visitMin:pick.visit,
+      matchedType:p.matchedType||"",
+      priceRange:p.priceRange||p.price_range||null,
+      priceLevel:p.priceLevel??p.price_level??null,
+      verifiedPriceMin:p.verifiedPriceMin??p.priceMin??null,
+      verifiedPriceMax:p.verifiedPriceMax??p.priceMax??null,
+      verifiedPriceCurrency:p.verifiedPriceCurrency||p.priceCurrency||p.currency||"",
+      verifiedPriceSource:p.verifiedPriceSource||p.priceSource||""
+    };
+    // Keep this stop's previously allocated start/end time and every other
+    // stop untouched. The replacement is a proposed fit, not a booked slot.
+    setData(prev=>{
+      const smart={...(prev.smartDayPlans||{})};
+      const current=(smart[workingDay]||[]);
+      smart[workingDay]=current.map((x,i)=>i===position?replacement:x);
+      const plans={...(prev.dayPlans||{})};
+      const oldPlans=plans[workingDay]||[];
+      plans[workingDay]=oldPlans.map(name=>name===stop.name?replacement.name:name);
+      return {...prev,smartDayPlans:smart,dayPlans:plans};
+    });
+    setNavChoiceStop("");
+    setSmartDayMessage(`${stop.name} replaced with ${replacement.name}. Other stops unchanged; check travel time before leaving.`);
+  };
+
   const removeSmartStop=stop=>setData(prev=>{
     const smart={...(prev.smartDayPlans||{})};smart[workingDay]=(smart[workingDay]||[]).filter(x=>x.name!==stop.name);
     const plans={...(prev.dayPlans||{})};plans[workingDay]=(plans[workingDay]||[]).filter(x=>x!==stop.name);
@@ -9129,6 +9256,20 @@ function ItalyDashNow({data,setData,onGoTo,dailyAmount}){
     {smartRoute.length>0&&<div className="live-card" id="iday-smart-route-result">
       <div className="live-card-h">Smart route from now</div>
       <div className="live-card-d">Built from your current location, time, weather, budget and verified nearby results.</div>
+      {(()=>{
+        const cost=italyNowSummarizeVerifiedRouteCost(smartRoute,homeCurrency,eurToHome);
+        const value=cost.known
+          ? (Math.abs(cost.max-cost.min)<0.01
+              ? formatCurrencyAmount(homeCurrency,cost.max,0)
+              : `${formatCurrencyAmount(homeCurrency,cost.min,0)}–${formatCurrencyAmount(homeCurrency,cost.max,0)}`)
+          : "";
+        return <div className="live-card-d" style={{marginTop:6,fontWeight:800}}>
+          {cost.known ? `💶 Verified prices subtotal (${cost.known}/${cost.total}): ${value}` : "💶 No verified monetary prices for this route"}
+          {cost.missing ? ` · ${cost.missing} price${cost.missing===1?"":"s"} unavailable` : ""}
+          {cost.unconverted ? ` · ${cost.unconverted} price${cost.unconverted===1?"":"s"} not convertible to ${homeCurrency}` : ""}
+          {!cost.missing&&!cost.unconverted ? " · all stop prices verified" : ""}
+        </div>;
+      })()}
       {smartRoute.map((stop,i)=><div className="smart-route-row" key={`${stop.id||stop.name}-${i}`}>
         <div className="smart-route-icon">{italyNowCategoryIcon(stop.category)}</div>
         <div className="smart-route-main">
@@ -9140,6 +9281,7 @@ function ItalyDashNow({data,setData,onGoTo,dailyAmount}){
         <div className="smart-route-actions">
           <button className="now-action-btn" onClick={()=>setNavChoiceStop(navChoiceStop===`smart:${i}`?"":`smart:${i}`)}>GO</button>
           <button className="now-secondary-btn" onClick={()=>removeSmartStop(stop)}>Skip</button>
+          <button className="now-secondary-btn" onClick={()=>replaceSmartStop(stop)}>Replace</button>
         </div>
         {navChoiceStop===`smart:${i}`&&<div className="iday-nav-choice" style={{gridColumn:"2 / -1"}}>
           <button onClick={()=>{setNavChoiceStop("");openMaps(stop);}}>Google Maps</button>
@@ -12338,6 +12480,8 @@ function App() {
 
     try {
       localStorage.removeItem("tripitaly_data");
+      clearRouteDraft("itinerary");
+      clearRouteDraft("bookings");
       localStorage.setItem(TRIPITALY_UI_KEY, JSON.stringify({step:0, section:"overview"}));
     } catch (e) {}
 
