@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 687 Italy Android/Web V1.14.0 TEST — Japan feature parity: Nearby Pro + Toilets + Map + Voice Assistant -->
+<!-- 687 Italy TEST — STEP 1: Settings parity with latest Japan -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>687 Italy</title>
@@ -5109,96 +5109,220 @@ function menuLabel(id, lang) {
 
 const VOICE_ASSISTANT_LANGUAGE_KEY = "tripitaly_voice_assistant_language";
 const VOICE_ASSISTANT_LANGUAGES = [
-  {code:"en",label:"English",recognition:"en-US",speech:"en-US"},
-  {code:"it",label:"Italiano",recognition:"it-IT",speech:"it-IT"},
-  {code:"ja",label:"日本語",recognition:"ja-JP",speech:"ja-JP"},
-  {code:"es",label:"Español",recognition:"es-ES",speech:"es-ES"},
-  {code:"de",label:"Deutsch",recognition:"de-DE",speech:"de-DE"},
-  {code:"fr",label:"Français",recognition:"fr-FR",speech:"fr-FR"},
-  {code:"zh",label:"简体中文",recognition:"zh-CN",speech:"zh-CN"},
-  {code:"ko",label:"한국어",recognition:"ko-KR",speech:"ko-KR"},
+  {code:"en", label:"English", recognition:"en-US", speech:"en-US"},
+  {code:"it", label:"Italiano", recognition:"it-IT", speech:"it-IT"},
+  {code:"ja", label:"日本語", recognition:"ja-JP", speech:"ja-JP"},
+  {code:"es", label:"Español", recognition:"es-ES", speech:"es-ES"},
+  {code:"de", label:"Deutsch", recognition:"de-DE", speech:"de-DE"},
+  {code:"fr", label:"Français", recognition:"fr-FR", speech:"fr-FR"},
+  {code:"zh", label:"简体中文", recognition:"zh-CN", speech:"zh-CN"},
+  {code:"ko", label:"한국어", recognition:"ko-KR", speech:"ko-KR"},
 ];
+const PRIMARY_APP_LANGUAGES = VOICE_ASSISTANT_LANGUAGES;
+
 function getVoiceAssistantLanguage(){
   try {
-    const v=localStorage.getItem(VOICE_ASSISTANT_LANGUAGE_KEY)||"en";
-    return VOICE_ASSISTANT_LANGUAGES.some(x=>x.code===v)?v:"en";
+    const saved = localStorage.getItem(VOICE_ASSISTANT_LANGUAGE_KEY) || "en";
+    return VOICE_ASSISTANT_LANGUAGES.some(x=>x.code===saved) ? saved : "en";
   } catch(_) { return "en"; }
 }
 function setVoiceAssistantLanguage(code){
-  const safe=VOICE_ASSISTANT_LANGUAGES.some(x=>x.code===code)?code:"en";
-  try { localStorage.setItem(VOICE_ASSISTANT_LANGUAGE_KEY,safe); } catch(_) {}
+  const safe = VOICE_ASSISTANT_LANGUAGES.some(x=>x.code===code) ? code : "en";
+  try {
+    localStorage.setItem(VOICE_ASSISTANT_LANGUAGE_KEY, safe);
+    localStorage.setItem("tripitaly_voice_reply_language", safe);
+  } catch(_) {}
+  try { window.dispatchEvent(new CustomEvent("tripitaly-voice-language-changed", {detail:safe})); } catch(_) {}
+  try { window.dispatchEvent(new CustomEvent("tripitaly-voice-output-changed")); } catch(_) {}
   return safe;
 }
 function voiceLanguageConfig(code){
-  return VOICE_ASSISTANT_LANGUAGES.find(x=>x.code===code)||VOICE_ASSISTANT_LANGUAGES[0];
-}
-function speak687Text(value){
-  if (!value || !("speechSynthesis" in window)) return;
-  try {
-    const cfg=voiceLanguageConfig(getVoiceAssistantLanguage());
-    const u=new SpeechSynthesisUtterance(String(value));
-    u.lang=cfg.speech; u.rate=.96;
-    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
-  } catch(_) {}
+  return VOICE_ASSISTANT_LANGUAGES.find(x=>x.code===code) || VOICE_ASSISTANT_LANGUAGES[0];
 }
 
-function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRestoreTrip, onDeleteArchive }) {
+const VOICE_REPLY_NAME_KEY = "tripitaly_voice_reply_name";
+const VOICE_REPLY_RATE_KEY = "tripitaly_voice_reply_rate";
+function getVoiceReplyName(){ try { return localStorage.getItem(VOICE_REPLY_NAME_KEY) || ""; } catch(_) { return ""; } }
+function setVoiceReplyName(name){
+  try { localStorage.setItem(VOICE_REPLY_NAME_KEY, String(name||"")); } catch(_) {}
+  try { window.dispatchEvent(new CustomEvent("tripitaly-voice-output-changed")); } catch(_) {}
+}
+function getVoiceReplyRate(){
+  try { return localStorage.getItem(VOICE_REPLY_RATE_KEY) === "slow" ? "slow" : "normal"; } catch(_) { return "normal"; }
+}
+function setVoiceReplyRate(value){
+  const safe = value === "slow" ? "slow" : "normal";
+  try { localStorage.setItem(VOICE_REPLY_RATE_KEY, safe); } catch(_) {}
+  try { window.dispatchEvent(new CustomEvent("tripitaly-voice-output-changed")); } catch(_) {}
+  return safe;
+}
+function getAvailableSpeechVoices(){
+  try { return (window.speechSynthesis && window.speechSynthesis.getVoices) ? window.speechSynthesis.getVoices() : []; } catch(_) { return []; }
+}
+function pickSpeechVoice(languageCode, preferredName){
+  const cfg = voiceLanguageConfig(languageCode);
+  const voices = getAvailableSpeechVoices();
+  if (preferredName) {
+    const exactName = voices.find(v => v.name === preferredName);
+    if (exactName) return exactName;
+  }
+  return voices.find(v => String(v.lang||"").toLowerCase() === cfg.speech.toLowerCase())
+    || voices.find(v => String(v.lang||"").toLowerCase().startsWith(languageCode))
+    || null;
+}
+function speak687Text(value){
+  if (!value || !("speechSynthesis" in window)) return false;
+  try {
+    const lang = getVoiceAssistantLanguage();
+    const cfg = voiceLanguageConfig(lang);
+    const u = new SpeechSynthesisUtterance(String(value));
+    u.lang = cfg.speech;
+    u.rate = getVoiceReplyRate() === "slow" ? 0.82 : 0.96;
+    const voice = pickSpeechVoice(lang, getVoiceReplyName());
+    if (voice) u.voice = voice;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+    return true;
+  } catch(_) { return false; }
+}
+
+const SETTINGS_LOCALIZED = {
+  en:{langLabel:"App & Voice Assistant language",langHint:"One language controls the 687 interface, Voice Assistant commands and spoken replies. Translate remains separate.",voice:"687 voice",voiceHint:"Voices come from your phone or browser. Available names can differ between iPhone, Android and desktop.",auto:"Automatic · best available",noVoice:"No selectable voice is currently exposed by this device. 687 will use the system fallback.",speed:"Speech speed",normal:"Normal",slow:"Slow",test:"🔊 Test 687 voice",currency:"Home currency",currencyHint:"Your trip budget, paid bookings and logged expenses use this currency. Italy prices remain in EUR.",converting:"Converting existing trip amounts…",guide:"User Guide",guideDesc:"Learn how to plan and use 687 Italy",past:"Past trips & recovery",pastHint:"Starting a new trip never destroys your current holiday. 687 Italy archives it first so you can restore it if you tapped reset by mistake.",none:"No archived trips yet",noneDesc:"Completed or replaced trips will appear here.",saved:"Saved trip",recovery:"Recovery available",daysLeft:"days left",archived:"Archived trip",restore:"Restore trip",memory:"Save memory PDF",delete:"Delete permanently",changeCurrency:"Change home currency",rateUnavailable:"The reference exchange rate is unavailable right now. Your trip currency was not changed."},
+  it:{langLabel:"Lingua app e Voice Assistant",langHint:"Una sola lingua controlla l'interfaccia 687, i comandi vocali e le risposte parlate. Traduci rimane separato.",voice:"Voce 687",voiceHint:"Le voci provengono dal telefono o dal browser. I nomi disponibili possono cambiare tra iPhone, Android e desktop.",auto:"Automatica · migliore disponibile",noVoice:"Nessuna voce selezionabile è disponibile su questo dispositivo. 687 userà la voce di sistema.",speed:"Velocità della voce",normal:"Normale",slow:"Lenta",test:"🔊 Prova la voce 687",currency:"Valuta principale",currencyHint:"Il budget del viaggio, le prenotazioni pagate e le spese registrate usano questa valuta. I prezzi in Italia restano in EUR.",converting:"Conversione degli importi del viaggio…",guide:"Guida utente",guideDesc:"Scopri come pianificare e usare 687 Italy",past:"Viaggi passati e recupero",pastHint:"Iniziare un nuovo viaggio non elimina quello attuale. 687 Italy lo archivia prima, così puoi ripristinarlo se hai premuto reset per errore.",none:"Nessun viaggio archiviato",noneDesc:"I viaggi completati o sostituiti appariranno qui.",saved:"Viaggio salvato",recovery:"Recupero disponibile",daysLeft:"giorni rimasti",archived:"Viaggio archiviato",restore:"Ripristina viaggio",memory:"Salva PDF ricordo",delete:"Elimina definitivamente",changeCurrency:"Cambiare la valuta principale",rateUnavailable:"Il tasso di cambio di riferimento non è disponibile. La valuta del viaggio non è stata modificata."},
+  ja:{langLabel:"アプリと音声アシスタントの言語",langHint:"1つの言語で687の画面、音声コマンド、音声応答を統一します。翻訳機能は別です。",voice:"687の声",voiceHint:"音声は端末またはブラウザのものを使用します。利用できる声はiPhone、Android、デスクトップで異なります。",auto:"自動 · 最適な音声",noVoice:"この端末では選択できる音声がありません。687はシステム音声を使用します。",speed:"話す速度",normal:"標準",slow:"ゆっくり",test:"🔊 687の声をテスト",currency:"基準通貨",currencyHint:"旅行予算、支払い済み予約、記録した支出はこの通貨を使用します。イタリアの価格はEURのままです。",converting:"旅行金額を換算中…",guide:"ユーザーガイド",guideDesc:"687 Italyの計画方法と使い方を見る",past:"過去の旅行と復元",pastHint:"新しい旅行を始めても現在の旅行は削除されません。687 Italyが先に保存するため、誤ってリセットしても復元できます。",none:"保存された旅行はまだありません",noneDesc:"完了または置き換えた旅行がここに表示されます。",saved:"保存済みの旅行",recovery:"復元可能",daysLeft:"日残り",archived:"保存済み旅行",restore:"旅行を復元",memory:"思い出PDFを保存",delete:"完全に削除",changeCurrency:"基準通貨を変更",rateUnavailable:"参照為替レートを取得できません。旅行通貨は変更されませんでした。"},
+  es:{langLabel:"Idioma de la app y Voice Assistant",langHint:"Un solo idioma controla la interfaz de 687, los comandos de voz y las respuestas habladas. Traducir sigue separado.",voice:"Voz de 687",voiceHint:"Las voces provienen de tu teléfono o navegador. Los nombres disponibles pueden variar entre iPhone, Android y ordenador.",auto:"Automática · mejor disponible",noVoice:"No hay una voz seleccionable disponible en este dispositivo. 687 usará la voz del sistema.",speed:"Velocidad de voz",normal:"Normal",slow:"Lenta",test:"🔊 Probar voz de 687",currency:"Moneda principal",currencyHint:"El presupuesto, las reservas pagadas y los gastos registrados usan esta moneda. Los precios de Italia permanecen en EUR.",converting:"Convirtiendo importes del viaje…",guide:"Guía de usuario",guideDesc:"Aprende a planificar y usar 687 Italy",past:"Viajes anteriores y recuperación",pastHint:"Empezar un nuevo viaje no destruye el actual. 687 Italy lo archiva primero para que puedas restaurarlo si pulsaste reset por error.",none:"Aún no hay viajes archivados",noneDesc:"Los viajes completados o sustituidos aparecerán aquí.",saved:"Viaje guardado",recovery:"Recuperación disponible",daysLeft:"días restantes",archived:"Viaje archivado",restore:"Restaurar viaje",memory:"Guardar PDF de recuerdo",delete:"Eliminar definitivamente",changeCurrency:"Cambiar moneda principal",rateUnavailable:"El tipo de cambio de referencia no está disponible. La moneda del viaje no se ha cambiado."},
+  de:{langLabel:"App- & Sprachassistent-Sprache",langHint:"Eine Sprache steuert die 687-Oberfläche, Sprachbefehle und gesprochenen Antworten. Übersetzen bleibt separat.",voice:"687 Stimme",voiceHint:"Die Stimmen stammen von deinem Telefon oder Browser. Verfügbare Namen können sich auf iPhone, Android und Desktop unterscheiden.",auto:"Automatisch · beste verfügbare",noVoice:"Auf diesem Gerät ist keine auswählbare Stimme verfügbar. 687 verwendet die Systemstimme.",speed:"Sprechgeschwindigkeit",normal:"Normal",slow:"Langsam",test:"🔊 687 Stimme testen",currency:"Hauptwährung",currencyHint:"Reisebudget, bezahlte Buchungen und erfasste Ausgaben verwenden diese Währung. Preise in Italien bleiben in EUR.",converting:"Reisebeträge werden umgerechnet…",guide:"Benutzerhandbuch",guideDesc:"So planst und nutzt du 687 Italy",past:"Frühere Reisen & Wiederherstellung",pastHint:"Eine neue Reise löscht die aktuelle nicht. 687 Italy archiviert sie zuerst, damit du sie nach einem versehentlichen Reset wiederherstellen kannst.",none:"Noch keine archivierten Reisen",noneDesc:"Abgeschlossene oder ersetzte Reisen erscheinen hier.",saved:"Gespeicherte Reise",recovery:"Wiederherstellung verfügbar",daysLeft:"Tage übrig",archived:"Archivierte Reise",restore:"Reise wiederherstellen",memory:"Erinnerungs-PDF speichern",delete:"Dauerhaft löschen",changeCurrency:"Hauptwährung ändern",rateUnavailable:"Der Referenzwechselkurs ist derzeit nicht verfügbar. Die Reisewährung wurde nicht geändert."},
+  fr:{langLabel:"Langue de l'app et du Voice Assistant",langHint:"Une seule langue contrôle l'interface 687, les commandes vocales et les réponses parlées. Traduire reste séparé.",voice:"Voix 687",voiceHint:"Les voix proviennent de votre téléphone ou navigateur. Les noms disponibles peuvent varier entre iPhone, Android et ordinateur.",auto:"Automatique · meilleure disponible",noVoice:"Aucune voix sélectionnable n'est disponible sur cet appareil. 687 utilisera la voix système.",speed:"Vitesse de parole",normal:"Normale",slow:"Lente",test:"🔊 Tester la voix 687",currency:"Devise principale",currencyHint:"Le budget du voyage, les réservations payées et les dépenses enregistrées utilisent cette devise. Les prix en Italie restent en EUR.",converting:"Conversion des montants du voyage…",guide:"Guide utilisateur",guideDesc:"Découvrez comment planifier et utiliser 687 Italy",past:"Voyages passés et récupération",pastHint:"Commencer un nouveau voyage ne supprime jamais le voyage actuel. 687 Italy l'archive d'abord afin de pouvoir le restaurer après un reset accidentel.",none:"Aucun voyage archivé",noneDesc:"Les voyages terminés ou remplacés apparaîtront ici.",saved:"Voyage enregistré",recovery:"Récupération disponible",daysLeft:"jours restants",archived:"Voyage archivé",restore:"Restaurer le voyage",memory:"Enregistrer le PDF souvenir",delete:"Supprimer définitivement",changeCurrency:"Changer la devise principale",rateUnavailable:"Le taux de change de référence n'est pas disponible. La devise du voyage n'a pas été modifiée."},
+  zh:{langLabel:"应用与语音助手语言",langHint:"一种语言同时控制 687 界面、语音指令和语音回复。翻译功能保持独立。",voice:"687 语音",voiceHint:"语音来自你的手机或浏览器。iPhone、Android 和桌面设备可用的语音名称可能不同。",auto:"自动 · 最佳可用语音",noVoice:"此设备当前没有可选择的语音。687 将使用系统默认语音。",speed:"语速",normal:"正常",slow:"慢速",test:"🔊 测试 687 语音",currency:"主要货币",currencyHint:"旅行预算、已付款预订和记录的支出使用此货币。意大利当地价格仍以 EUR 显示。",converting:"正在转换旅行金额…",guide:"用户指南",guideDesc:"了解如何规划和使用 687 Italy",past:"过去的旅行与恢复",pastHint:"开始新旅行不会删除当前旅行。687 Italy 会先将其存档，以便误操作后恢复。",none:"暂无已存档旅行",noneDesc:"已完成或被替换的旅行会显示在这里。",saved:"已保存的旅行",recovery:"可恢复",daysLeft:"天剩余",archived:"已存档旅行",restore:"恢复旅行",memory:"保存旅行回忆 PDF",delete:"永久删除",changeCurrency:"更改主要货币",rateUnavailable:"当前无法获取参考汇率。旅行货币未更改。"},
+  ko:{langLabel:"앱 및 Voice Assistant 언어",langHint:"하나의 언어가 687 인터페이스, 음성 명령, 음성 응답을 함께 제어합니다. 번역 기능은 별도입니다.",voice:"687 음성",voiceHint:"음성은 휴대폰 또는 브라우저에서 제공됩니다. iPhone, Android, 데스크톱에 따라 사용 가능한 음성이 다를 수 있습니다.",auto:"자동 · 사용 가능한 최적 음성",noVoice:"이 기기에서는 선택 가능한 음성이 없습니다. 687은 시스템 기본 음성을 사용합니다.",speed:"말하기 속도",normal:"보통",slow:"느리게",test:"🔊 687 음성 테스트",currency:"기준 통화",currencyHint:"여행 예산, 결제한 예약, 기록한 지출은 이 통화를 사용합니다. 이탈리아 현지 가격은 EUR로 유지됩니다.",converting:"여행 금액 환산 중…",guide:"사용자 가이드",guideDesc:"687 Italy 계획 및 사용 방법 알아보기",past:"지난 여행 및 복구",pastHint:"새 여행을 시작해도 현재 여행은 삭제되지 않습니다. 687 Italy가 먼저 보관하므로 실수로 초기화해도 복구할 수 있습니다.",none:"보관된 여행이 없습니다",noneDesc:"완료되거나 교체된 여행이 여기에 표시됩니다.",saved:"저장된 여행",recovery:"복구 가능",daysLeft:"일 남음",archived:"보관된 여행",restore:"여행 복원",memory:"추억 PDF 저장",delete:"영구 삭제",changeCurrency:"기준 통화 변경",rateUnavailable:"현재 기준 환율을 사용할 수 없습니다. 여행 통화가 변경되지 않았습니다."}
+};
+
+function DashSettings({ data, setData, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
+  const sc = SETTINGS_LOCALIZED[uiLanguage] || SETTINGS_LOCALIZED.en;
+  const [voiceLanguage, setVoiceLanguageState] = useState(()=>getVoiceAssistantLanguage());
+  const [voiceReplyName, setVoiceReplyNameState] = useState(()=>getVoiceReplyName());
+  const [voiceReplyRate, setVoiceReplyRateState] = useState(()=>getVoiceReplyRate());
+  const [speechVoices, setSpeechVoices] = useState(()=>getAvailableSpeechVoices());
   const [currencyBusy, setCurrencyBusy] = useState(false);
+
+  React.useEffect(()=>{
+    const refreshVoices = ()=>setSpeechVoices(getAvailableSpeechVoices());
+    refreshVoices();
+    if (window.speechSynthesis) window.speechSynthesis.addEventListener?.("voiceschanged", refreshVoices);
+    return ()=>{ if (window.speechSynthesis) window.speechSynthesis.removeEventListener?.("voiceschanged", refreshVoices); };
+  },[]);
+
+  const replyVoiceOptions = speechVoices.filter(v=>{
+    const lang = String(v.lang||"").toLowerCase();
+    const cfg = voiceLanguageConfig(voiceLanguage);
+    return lang === cfg.speech.toLowerCase() || lang.startsWith(voiceLanguage);
+  });
+
   const changeTripCurrency = async (nextCurrency) => {
     const from = getHomeCurrency(data);
     const to = String(nextCurrency || from).toUpperCase();
     if (from === to || currencyBusy) return;
     const hasMoney = Number(data?.budget || 0) > 0 || Number(data?.prepaidTotal || 0) > 0 || Number(data?.flightPrice || 0) > 0 || Number(data?.hotelPrice || 0) > 0 || Number(data?.carPrice || 0) > 0 || (data?.expenses || []).some(e => Number(e.amount || 0) > 0);
-    if (hasMoney && !window.confirm(`Change home currency from ${from} to ${to}? Existing budget, booking totals and logged expenses will be converted using the current reference exchange rate.`)) return;
+    if (hasMoney && !window.confirm(`${sc.changeCurrency}: ${from} → ${to}?`)) return;
     setCurrencyBusy(true);
     const rate = await fetchCurrencyConversionRate(from,to);
     setCurrencyBusy(false);
-    if (!rate) { window.alert("The reference exchange rate is unavailable right now. Your trip currency was not changed."); return; }
+    if (!rate) { window.alert(sc.rateUnavailable); return; }
     setData(convertTripHomeCurrencyAmounts(data,to,rate));
   };
+
   return (
     <div>
       <div className="field">
-        <label>Menu language</label>
-        <p className="park-hint">Changes the navigation menu only. Translate and its microphone languages stay unchanged.</p>
-        <select className="plain" value={uiLanguage} onChange={e=>setUiLanguage(e.target.value)}>
-          {MENU_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.label}</option>)}
+        <label>{sc.langLabel}</label>
+        <p className="park-hint">{sc.langHint}</p>
+        <select
+          className="plain"
+          value={voiceLanguage}
+          onChange={e=>{
+            const next = setVoiceAssistantLanguage(e.target.value);
+            setVoiceLanguageState(next);
+            setUiLanguage(next);
+            setVoiceReplyName("");
+            setVoiceReplyNameState("");
+          }}
+        >
+          {PRIMARY_APP_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.label}</option>)}
         </select>
       </div>
+
       <div className="field">
-        <label>Home currency</label>
-        <p className="park-hint">Your trip budget, paid bookings and logged expenses use this currency. Italy prices remain in EUR.</p>
-        <select value={getHomeCurrency(data)} disabled={currencyBusy} onChange={e=>changeTripCurrency(e.target.value)}
-          style={{border:"1.5px solid var(--line)",borderRadius:10,background:"#fff",fontFamily:"Sora, sans-serif",fontWeight:800,padding:"10px 12px",minWidth:130}}>
+        <label>{sc.voice}</label>
+        <p className="park-hint">{sc.voiceHint}</p>
+        <select
+          className="plain"
+          value={voiceReplyName}
+          onChange={e=>{ setVoiceReplyName(e.target.value); setVoiceReplyNameState(e.target.value); }}
+        >
+          <option value="">{sc.auto}</option>
+          {replyVoiceOptions.map((v,i)=><option key={`${v.name}-${v.lang}-${i}`} value={v.name}>{v.name} · {v.lang}{v.default ? " · Default" : ""}</option>)}
+        </select>
+        {replyVoiceOptions.length===0 && <p className="park-hint" style={{marginTop:6}}>{sc.noVoice}</p>}
+      </div>
+
+      <div className="field">
+        <label>{sc.speed}</label>
+        <select
+          className="plain"
+          value={voiceReplyRate}
+          onChange={e=>{ const next=setVoiceReplyRate(e.target.value); setVoiceReplyRateState(next); }}
+        >
+          <option value="normal">{sc.normal}</option>
+          <option value="slow">{sc.slow}</option>
+        </select>
+        <button
+          type="button"
+          className="btn-secondary"
+          style={{width:"100%",marginTop:10}}
+          onClick={()=>{
+            const samples={en:"Hello. I am your 687 travel assistant.",it:"Ciao. Sono il tuo assistente di viaggio 687.",ja:"こんにちは。687 トラベルアシスタントです。",es:"Hola. Soy tu asistente de viaje 687.",de:"Hallo. Ich bin dein 687 Reiseassistent.",fr:"Bonjour. Je suis votre assistant de voyage 687.",zh:"你好。我是你的 687 旅行助手。",ko:"안녕하세요. 저는 687 여행 도우미입니다."};
+            speak687Text(samples[voiceLanguage] || samples.en);
+          }}
+        >
+          {sc.test}
+        </button>
+      </div>
+
+      <div className="field">
+        <label>{sc.currency}</label>
+        <p className="park-hint">{sc.currencyHint}</p>
+        <select
+          value={getHomeCurrency(data)}
+          disabled={currencyBusy}
+          onChange={e=>changeTripCurrency(e.target.value)}
+          style={{border:"1.5px solid var(--line)",borderRadius:10,background:"#fff",fontFamily:"Sora, sans-serif",fontWeight:800,padding:"10px 12px",minWidth:130}}
+        >
           {HOME_CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
         </select>
-        {currencyBusy && <p className="park-hint" style={{marginTop:6}}>Converting existing trip amounts…</p>}
+        {currencyBusy && <p className="park-hint" style={{marginTop:6}}>{sc.converting}</p>}
       </div>
 
-
       <div className="field">
-        <label>User Guide</label>
+        <label>{sc.guide}</label>
         <button
           className="btn-secondary"
           style={{width:"100%", textAlign:"left", padding:"14px 16px"}}
           onClick={() => openExternalWebsite("/687-italy-user-guide.pdf", {step:9, section:"settings"})}
         >
-          📖 User Guide
+          📖 {sc.guide}
           <span style={{display:"block", fontSize:12, fontWeight:500, opacity:.72, marginTop:4}}>
-            Learn how to plan and use 687 Italy
+            {sc.guideDesc}
           </span>
         </button>
       </div>
 
       <div className="field">
-        <label>Past trips & recovery</label>
-        <p className="park-hint">
-          Starting a new trip never destroys your current holiday. 687 Italy archives it first so you can restore it if you tapped reset by mistake.
-        </p>
+        <label>{sc.past}</label>
+        <p className="park-hint">{sc.pastHint}</p>
         {(!archives || archives.length === 0) ? (
           <div className="choice-card" style={{opacity:.6}}>
             <div className="choice-icon">🗂️</div>
-            <div className="choice-text"><div className="h">No archived trips yet</div><div className="d">Completed or replaced trips will appear here.</div></div>
+            <div className="choice-text"><div className="h">{sc.none}</div><div className="d">{sc.noneDesc}</div></div>
           </div>
         ) : archives.map(item => {
           const label = tripArchiveLabel(item);
@@ -5207,28 +5331,19 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRe
           return (
             <div className="offline-card" key={item.archiveId}>
               <div className="offline-card-h">🇮🇹 {label.route}</div>
-              <div className="offline-card-d">{label.dates || "Saved trip"} · {recovery ? `Recovery available · ${TRIP_ENGINE_RECOVERY_DAYS-ageDays} day${TRIP_ENGINE_RECOVERY_DAYS-ageDays===1?"":"s"} left` : "Archived trip"}</div>
+              <div className="offline-card-d">{label.dates || sc.saved} · {recovery ? `${sc.recovery} · ${TRIP_ENGINE_RECOVERY_DAYS-ageDays} ${sc.daysLeft}` : sc.archived}</div>
               <div className="wallet-doc-actions">
-                <button className="wallet-mini-btn" onClick={() => onRestoreTrip(item.archiveId)}>Restore trip</button>
-                <button className="wallet-mini-btn" onClick={() => printTripItinerary(item.data)}>Save memory PDF</button>
-                <button className="wallet-mini-btn danger" onClick={() => onDeleteArchive(item.archiveId)}>Delete permanently</button>
+                <button className="wallet-mini-btn" onClick={() => onRestoreTrip(item.archiveId)}>{sc.restore}</button>
+                <button className="wallet-mini-btn" onClick={() => printTripItinerary(item.data)}>{sc.memory}</button>
+                <button className="wallet-mini-btn danger" onClick={() => onDeleteArchive(item.archiveId)}>{sc.delete}</button>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div
-        style={{
-          textAlign:"center",
-          fontSize:10.5,
-          opacity:.42,
-          padding:"8px 0 2px",
-          userSelect:"none",
-          cursor:"default"
-        }}
-      >
-        687 Italy · Web/Android baseline · V1.13.6F
+      <div style={{textAlign:"center",fontSize:10.5,opacity:.42,padding:"8px 0 2px",userSelect:"none",cursor:"default"}}>
+        687 Italy · TEST
       </div>
     </div>
   );
@@ -10708,7 +10823,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
-        {section === "settings" && <DashSettings data={data} setData={setData} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
+        {section === "settings" && <DashSettings data={data} setData={setData} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
         {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && <DashNearby data={data} setData={setData} />}
         {section === "drive" && data.wantsCar && <DashDrive data={data} setData={setData} />}
