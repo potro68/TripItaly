@@ -12222,6 +12222,16 @@ function App() {
     if (root) observer.observe(root,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:["placeholder","title","aria-label"]});
     return () => { cancelAnimationFrame(raf); observer.disconnect(); };
   }, [uiLanguage, step, showVoiceSetup]);
+  const globalVoiceGoTo = (section) => {
+    if (!section) return;
+    try { saveUIState({step:9, section}); } catch (_) {}
+    setDashboardSection(section);
+    if (step !== 9) setStep(9);
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("tripitaly-global-voice-go-section", {detail: section}));
+    }, step === 9 ? 0 : 80);
+  };
+
   const setTheme = (nextTheme) => {
     setThemeState(nextTheme);
     try { localStorage.setItem(TRIP_ENGINE_THEME_KEY, nextTheme); } catch(e) {}
@@ -12327,8 +12337,9 @@ function App() {
   if (step === 0) {
     return (
       <div className="app">
-        <ScreenIntro onNext={() => setStep(1)} />
         {showVoiceSetup && <VoiceAssistantFirstRun onDone={()=>setShowVoiceSetup(false)} onLanguageChange={setUiLanguage} />}
+        {!showVoiceSetup && <DashboardVoiceAssistant onGoTo={globalVoiceGoTo} data={data} currentSection={dashboardSection} />}
+        <ScreenIntro onNext={() => setStep(1)} />
       </div>
     );
   }
@@ -12350,13 +12361,15 @@ function App() {
         </div>
         <ScreenDashboard data={data} setData={setData} onStartNewTrip={startNewTrip} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={restoreArchivedTrip} onDeleteArchive={deleteArchivedTrip} onSectionChange={setDashboardSection} />
         {showVoiceSetup && <VoiceAssistantFirstRun onDone={()=>setShowVoiceSetup(false)} onLanguageChange={setUiLanguage} />}
-        {!showVoiceSetup && <DashboardVoiceAssistant onGoTo={(id)=>{setDashboardSection(id);saveUIState({step:9,section:id});window.dispatchEvent(new CustomEvent("tripitaly-open-section",{detail:id}));}} data={data} currentSection={dashboardSection} onUiLanguageChange={setUiLanguage} />}
+        {!showVoiceSetup && <DashboardVoiceAssistant onGoTo={globalVoiceGoTo} data={data} currentSection={dashboardSection} />}
       </div>
     );
   }
 
   return (
     <div className="app">
+      {showVoiceSetup && <VoiceAssistantFirstRun onDone={()=>setShowVoiceSetup(false)} onLanguageChange={setUiLanguage} />}
+      {!showVoiceSetup && <DashboardVoiceAssistant onGoTo={globalVoiceGoTo} data={data} currentSection={dashboardSection} />}
       <div className="topbar">
         <div className="brand">687 <span className="accent">Italy</span></div>
         <div className="progress-track">
