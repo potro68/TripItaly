@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 687 Italy TEST — STEP 1: Settings parity with latest Japan -->
+<!-- 687 Italy TEST — Full-app language localization ported from latest Japan -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>687 Italy</title>
@@ -5111,15 +5111,13 @@ const VOICE_ASSISTANT_LANGUAGE_KEY = "tripitaly_voice_assistant_language";
 const VOICE_ASSISTANT_LANGUAGES = [
   {code:"en", label:"English", recognition:"en-US", speech:"en-US"},
   {code:"it", label:"Italiano", recognition:"it-IT", speech:"it-IT"},
-  {code:"ja", label:"日本語", recognition:"ja-JP", speech:"ja-JP"},
+  {code:"ja", label:"イタリア語", recognition:"ja-JP", speech:"ja-JP"},
   {code:"es", label:"Español", recognition:"es-ES", speech:"es-ES"},
   {code:"de", label:"Deutsch", recognition:"de-DE", speech:"de-DE"},
   {code:"fr", label:"Français", recognition:"fr-FR", speech:"fr-FR"},
   {code:"zh", label:"简体中文", recognition:"zh-CN", speech:"zh-CN"},
   {code:"ko", label:"한국어", recognition:"ko-KR", speech:"ko-KR"},
 ];
-const PRIMARY_APP_LANGUAGES = VOICE_ASSISTANT_LANGUAGES;
-
 function getVoiceAssistantLanguage(){
   try {
     const saved = localStorage.getItem(VOICE_ASSISTANT_LANGUAGE_KEY) || "en";
@@ -5130,6 +5128,8 @@ function setVoiceAssistantLanguage(code){
   const safe = VOICE_ASSISTANT_LANGUAGES.some(x=>x.code===code) ? code : "en";
   try {
     localStorage.setItem(VOICE_ASSISTANT_LANGUAGE_KEY, safe);
+    // Voice Assistant is a navigation/control feature, not Translate:
+    // 687 answers in the same language the traveler uses for commands.
     localStorage.setItem("tripitaly_voice_reply_language", safe);
   } catch(_) {}
   try { window.dispatchEvent(new CustomEvent("tripitaly-voice-language-changed", {detail:safe})); } catch(_) {}
@@ -5140,8 +5140,15 @@ function voiceLanguageConfig(code){
   return VOICE_ASSISTANT_LANGUAGES.find(x=>x.code===code) || VOICE_ASSISTANT_LANGUAGES[0];
 }
 
+const VOICE_REPLY_LANGUAGE_KEY = "tripitaly_voice_reply_language";
 const VOICE_REPLY_NAME_KEY = "tripitaly_voice_reply_name";
 const VOICE_REPLY_RATE_KEY = "tripitaly_voice_reply_rate";
+function getVoiceReplyLanguage(){
+  return getVoiceAssistantLanguage();
+}
+function setVoiceReplyLanguage(code){
+  return setVoiceAssistantLanguage(code);
+}
 function getVoiceReplyName(){ try { return localStorage.getItem(VOICE_REPLY_NAME_KEY) || ""; } catch(_) { return ""; } }
 function setVoiceReplyName(name){
   try { localStorage.setItem(VOICE_REPLY_NAME_KEY, String(name||"")); } catch(_) {}
@@ -5170,12 +5177,12 @@ function pickSpeechVoice(languageCode, preferredName){
     || voices.find(v => String(v.lang||"").toLowerCase().startsWith(languageCode))
     || null;
 }
-function speak687Text(value){
-  if (!value || !("speechSynthesis" in window)) return false;
+function speak687Text(text){
+  if (!text || !("speechSynthesis" in window)) return false;
   try {
-    const lang = getVoiceAssistantLanguage();
+    const lang = getVoiceReplyLanguage();
     const cfg = voiceLanguageConfig(lang);
-    const u = new SpeechSynthesisUtterance(String(value));
+    const u = new SpeechSynthesisUtterance(text);
     u.lang = cfg.speech;
     u.rate = getVoiceReplyRate() === "slow" ? 0.82 : 0.96;
     const voice = pickSpeechVoice(lang, getVoiceReplyName());
@@ -5186,16 +5193,39 @@ function speak687Text(value){
   } catch(_) { return false; }
 }
 
+
 const SETTINGS_LOCALIZED = {
   en:{langLabel:"App & Voice Assistant language",langHint:"One language controls the 687 interface, Voice Assistant commands and spoken replies. Translate remains separate.",voice:"687 voice",voiceHint:"Voices come from your phone or browser. Available names can differ between iPhone, Android and desktop.",auto:"Automatic · best available",noVoice:"No selectable voice is currently exposed by this device. 687 will use the system fallback.",speed:"Speech speed",normal:"Normal",slow:"Slow",test:"🔊 Test 687 voice",currency:"Home currency",currencyHint:"Your trip budget, paid bookings and logged expenses use this currency. Italy prices remain in EUR.",converting:"Converting existing trip amounts…",guide:"User Guide",guideDesc:"Learn how to plan and use 687 Italy",past:"Past trips & recovery",pastHint:"Starting a new trip never destroys your current holiday. 687 Italy archives it first so you can restore it if you tapped reset by mistake.",none:"No archived trips yet",noneDesc:"Completed or replaced trips will appear here.",saved:"Saved trip",recovery:"Recovery available",daysLeft:"days left",archived:"Archived trip",restore:"Restore trip",memory:"Save memory PDF",delete:"Delete permanently",changeCurrency:"Change home currency",rateUnavailable:"The reference exchange rate is unavailable right now. Your trip currency was not changed."},
   it:{langLabel:"Lingua app e Voice Assistant",langHint:"Una sola lingua controlla l'interfaccia 687, i comandi vocali e le risposte parlate. Traduci rimane separato.",voice:"Voce 687",voiceHint:"Le voci provengono dal telefono o dal browser. I nomi disponibili possono cambiare tra iPhone, Android e desktop.",auto:"Automatica · migliore disponibile",noVoice:"Nessuna voce selezionabile è disponibile su questo dispositivo. 687 userà la voce di sistema.",speed:"Velocità della voce",normal:"Normale",slow:"Lenta",test:"🔊 Prova la voce 687",currency:"Valuta principale",currencyHint:"Il budget del viaggio, le prenotazioni pagate e le spese registrate usano questa valuta. I prezzi in Italia restano in EUR.",converting:"Conversione degli importi del viaggio…",guide:"Guida utente",guideDesc:"Scopri come pianificare e usare 687 Italy",past:"Viaggi passati e recupero",pastHint:"Iniziare un nuovo viaggio non elimina quello attuale. 687 Italy lo archivia prima, così puoi ripristinarlo se hai premuto reset per errore.",none:"Nessun viaggio archiviato",noneDesc:"I viaggi completati o sostituiti appariranno qui.",saved:"Viaggio salvato",recovery:"Recupero disponibile",daysLeft:"giorni rimasti",archived:"Viaggio archiviato",restore:"Ripristina viaggio",memory:"Salva PDF ricordo",delete:"Elimina definitivamente",changeCurrency:"Cambiare la valuta principale",rateUnavailable:"Il tasso di cambio di riferimento non è disponibile. La valuta del viaggio non è stata modificata."},
   ja:{langLabel:"アプリと音声アシスタントの言語",langHint:"1つの言語で687の画面、音声コマンド、音声応答を統一します。翻訳機能は別です。",voice:"687の声",voiceHint:"音声は端末またはブラウザのものを使用します。利用できる声はiPhone、Android、デスクトップで異なります。",auto:"自動 · 最適な音声",noVoice:"この端末では選択できる音声がありません。687はシステム音声を使用します。",speed:"話す速度",normal:"標準",slow:"ゆっくり",test:"🔊 687の声をテスト",currency:"基準通貨",currencyHint:"旅行予算、支払い済み予約、記録した支出はこの通貨を使用します。イタリアの価格はEURのままです。",converting:"旅行金額を換算中…",guide:"ユーザーガイド",guideDesc:"687 Italyの計画方法と使い方を見る",past:"過去の旅行と復元",pastHint:"新しい旅行を始めても現在の旅行は削除されません。687 Italyが先に保存するため、誤ってリセットしても復元できます。",none:"保存された旅行はまだありません",noneDesc:"完了または置き換えた旅行がここに表示されます。",saved:"保存済みの旅行",recovery:"復元可能",daysLeft:"日残り",archived:"保存済み旅行",restore:"旅行を復元",memory:"思い出PDFを保存",delete:"完全に削除",changeCurrency:"基準通貨を変更",rateUnavailable:"参照為替レートを取得できません。旅行通貨は変更されませんでした。"},
   es:{langLabel:"Idioma de la app y Voice Assistant",langHint:"Un solo idioma controla la interfaz de 687, los comandos de voz y las respuestas habladas. Traducir sigue separado.",voice:"Voz de 687",voiceHint:"Las voces provienen de tu teléfono o navegador. Los nombres disponibles pueden variar entre iPhone, Android y ordenador.",auto:"Automática · mejor disponible",noVoice:"No hay una voz seleccionable disponible en este dispositivo. 687 usará la voz del sistema.",speed:"Velocidad de voz",normal:"Normal",slow:"Lenta",test:"🔊 Probar voz de 687",currency:"Moneda principal",currencyHint:"El presupuesto, las reservas pagadas y los gastos registrados usan esta moneda. Los precios de Italia permanecen en EUR.",converting:"Convirtiendo importes del viaje…",guide:"Guía de usuario",guideDesc:"Aprende a planificar y usar 687 Italy",past:"Viajes anteriores y recuperación",pastHint:"Empezar un nuevo viaje no destruye el actual. 687 Italy lo archiva primero para que puedas restaurarlo si pulsaste reset por error.",none:"Aún no hay viajes archivados",noneDesc:"Los viajes completados o sustituidos aparecerán aquí.",saved:"Viaje guardado",recovery:"Recuperación disponible",daysLeft:"días restantes",archived:"Viaje archivado",restore:"Restaurar viaje",memory:"Guardar PDF de recuerdo",delete:"Eliminar definitivamente",changeCurrency:"Cambiar moneda principal",rateUnavailable:"El tipo de cambio de referencia no está disponible. La moneda del viaje no se ha cambiado."},
-  de:{langLabel:"App- & Sprachassistent-Sprache",langHint:"Eine Sprache steuert die 687-Oberfläche, Sprachbefehle und gesprochenen Antworten. Übersetzen bleibt separat.",voice:"687 Stimme",voiceHint:"Die Stimmen stammen von deinem Telefon oder Browser. Verfügbare Namen können sich auf iPhone, Android und Desktop unterscheiden.",auto:"Automatisch · beste verfügbare",noVoice:"Auf diesem Gerät ist keine auswählbare Stimme verfügbar. 687 verwendet die Systemstimme.",speed:"Sprechgeschwindigkeit",normal:"Normal",slow:"Langsam",test:"🔊 687 Stimme testen",currency:"Hauptwährung",currencyHint:"Reisebudget, bezahlte Buchungen und erfasste Ausgaben verwenden diese Währung. Preise in Italien bleiben in EUR.",converting:"Reisebeträge werden umgerechnet…",guide:"Benutzerhandbuch",guideDesc:"So planst und nutzt du 687 Italy",past:"Frühere Reisen & Wiederherstellung",pastHint:"Eine neue Reise löscht die aktuelle nicht. 687 Italy archiviert sie zuerst, damit du sie nach einem versehentlichen Reset wiederherstellen kannst.",none:"Noch keine archivierten Reisen",noneDesc:"Abgeschlossene oder ersetzte Reisen erscheinen hier.",saved:"Gespeicherte Reise",recovery:"Wiederherstellung verfügbar",daysLeft:"Tage übrig",archived:"Archivierte Reise",restore:"Reise wiederherstellen",memory:"Erinnerungs-PDF speichern",delete:"Dauerhaft löschen",changeCurrency:"Hauptwährung ändern",rateUnavailable:"Der Referenzwechselkurs ist derzeit nicht verfügbar. Die Reisewährung wurde nicht geändert."},
-  fr:{langLabel:"Langue de l'app et du Voice Assistant",langHint:"Une seule langue contrôle l'interface 687, les commandes vocales et les réponses parlées. Traduire reste séparé.",voice:"Voix 687",voiceHint:"Les voix proviennent de votre téléphone ou navigateur. Les noms disponibles peuvent varier entre iPhone, Android et ordinateur.",auto:"Automatique · meilleure disponible",noVoice:"Aucune voix sélectionnable n'est disponible sur cet appareil. 687 utilisera la voix système.",speed:"Vitesse de parole",normal:"Normale",slow:"Lente",test:"🔊 Tester la voix 687",currency:"Devise principale",currencyHint:"Le budget du voyage, les réservations payées et les dépenses enregistrées utilisent cette devise. Les prix en Italie restent en EUR.",converting:"Conversion des montants du voyage…",guide:"Guide utilisateur",guideDesc:"Découvrez comment planifier et utiliser 687 Italy",past:"Voyages passés et récupération",pastHint:"Commencer un nouveau voyage ne supprime jamais le voyage actuel. 687 Italy l'archive d'abord afin de pouvoir le restaurer après un reset accidentel.",none:"Aucun voyage archivé",noneDesc:"Les voyages terminés ou remplacés apparaîtront ici.",saved:"Voyage enregistré",recovery:"Récupération disponible",daysLeft:"jours restants",archived:"Voyage archivé",restore:"Restaurer le voyage",memory:"Enregistrer le PDF souvenir",delete:"Supprimer définitivement",changeCurrency:"Changer la devise principale",rateUnavailable:"Le taux de change de référence n'est pas disponible. La devise du voyage n'a pas été modifiée."},
-  zh:{langLabel:"应用与语音助手语言",langHint:"一种语言同时控制 687 界面、语音指令和语音回复。翻译功能保持独立。",voice:"687 语音",voiceHint:"语音来自你的手机或浏览器。iPhone、Android 和桌面设备可用的语音名称可能不同。",auto:"自动 · 最佳可用语音",noVoice:"此设备当前没有可选择的语音。687 将使用系统默认语音。",speed:"语速",normal:"正常",slow:"慢速",test:"🔊 测试 687 语音",currency:"主要货币",currencyHint:"旅行预算、已付款预订和记录的支出使用此货币。意大利当地价格仍以 EUR 显示。",converting:"正在转换旅行金额…",guide:"用户指南",guideDesc:"了解如何规划和使用 687 Italy",past:"过去的旅行与恢复",pastHint:"开始新旅行不会删除当前旅行。687 Italy 会先将其存档，以便误操作后恢复。",none:"暂无已存档旅行",noneDesc:"已完成或被替换的旅行会显示在这里。",saved:"已保存的旅行",recovery:"可恢复",daysLeft:"天剩余",archived:"已存档旅行",restore:"恢复旅行",memory:"保存旅行回忆 PDF",delete:"永久删除",changeCurrency:"更改主要货币",rateUnavailable:"当前无法获取参考汇率。旅行货币未更改。"},
-  ko:{langLabel:"앱 및 Voice Assistant 언어",langHint:"하나의 언어가 687 인터페이스, 음성 명령, 음성 응답을 함께 제어합니다. 번역 기능은 별도입니다.",voice:"687 음성",voiceHint:"음성은 휴대폰 또는 브라우저에서 제공됩니다. iPhone, Android, 데스크톱에 따라 사용 가능한 음성이 다를 수 있습니다.",auto:"자동 · 사용 가능한 최적 음성",noVoice:"이 기기에서는 선택 가능한 음성이 없습니다. 687은 시스템 기본 음성을 사용합니다.",speed:"말하기 속도",normal:"보통",slow:"느리게",test:"🔊 687 음성 테스트",currency:"기준 통화",currencyHint:"여행 예산, 결제한 예약, 기록한 지출은 이 통화를 사용합니다. 이탈리아 현지 가격은 EUR로 유지됩니다.",converting:"여행 금액 환산 중…",guide:"사용자 가이드",guideDesc:"687 Italy 계획 및 사용 방법 알아보기",past:"지난 여행 및 복구",pastHint:"새 여행을 시작해도 현재 여행은 삭제되지 않습니다. 687 Italy가 먼저 보관하므로 실수로 초기화해도 복구할 수 있습니다.",none:"보관된 여행이 없습니다",noneDesc:"완료되거나 교체된 여행이 여기에 표시됩니다.",saved:"저장된 여행",recovery:"복구 가능",daysLeft:"일 남음",archived:"보관된 여행",restore:"여행 복원",memory:"추억 PDF 저장",delete:"영구 삭제",changeCurrency:"기준 통화 변경",rateUnavailable:"현재 기준 환율을 사용할 수 없습니다. 여행 통화가 변경되지 않았습니다."}
+  de:{langLabel:"App- & Sprachassistent-Sprache",langHint:"Eine Sprache steuert die 687-Oberfläche, Sprachbefehle und gesprochenen Antworten. Übersetzen bleibt separat.",voice:"687 Stimme",voiceHint:"Die Stimmen stammen von deinem Telefon oder Browser. Verfügbare Namen können sich auf iPhone, Android und Desktop unterscheiden.",auto:"Automatisch · beste verfügbare",noVoice:"Auf diesem Gerät ist keine auswählbare Stimme verfügbar. 687 verwendet die Systemstimme.",speed:"Sprechgeschwindigkeit",normal:"Normal",slow:"Langsam",test:"🔊 687 Stimme testen",currency:"Hauptwährung",currencyHint:"Reisebudget, bezahlte Buchungen und erfasste Ausgaben verwenden diese Währung. Preise in Italy bleiben in EUR.",converting:"Reisebeträge werden umgerechnet…",guide:"Benutzerhandbuch",guideDesc:"So planst und nutzt du 687 Italy",past:"Frühere Reisen & Wiederherstellung",pastHint:"Eine neue Reise löscht die aktuelle nicht. 687 Italy archiviert sie zuerst, damit du sie nach einem versehentlichen Reset wiederherstellen kannst.",none:"Noch keine archivierten Reisen",noneDesc:"Abgeschlossene oder ersetzte Reisen erscheinen hier.",saved:"Gespeicherte Reise",recovery:"Wiederherstellung verfügbar",daysLeft:"Tage übrig",archived:"Archivierte Reise",restore:"Reise wiederherstellen",memory:"Erinnerungs-PDF speichern",delete:"Dauerhaft löschen",changeCurrency:"Hauptwährung ändern",rateUnavailable:"Der Referenzwechselkurs ist derzeit nicht verfügbar. Die Reisewährung wurde nicht geändert."},
+  fr:{langLabel:"Langue de l'app et du Voice Assistant",langHint:"Une seule langue contrôle l'interface 687, les commandes vocales et les réponses parlées. Traduire reste séparé.",voice:"Voix 687",voiceHint:"Les voix proviennent de votre téléphone ou navigateur. Les noms disponibles peuvent varier entre iPhone, Android et ordinateur.",auto:"Automatique · meilleure disponible",noVoice:"Aucune voix sélectionnable n'est disponible sur cet appareil. 687 utilisera la voix système.",speed:"Vitesse de parole",normal:"Normale",slow:"Lente",test:"🔊 Tester la voix 687",currency:"Devise principale",currencyHint:"Le budget du voyage, les réservations payées et les dépenses enregistrées utilisent cette devise. Les prix au Italie restent en EUR.",converting:"Conversion des montants du voyage…",guide:"Guide utilisateur",guideDesc:"Découvrez comment planifier et utiliser 687 Italy",past:"Voyages passés et récupération",pastHint:"Commencer un nouveau voyage ne supprime jamais le voyage actuel. 687 Italy l'archive d'abord afin de pouvoir le restaurer après un reset accidentel.",none:"Aucun voyage archivé",noneDesc:"Les voyages terminés ou remplacés apparaîtront ici.",saved:"Voyage enregistré",recovery:"Récupération disponible",daysLeft:"jours restants",archived:"Voyage archivé",restore:"Restaurer le voyage",memory:"Enregistrer le PDF souvenir",delete:"Supprimer définitivement",changeCurrency:"Changer la devise principale",rateUnavailable:"Le taux de change de référence n'est pas disponible. La devise du voyage n'a pas été modifiée."}
 };
+SETTINGS_LOCALIZED.zh={langLabel:"应用与语音助手语言",langHint:"一种语言同时控制 687 界面、语音指令和语音回复。翻译功能保持独立。",voice:"687 语音",voiceHint:"语音来自你的手机或浏览器。iPhone、Android 和桌面设备可用的语音名称可能不同。",auto:"自动 · 最佳可用语音",noVoice:"此设备当前没有可选择的语音。687 将使用系统默认语音。",speed:"语速",normal:"正常",slow:"慢速",test:"🔊 测试 687 语音",currency:"主要货币",currencyHint:"旅行预算、已付款预订和记录的支出使用此货币。イタリア当地价格仍以 EUR 显示。",converting:"正在转换旅行金额…",guide:"用户指南",guideDesc:"了解如何规划和使用 687 Italy",past:"过去的旅行与恢复",pastHint:"开始新旅行不会删除当前旅行。687 Italy 会先将其存档，以便误操作后恢复。",none:"暂无已存档旅行",noneDesc:"已完成或被替换的旅行会显示在这里。",saved:"已保存的旅行",recovery:"可恢复",daysLeft:"天剩余",archived:"已存档旅行",restore:"恢复旅行",memory:"保存旅行回忆 PDF",delete:"永久删除",changeCurrency:"更改主要货币",rateUnavailable:"当前无法获取参考汇率。旅行货币未更改。"};
+SETTINGS_LOCALIZED.ko={langLabel:"앱 및 Voice Assistant 언어",langHint:"하나의 언어가 687 인터페이스, 음성 명령, 음성 응답을 함께 제어합니다. 번역 기능은 별도입니다.",voice:"687 음성",voiceHint:"음성은 휴대폰 또는 브라우저에서 제공됩니다. iPhone, Android, 데스크톱에 따라 사용 가능한 음성이 다를 수 있습니다.",auto:"자동 · 사용 가능한 최적 음성",noVoice:"이 기기에서는 선택 가능한 음성이 없습니다. 687은 시스템 기본 음성을 사용합니다.",speed:"말하기 속도",normal:"보통",slow:"느리게",test:"🔊 687 음성 테스트",currency:"기준 통화",currencyHint:"여행 예산, 결제한 예약, 기록한 지출은 이 통화를 사용합니다. 이탈리아 현지 가격은 EUR로 유지됩니다.",converting:"여행 금액 환산 중…",guide:"사용자 가이드",guideDesc:"687 Italy 계획 및 사용 방법 알아보기",past:"지난 여행 및 복구",pastHint:"새 여행을 시작해도 현재 여행은 삭제되지 않습니다. 687 Italy이 먼저 보관하므로 실수로 초기화해도 복구할 수 있습니다.",none:"보관된 여행이 없습니다",noneDesc:"완료되거나 교체된 여행이 여기에 표시됩니다.",saved:"저장된 여행",recovery:"복구 가능",daysLeft:"일 남음",archived:"보관된 여행",restore:"여행 복원",memory:"추억 PDF 저장",delete:"영구 삭제",changeCurrency:"기준 통화 변경",rateUnavailable:"현재 기준 환율을 사용할 수 없습니다. 여행 통화가 변경되지 않았습니다."};
+
+const TOOLS_LOCALIZED = {
+ en:{currency:"Italy currency",euro:"Italyese euro · EUR",euroHint:"Enter a price in euro to estimate it in your home currency.",loading:"Loading reference exchange rate…",unavailable:"Reference exchange rate unavailable right now.",enter:"Enter an amount in Italyese euro.",ref:"Reference conversion only. Card issuers, banks and cash exchanges may use different rates or fees.",emergency:"Emergency numbers",police:"Police in Italy",ambulance:"Ambulance / Fire in Italy",practical:"Italy practical",station:"Stations can be large",stationD:"Allow extra time for transfers in major stations and follow line colors, platform numbers and exit numbers.",cash:"Keep some cash",cashD:"Cards are common, but cash is still useful for smaller venues, temples, rural areas and some machines.",bins:"Public bins can be limited",binsD:"Carry a small bag for rubbish until you find the correct disposal point.",privacy:"Privacy & support",privacyL:"Privacy",terms:"Terms",support:"Support",local:"Local data",localD:"687 Italy stores your trip and Travel Wallet documents on this device so you can return to them later.",delete:"Delete trip & local data"},
+ it:{currency:"Valuta in Italia",euro:"Euro italiano · EUR",euroHint:"Inserisci un prezzo in euro per stimarlo nella tua valuta principale.",loading:"Caricamento del tasso di cambio…",unavailable:"Tasso di cambio di riferimento non disponibile.",enter:"Inserisci un importo in euro italiani.",ref:"Conversione indicativa. Carte, banche e cambiavalute possono applicare tassi o commissioni diversi.",emergency:"Numeri di emergenza",police:"Polizia in Italia",ambulance:"Ambulanza / Vigili del fuoco in Italia",practical:"Consigli pratici per il Italia",station:"Le stazioni possono essere molto grandi",stationD:"Calcola tempo extra per i cambi nelle grandi stazioni e segui colori delle linee, numeri dei binari e delle uscite.",cash:"Tieni un po' di contanti",cashD:"Le carte sono diffuse, ma i contanti sono ancora utili in piccoli locali, templi, zone rurali e alcuni distributori.",bins:"I cestini pubblici possono essere pochi",binsD:"Porta con te un piccolo sacchetto per i rifiuti finché non trovi il punto corretto di smaltimento.",privacy:"Privacy e supporto",privacyL:"Privacy",terms:"Termini",support:"Supporto",local:"Dati locali",localD:"687 Italy salva su questo dispositivo il viaggio e i documenti del Travel Wallet, così puoi ritrovarli in seguito.",delete:"Elimina viaggio e dati locali"},
+ ja:{currency:"イタリアの通貨",euro:"ユーロ · EUR",euroHint:"ユーロの金額を入力すると基準通貨で概算できます。",loading:"参考為替レートを読み込み中…",unavailable:"参考為替レートは現在利用できません。",enter:"ユーロの金額を入力してください。",ref:"参考換算です。カード会社、銀行、両替所では異なるレートや手数料が適用される場合があります。",emergency:"緊急電話番号",police:"イタリアの警察",ambulance:"イタリアの救急 / 消防",practical:"イタリアで役立つ情報",station:"駅はとても広いことがあります",stationD:"大きな駅での乗り換えには余裕を持ち、路線色、ホーム番号、出口番号を確認してください。",cash:"現金も少し持つ",cashD:"カードは広く使えますが、小さな店、寺院、地方、一部の機械では現金が役立ちます。",bins:"公共のゴミ箱は少ないことがあります",binsD:"適切なゴミ捨て場所が見つかるまで、小さな袋にゴミを入れて持ち歩くと便利です。",privacy:"プライバシーとサポート",privacyL:"プライバシー",terms:"利用規約",support:"サポート",local:"ローカルデータ",localD:"687 Italyは旅行情報とTravel Walletの書類をこの端末に保存し、後から再び利用できるようにします。",delete:"旅行とローカルデータを削除"},
+ es:{currency:"Moneda de Italia",euro:"Euro japonés · EUR",euroHint:"Introduce un precio en euroes para estimarlo en tu moneda principal.",loading:"Cargando tipo de cambio de referencia…",unavailable:"El tipo de cambio de referencia no está disponible.",enter:"Introduce una cantidad en euroes japoneses.",ref:"Conversión orientativa. Tarjetas, bancos y casas de cambio pueden usar tipos o comisiones diferentes.",emergency:"Números de emergencia",police:"Policía en Italia",ambulance:"Ambulancia / Bomberos en Italia",practical:"Consejos prácticos de Italia",station:"Las estaciones pueden ser grandes",stationD:"Deja tiempo extra para los transbordos en estaciones grandes y sigue colores de línea, números de andén y salidas.",cash:"Lleva algo de efectivo",cashD:"Las tarjetas son habituales, pero el efectivo sigue siendo útil en locales pequeños, templos, zonas rurales y algunas máquinas.",bins:"Puede haber pocos contenedores públicos",binsD:"Lleva una pequeña bolsa para la basura hasta encontrar el punto de eliminación adecuado.",privacy:"Privacidad y soporte",privacyL:"Privacidad",terms:"Términos",support:"Soporte",local:"Datos locales",localD:"687 Italy guarda tu viaje y los documentos del Travel Wallet en este dispositivo para que puedas volver a ellos más tarde.",delete:"Eliminar viaje y datos locales"},
+ de:{currency:"Währung in Italy",euro:"Italyischer Euro · EUR",euroHint:"Gib einen Preis in Euro ein, um ihn in deiner Hauptwährung zu schätzen.",loading:"Referenzwechselkurs wird geladen…",unavailable:"Referenzwechselkurs ist derzeit nicht verfügbar.",enter:"Gib einen Betrag in japanischen Euro ein.",ref:"Nur Referenzumrechnung. Kartenanbieter, Banken und Wechselstuben können andere Kurse oder Gebühren verwenden.",emergency:"Notrufnummern",police:"Polizei in Italy",ambulance:"Rettungsdienst / Feuerwehr in Italy",practical:"Praktisches für Italy",station:"Bahnhöfe können sehr groß sein",stationD:"Plane bei Umstiegen in großen Bahnhöfen zusätzliche Zeit ein und beachte Linienfarben, Gleis- und Ausgangsnummern.",cash:"Etwas Bargeld mitnehmen",cashD:"Karten sind verbreitet, aber Bargeld ist bei kleineren Orten, Tempeln, in ländlichen Gebieten und an manchen Automaten nützlich.",bins:"Öffentliche Mülleimer können selten sein",binsD:"Nimm einen kleinen Müllbeutel mit, bis du eine passende Entsorgungsstelle findest.",privacy:"Datenschutz & Support",privacyL:"Datenschutz",terms:"Bedingungen",support:"Support",local:"Lokale Daten",localD:"687 Italy speichert deine Reise und Travel-Wallet-Dokumente auf diesem Gerät, damit du später darauf zurückgreifen kannst.",delete:"Reise & lokale Daten löschen"},
+ fr:{currency:"Monnaie au Italie",euro:"Euro japonais · EUR",euroHint:"Entrez un prix en euros pour l'estimer dans votre devise principale.",loading:"Chargement du taux de change de référence…",unavailable:"Taux de change de référence indisponible.",enter:"Entrez un montant en euros japonais.",ref:"Conversion indicative uniquement. Les cartes, banques et bureaux de change peuvent appliquer des taux ou frais différents.",emergency:"Numéros d'urgence",police:"Police au Italie",ambulance:"Ambulance / Pompiers au Italie",practical:"Conseils pratiques au Italie",station:"Les gares peuvent être très grandes",stationD:"Prévoyez du temps supplémentaire pour les correspondances dans les grandes gares et suivez les couleurs des lignes, numéros de quai et de sortie.",cash:"Gardez un peu d'espèces",cashD:"Les cartes sont courantes, mais les espèces restent utiles dans les petits établissements, temples, zones rurales et certaines machines.",bins:"Les poubelles publiques peuvent être rares",binsD:"Gardez un petit sac pour vos déchets jusqu'à trouver le bon point de collecte.",privacy:"Confidentialité et assistance",privacyL:"Confidentialité",terms:"Conditions",support:"Assistance",local:"Données locales",localD:"687 Italy conserve votre voyage et les documents du Travel Wallet sur cet appareil afin que vous puissiez les retrouver plus tard.",delete:"Supprimer le voyage et les données locales"}
+};
+TOOLS_LOCALIZED.zh={currency:"イタリア货币",euro:"欧元 · EUR",euroHint:"输入欧元价格以估算为你的主要货币。",loading:"正在加载参考汇率…",unavailable:"当前无法获取参考汇率。",enter:"请输入欧元金额。",ref:"仅供参考。发卡机构、银行和兑换点可能使用不同汇率或收取费用。",emergency:"紧急电话号码",police:"イタリア警察",ambulance:"イタリア急救 / 消防",practical:"イタリア实用信息",station:"车站可能很大",stationD:"在大型车站换乘时预留更多时间，并留意线路颜色、站台编号和出口编号。",cash:"随身带一些现金",cashD:"银行卡很普遍，但在小型店铺、寺庙、乡村地区和部分机器上现金仍然有用。",bins:"公共垃圾桶可能较少",binsD:"随身带一个小垃圾袋，直到找到合适的垃圾处理点。",privacy:"隐私与支持",privacyL:"隐私",terms:"条款",support:"支持",local:"本地数据",localD:"687 Italy 会将你的旅行和 Travel Wallet 文件保存在此设备上，方便以后继续使用。",delete:"删除旅行和本地数据"};
+TOOLS_LOCALIZED.ko={currency:"이탈리아 통화",euro:"유로 · EUR",euroHint:"유로 금액을 입력하면 기준 통화로 예상 금액을 확인할 수 있습니다.",loading:"기준 환율 불러오는 중…",unavailable:"현재 기준 환율을 사용할 수 없습니다.",enter:"유로화 금액을 입력하세요.",ref:"참고용 환산입니다. 카드사, 은행, 환전소는 다른 환율이나 수수료를 적용할 수 있습니다.",emergency:"긴급 전화번호",police:"이탈리아 경찰",ambulance:"이탈리아 구급 / 소방",practical:"이탈리아 여행 실용 정보",station:"역이 매우 클 수 있습니다",stationD:"대형 역에서 환승할 때는 여유 시간을 두고 노선 색상, 승강장 번호, 출구 번호를 확인하세요.",cash:"현금을 조금 준비하세요",cashD:"카드 사용이 일반적이지만 작은 가게, 사찰, 지방 지역, 일부 기기에서는 현금이 유용합니다.",bins:"공공 쓰레기통이 적을 수 있습니다",binsD:"적절한 쓰레기통을 찾을 때까지 작은 봉투에 쓰레기를 보관하세요.",privacy:"개인정보 및 지원",privacyL:"개인정보",terms:"이용약관",support:"지원",local:"로컬 데이터",localD:"687 Italy은 여행 정보와 Travel Wallet 문서를 이 기기에 저장해 나중에 다시 사용할 수 있게 합니다.",delete:"여행 및 로컬 데이터 삭제"};
+
+const IDAY_LOCALIZED = {
+ en:{today:"Today",now:"NOW",budget:"Budget",prevent:"Prevent",guardian:"Guardian",signals:"Signals",rescue:"Rescue",nowTitle:"NOW · What can I do now?",guardianTitle:"Trip Guardian",signalsTitle:"Live Signals",subNow:"What makes sense right now, plus Smart Day when the plan needs to adapt.",subBudget:"What is safe to spend today, using itinerary expenses and the remaining trip budget.",subPrevent:"Weather and live problems checked against today's plan before they become a problem.",subGuardian:"Notifications for important changes that can affect your day.",subSignals:"Report and see what is happening at your stops or on the way between them.",subRescue:"Fast help when something has already gone wrong.",how:"How Intelligent Day works",center:"Your plan stays at the center",nowD:"Uses GPS, time, weather, nearby places and Smart Day to tell you what makes sense now.",budgetD:"Reads itinerary expenses, shows what is safe today and helps NOW favor affordable verified-price choices when available.",preventD:"Checks weather and relevant signals against your stops before they cause a problem.",guardianD:"Notifies you when an important change may affect the day, even before you open NOW.",signalsD:"Shows and reports problems at your planned stops or along the route between them.",rescueD:"Helps when a train, weather, passport, medical or other problem has already happened.",shared:"Itinerary and Nearby write to the same plan you see above. Intelligent Day never creates a second itinerary.",spent:"Spent today",left:"Left today",safe:"Safe today",day:"Day",openIt:"Open today's itinerary",budgetSet:"Set your trip budget first; Intelligent Day reads daily expenses from your itinerary.",budgetLow:"Today's budget is getting low. NOW will favor lower-cost options when it builds suggestions.",using:"You're using",target:"of today's original target.",over:"over the original daily target. Intelligent Day will favor lower-cost options.",budgetIntel:"687 Budget Intelligence",know:"Know what is safe to spend today",uses:"Uses the trip budget plus the expenses entered in your itinerary. No second budget is created.",originalLeft:"Original target left",originalTarget:"Original daily target",safeSpend:"Safe to spend today",recalc:"Recalculated from remaining trip money",tripRemaining:"Trip money remaining",including:"including today",oneBudget:"One shared budget",source:"Your itinerary expenses are the source",sourceD:"Add or edit today's expenses in Itinerary. Intelligent Day reads them automatically.",edit:"Add / edit today's expenses"},
+ it:{today:"Oggi",now:"ADESSO",budget:"Budget",prevent:"Prevenzione",guardian:"Guardian",signals:"Segnali",rescue:"Soccorso",nowTitle:"ADESSO · Cosa posso fare ora?",guardianTitle:"Guardian del viaggio",signalsTitle:"Segnali live",subNow:"Cosa ha senso fare adesso, con Smart Day quando il piano deve adattarsi.",subBudget:"Quanto puoi spendere in sicurezza oggi, usando le spese dell'itinerario e il budget restante.",subPrevent:"Meteo e problemi live controllati rispetto al piano di oggi prima che diventino un problema.",subGuardian:"Notifiche per cambiamenti importanti che possono influenzare la tua giornata.",subSignals:"Segnala e guarda cosa succede nelle tue tappe o lungo il percorso.",subRescue:"Aiuto rapido quando qualcosa è già andato storto.",how:"Come funziona Giornata intelligente",center:"Il tuo piano resta al centro",nowD:"Usa GPS, ora, meteo, luoghi vicini e Smart Day per dirti cosa conviene fare adesso.",budgetD:"Legge le spese dell'itinerario, mostra quanto è sicuro spendere oggi e aiuta ADESSO a preferire opzioni convenienti con prezzo verificato quando disponibili.",preventD:"Controlla meteo e segnali rilevanti rispetto alle tue tappe prima che causino un problema.",guardianD:"Ti avvisa quando un cambiamento importante può influenzare la giornata, anche prima di aprire ADESSO.",signalsD:"Mostra e segnala problemi nelle tappe pianificate o lungo il percorso tra esse.",rescueD:"Aiuta quando un problema con treno, meteo, passaporto, salute o altro è già successo.",shared:"Itinerario e Nelle vicinanze scrivono nello stesso piano che vedi sopra. Giornata intelligente non crea mai un secondo itinerario.",spent:"Speso oggi",left:"Rimasto oggi",safe:"Sicuro oggi",day:"Giorno",openIt:"Apri l'itinerario di oggi",budgetSet:"Imposta prima il budget del viaggio; Giornata intelligente legge le spese giornaliere dall'itinerario.",budgetLow:"Il budget di oggi sta diminuendo. ADESSO preferirà opzioni meno costose quando crea suggerimenti.",using:"Stai usando",target:"del target originale di oggi.",over:"oltre il target giornaliero originale. Giornata intelligente preferirà opzioni meno costose.",budgetIntel:"687 Budget intelligente",know:"Scopri quanto puoi spendere in sicurezza oggi",uses:"Usa il budget del viaggio e le spese inserite nell'itinerario. Non viene creato un secondo budget.",originalLeft:"Target originale rimasto",originalTarget:"Target giornaliero originale",safeSpend:"Sicuro da spendere oggi",recalc:"Ricalcolato dal denaro restante del viaggio",tripRemaining:"Denaro viaggio rimanente",including:"incluso oggi",oneBudget:"Un unico budget condiviso",source:"Le spese dell'itinerario sono la fonte",sourceD:"Aggiungi o modifica le spese di oggi in Itinerario. Giornata intelligente le legge automaticamente.",edit:"Aggiungi / modifica le spese di oggi"},
+ ja:{today:"今日",now:"NOW",budget:"予算",prevent:"予防",guardian:"Guardian",signals:"シグナル",rescue:"レスキュー",nowTitle:"NOW · 今何をすればいい？",guardianTitle:"トリップGuardian",signalsTitle:"ライブシグナル",subNow:"今するべきことを案内し、必要なときはSmart Dayが予定を調整します。",subBudget:"旅程の支出と残り予算から、今日安全に使える金額を表示します。",subPrevent:"問題になる前に、今日の予定に対して天気とライブ情報を確認します。",subGuardian:"一日に影響する重要な変化を通知します。",subSignals:"予定した場所や移動ルートで起きていることを確認・報告します。",subRescue:"すでに問題が起きたときに素早く助けます。",how:"Intelligent Dayの仕組み",center:"あなたの予定が中心です",nowD:"GPS、時刻、天気、周辺スポット、Smart Dayを使って今すべきことを案内します。",budgetD:"旅程の支出を読み取り、今日安全に使える金額を表示し、確認済み価格がある場合は手頃な選択肢を優先します。",preventD:"問題になる前に、天気と関連シグナルを予定した場所に照らして確認します。",guardianD:"重要な変化が一日に影響する可能性があるとき、NOWを開く前でも通知します。",signalsD:"予定した場所やその間のルートの問題を表示・報告します。",rescueD:"電車、天気、パスポート、医療などの問題が起きた後にサポートします。",shared:"旅程と周辺検索は同じ予定に保存されます。Intelligent Dayが別の旅程を作ることはありません。",spent:"今日の支出",left:"今日の残り",safe:"今日安全に使える額",day:"日目",openIt:"今日の旅程を開く",budgetSet:"まず旅行予算を設定してください。Intelligent Dayは旅程から毎日の支出を読み取ります。",budgetLow:"今日の予算が少なくなっています。NOWは低価格の選択肢を優先します。",using:"今日の元の目標の",target:"を使用しています。",over:"元の1日目標を超えています。Intelligent Dayは低価格の選択肢を優先します。",budgetIntel:"687 予算インテリジェンス",know:"今日安全に使える金額を確認",uses:"旅行予算と旅程に入力した支出を使用します。別の予算は作成しません。",originalLeft:"元の目標残額",originalTarget:"元の1日目標",safeSpend:"今日安全に使える額",recalc:"旅行の残金から再計算",tripRemaining:"旅行の残金",including:"今日を含む",oneBudget:"共有される1つの予算",source:"旅程の支出が基準です",sourceD:"今日の支出は旅程で追加・編集します。Intelligent Dayが自動で読み取ります。",edit:"今日の支出を追加 / 編集"},
+ es:{today:"Hoy",now:"AHORA",budget:"Presupuesto",prevent:"Prevenir",guardian:"Guardian",signals:"Señales",rescue:"Rescate",nowTitle:"AHORA · ¿Qué puedo hacer ahora?",guardianTitle:"Guardian del viaje",signalsTitle:"Señales en vivo",subNow:"Qué tiene sentido hacer ahora, con Smart Day cuando el plan necesita adaptarse.",subBudget:"Qué es seguro gastar hoy usando los gastos del itinerario y el presupuesto restante.",subPrevent:"El tiempo y los problemas en vivo se comprueban con el plan de hoy antes de convertirse en un problema.",subGuardian:"Notificaciones de cambios importantes que pueden afectar tu día.",subSignals:"Informa y consulta qué ocurre en tus paradas o durante el trayecto.",subRescue:"Ayuda rápida cuando algo ya ha salido mal.",how:"Cómo funciona Día inteligente",center:"Tu plan sigue en el centro",nowD:"Usa GPS, hora, clima, lugares cercanos y Smart Day para decirte qué tiene sentido hacer ahora.",budgetD:"Lee los gastos del itinerario, muestra qué es seguro gastar hoy y ayuda a AHORA a priorizar opciones asequibles con precios verificados.",preventD:"Comprueba el tiempo y señales relevantes frente a tus paradas antes de que causen un problema.",guardianD:"Te avisa cuando un cambio importante puede afectar el día, incluso antes de abrir AHORA.",signalsD:"Muestra e informa problemas en tus paradas o en la ruta entre ellas.",rescueD:"Ayuda cuando ya ha ocurrido un problema de tren, clima, pasaporte, médico u otro.",shared:"Itinerario y Cerca de ti escriben en el mismo plan. Día inteligente nunca crea un segundo itinerario.",spent:"Gastado hoy",left:"Restante hoy",safe:"Seguro hoy",day:"Día",openIt:"Abrir itinerario de hoy",budgetSet:"Primero define el presupuesto del viaje; Día inteligente lee los gastos diarios del itinerario.",budgetLow:"El presupuesto de hoy se está agotando. AHORA priorizará opciones de menor coste.",using:"Estás usando",target:"del objetivo original de hoy.",over:"por encima del objetivo diario original. Día inteligente priorizará opciones más baratas.",budgetIntel:"687 Inteligencia de presupuesto",know:"Conoce cuánto es seguro gastar hoy",uses:"Usa el presupuesto del viaje y los gastos introducidos en el itinerario. No se crea un segundo presupuesto.",originalLeft:"Objetivo original restante",originalTarget:"Objetivo diario original",safeSpend:"Seguro para gastar hoy",recalc:"Recalculado con el dinero restante",tripRemaining:"Dinero restante del viaje",including:"incluido hoy",oneBudget:"Un presupuesto compartido",source:"Los gastos del itinerario son la fuente",sourceD:"Añade o edita los gastos de hoy en Itinerario. Día inteligente los lee automáticamente.",edit:"Añadir / editar gastos de hoy"},
+ de:{today:"Heute",now:"JETZT",budget:"Budget",prevent:"Vorbeugen",guardian:"Guardian",signals:"Signale",rescue:"Hilfe",nowTitle:"JETZT · Was kann ich jetzt tun?",guardianTitle:"Trip Guardian",signalsTitle:"Live-Signale",subNow:"Was jetzt sinnvoll ist – plus Smart Day, wenn sich der Plan anpassen muss.",subBudget:"Was du heute sicher ausgeben kannst, basierend auf Reiseplan-Ausgaben und Restbudget.",subPrevent:"Wetter und Live-Probleme werden mit dem heutigen Plan geprüft, bevor sie zum Problem werden.",subGuardian:"Benachrichtigungen über wichtige Änderungen, die deinen Tag beeinflussen können.",subSignals:"Melde und sieh, was an deinen Stopps oder unterwegs passiert.",subRescue:"Schnelle Hilfe, wenn bereits etwas schiefgegangen ist.",how:"So funktioniert Intelligenter Tag",center:"Dein Plan bleibt im Mittelpunkt",nowD:"Nutzt GPS, Zeit, Wetter, Orte in der Nähe und Smart Day, um zu zeigen, was jetzt sinnvoll ist.",budgetD:"Liest Reiseplan-Ausgaben, zeigt das sichere Tagesbudget und hilft JETZT, günstige Optionen mit bestätigten Preisen zu bevorzugen.",preventD:"Prüft Wetter und relevante Signale gegen deine Stopps, bevor Probleme entstehen.",guardianD:"Benachrichtigt dich, wenn eine wichtige Änderung deinen Tag beeinflussen könnte – noch bevor du JETZT öffnest.",signalsD:"Zeigt und meldet Probleme an geplanten Stopps oder auf der Route dazwischen.",rescueD:"Hilft, wenn ein Zug-, Wetter-, Pass-, medizinisches oder anderes Problem bereits passiert ist.",shared:"Reiseplan und In der Nähe schreiben in denselben Plan. Intelligenter Tag erstellt niemals einen zweiten Reiseplan.",spent:"Heute ausgegeben",left:"Heute übrig",safe:"Heute sicher",day:"Tag",openIt:"Heutigen Reiseplan öffnen",budgetSet:"Lege zuerst dein Reisebudget fest; Intelligenter Tag liest Tagesausgaben aus dem Reiseplan.",budgetLow:"Das heutige Budget wird knapp. JETZT bevorzugt günstigere Optionen.",using:"Du nutzt",target:"des ursprünglichen Tagesziels.",over:"über dem ursprünglichen Tagesziel. Intelligenter Tag bevorzugt günstigere Optionen.",budgetIntel:"687 Budget Intelligence",know:"Was du heute sicher ausgeben kannst",uses:"Verwendet Reisebudget und im Reiseplan erfasste Ausgaben. Es wird kein zweites Budget erstellt.",originalLeft:"Ursprüngliches Ziel übrig",originalTarget:"Ursprüngliches Tagesziel",safeSpend:"Heute sicher auszugeben",recalc:"Aus verbleibendem Reisegeld neu berechnet",tripRemaining:"Verbleibendes Reisegeld",including:"einschließlich heute",oneBudget:"Ein gemeinsames Budget",source:"Reiseplan-Ausgaben sind die Quelle",sourceD:"Füge heutige Ausgaben im Reiseplan hinzu oder bearbeite sie. Intelligenter Tag liest sie automatisch.",edit:"Heutige Ausgaben hinzufügen / bearbeiten"},
+ fr:{today:"Aujourd'hui",now:"MAINTENANT",budget:"Budget",prevent:"Prévenir",guardian:"Guardian",signals:"Signaux",rescue:"Secours",nowTitle:"MAINTENANT · Que puis-je faire maintenant ?",guardianTitle:"Guardian du voyage",signalsTitle:"Signaux en direct",subNow:"Ce qui est pertinent maintenant, avec Smart Day lorsque le programme doit s'adapter.",subBudget:"Ce que vous pouvez dépenser aujourd'hui en toute sécurité selon les dépenses de l'itinéraire et le budget restant.",subPrevent:"La météo et les problèmes en direct sont vérifiés par rapport au programme du jour avant qu'ils ne deviennent un problème.",subGuardian:"Notifications des changements importants pouvant affecter votre journée.",subSignals:"Signalez et consultez ce qui se passe à vos étapes ou sur le trajet.",subRescue:"Aide rapide lorsqu'un problème est déjà survenu.",how:"Comment fonctionne Journée intelligente",center:"Votre programme reste au centre",nowD:"Utilise GPS, heure, météo, lieux proches et Smart Day pour vous dire ce qui est pertinent maintenant.",budgetD:"Lit les dépenses de l'itinéraire, indique ce qui est sûr à dépenser aujourd'hui et aide MAINTENANT à privilégier les options abordables avec prix vérifiés.",preventD:"Vérifie la météo et les signaux pertinents par rapport à vos étapes avant qu'ils ne causent un problème.",guardianD:"Vous avertit lorsqu'un changement important peut affecter la journée, même avant d'ouvrir MAINTENANT.",signalsD:"Affiche et signale les problèmes à vos étapes ou sur le trajet entre elles.",rescueD:"Aide lorsqu'un problème de train, météo, passeport, santé ou autre s'est déjà produit.",shared:"Itinéraire et À proximité alimentent le même programme. Journée intelligente ne crée jamais un deuxième itinéraire.",spent:"Dépensé aujourd'hui",left:"Restant aujourd'hui",safe:"Sûr aujourd'hui",day:"Jour",openIt:"Ouvrir l'itinéraire du jour",budgetSet:"Définissez d'abord le budget du voyage ; Journée intelligente lit les dépenses quotidiennes depuis l'itinéraire.",budgetLow:"Le budget du jour devient faible. MAINTENANT privilégiera les options moins coûteuses.",using:"Vous utilisez",target:"de l'objectif initial du jour.",over:"au-dessus de l'objectif quotidien initial. Journée intelligente privilégiera les options moins coûteuses.",budgetIntel:"687 Intelligence budget",know:"Sachez ce que vous pouvez dépenser aujourd'hui en toute sécurité",uses:"Utilise le budget du voyage et les dépenses saisies dans l'itinéraire. Aucun second budget n'est créé.",originalLeft:"Objectif initial restant",originalTarget:"Objectif quotidien initial",safeSpend:"Sûr à dépenser aujourd'hui",recalc:"Recalculé à partir de l'argent restant",tripRemaining:"Argent restant du voyage",including:"aujourd'hui inclus",oneBudget:"Un budget partagé",source:"Les dépenses de l'itinéraire sont la source",sourceD:"Ajoutez ou modifiez les dépenses du jour dans Itinéraire. Journée intelligente les lit automatiquement.",edit:"Ajouter / modifier les dépenses du jour"}
+};
+IDAY_LOCALIZED.zh={today:"今天",now:"现在",budget:"预算",prevent:"预防",guardian:"Guardian",signals:"信号",rescue:"救援",nowTitle:"现在 · 我现在可以做什么？",guardianTitle:"旅行 Guardian",signalsTitle:"实时信号",subNow:"根据当前情况给出最合适的建议，需要时由 Smart Day 调整计划。",subBudget:"根据行程支出和剩余旅行预算，计算今天可以安全花费的金额。",subPrevent:"在问题发生前，将天气和实时问题与今天的计划进行核对。",subGuardian:"重要变化可能影响当天行程时发送通知。",subSignals:"查看或报告你在停靠点以及途中发生的情况。",subRescue:"事情已经出问题时提供快速帮助。",how:"智能行程如何工作",center:"你的计划始终是核心",nowD:"结合 GPS、时间、天气、附近地点和 Smart Day，告诉你现在最适合做什么。",budgetD:"读取行程支出，显示今天可安全花费的金额，并在有可靠价格时帮助 NOW 优先选择负担得起的选项。",preventD:"在问题影响行程前，将天气和相关信号与你的停靠点进行核对。",guardianD:"重要变化可能影响当天时通知你，即使你还没有打开 NOW。",signalsD:"显示并报告计划停靠点或路线上的问题。",rescueD:"列车、天气、护照、医疗或其他问题已经发生时提供帮助。",shared:"Itinerary 和 Nearby 使用同一份计划。智能行程不会创建第二份行程。",spent:"今天已花费",left:"今天剩余",safe:"今天可安全花费",day:"第",openIt:"打开今天的行程",budgetSet:"请先设置旅行预算；智能行程会读取行程中的每日支出。",budgetLow:"今天的预算正在变少。NOW 会优先考虑成本较低的选项。",using:"你已使用",target:"今天原始目标的",over:"超过原始每日目标。智能行程会优先考虑更低成本的选项。",budgetIntel:"687 预算智能",know:"了解今天可以安全花费多少",uses:"使用旅行总预算和行程中输入的支出，不会创建第二份预算。",originalLeft:"原始目标剩余",originalTarget:"原始每日目标",safeSpend:"今天可安全花费",recalc:"根据剩余旅行资金重新计算",tripRemaining:"旅行剩余资金",including:"包括今天",oneBudget:"一份共享预算",source:"行程支出是数据来源",sourceD:"在 Itinerary 中添加或修改今天的支出，智能行程会自动读取。",edit:"添加 / 修改今天的支出"};
+IDAY_LOCALIZED.ko={today:"오늘",now:"지금",budget:"예산",prevent:"예방",guardian:"Guardian",signals:"신호",rescue:"구조",nowTitle:"지금 · 지금 무엇을 할 수 있나요?",guardianTitle:"Trip Guardian",signalsTitle:"실시간 신호",subNow:"지금 가장 적절한 행동과 필요할 때 계획을 조정하는 Smart Day를 보여줍니다.",subBudget:"일정 지출과 남은 여행 예산을 사용해 오늘 안전하게 쓸 수 있는 금액을 계산합니다.",subPrevent:"문제가 되기 전에 날씨와 실시간 문제를 오늘 일정과 확인합니다.",subGuardian:"하루에 영향을 줄 수 있는 중요한 변화가 있을 때 알려줍니다.",subSignals:"방문지나 이동 중 무슨 일이 있는지 보고 확인합니다.",subRescue:"이미 문제가 발생했을 때 빠르게 도움을 제공합니다.",how:"스마트 데이 작동 방식",center:"여행 계획이 항상 중심입니다",nowD:"GPS, 시간, 날씨, 주변 장소와 Smart Day를 사용해 지금 무엇이 적절한지 알려줍니다.",budgetD:"일정의 지출을 읽고 오늘 안전하게 쓸 수 있는 금액을 보여주며, 확인된 가격이 있을 때 NOW가 합리적인 옵션을 우선하도록 돕습니다.",preventD:"문제가 생기기 전에 날씨와 관련 신호를 방문지와 비교합니다.",guardianD:"중요한 변화가 하루에 영향을 줄 수 있을 때 NOW를 열기 전에도 알려줍니다.",signalsD:"계획된 방문지나 그 사이 경로의 문제를 표시하고 보고합니다.",rescueD:"열차, 날씨, 여권, 의료 또는 기타 문제가 이미 발생했을 때 도움을 줍니다.",shared:"Itinerary와 Nearby는 같은 계획을 사용합니다. 스마트 데이는 두 번째 일정을 만들지 않습니다.",spent:"오늘 지출",left:"오늘 남음",safe:"오늘 안전 금액",day:"일",openIt:"오늘 일정 열기",budgetSet:"먼저 여행 예산을 설정하세요. 스마트 데이는 일정의 일일 지출을 읽습니다.",budgetLow:"오늘 예산이 부족해지고 있습니다. NOW는 더 저렴한 옵션을 우선합니다.",using:"사용 중",target:"오늘 원래 목표의",over:"원래 일일 목표를 초과했습니다. 스마트 데이는 더 저렴한 옵션을 우선합니다.",budgetIntel:"687 예산 인텔리전스",know:"오늘 안전하게 쓸 수 있는 금액 확인",uses:"여행 예산과 일정에 입력한 지출을 사용하며 두 번째 예산은 만들지 않습니다.",originalLeft:"원래 목표 남음",originalTarget:"원래 일일 목표",safeSpend:"오늘 안전하게 사용 가능",recalc:"남은 여행 자금으로 재계산",tripRemaining:"남은 여행 자금",including:"오늘 포함",oneBudget:"하나의 공유 예산",source:"일정 지출이 기준입니다",sourceD:"Itinerary에서 오늘 지출을 추가하거나 수정하면 스마트 데이가 자동으로 읽습니다.",edit:"오늘 지출 추가 / 수정"};
 
 function DashSettings({ data, setData, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive }) {
   const sc = SETTINGS_LOCALIZED[uiLanguage] || SETTINGS_LOCALIZED.en;
@@ -5204,20 +5234,17 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, theme, setThem
   const [voiceReplyRate, setVoiceReplyRateState] = useState(()=>getVoiceReplyRate());
   const [speechVoices, setSpeechVoices] = useState(()=>getAvailableSpeechVoices());
   const [currencyBusy, setCurrencyBusy] = useState(false);
-
   React.useEffect(()=>{
     const refreshVoices = ()=>setSpeechVoices(getAvailableSpeechVoices());
     refreshVoices();
     if (window.speechSynthesis) window.speechSynthesis.addEventListener?.("voiceschanged", refreshVoices);
     return ()=>{ if (window.speechSynthesis) window.speechSynthesis.removeEventListener?.("voiceschanged", refreshVoices); };
   },[]);
-
   const replyVoiceOptions = speechVoices.filter(v=>{
     const lang = String(v.lang||"").toLowerCase();
     const cfg = voiceLanguageConfig(voiceLanguage);
     return lang === cfg.speech.toLowerCase() || lang.startsWith(voiceLanguage);
   });
-
   const changeTripCurrency = async (nextCurrency) => {
     const from = getHomeCurrency(data);
     const to = String(nextCurrency || from).toUpperCase();
@@ -5230,7 +5257,6 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, theme, setThem
     if (!rate) { window.alert(sc.rateUnavailable); return; }
     setData(convertTripHomeCurrencyAmounts(data,to,rate));
   };
-
   return (
     <div>
       <div className="field">
@@ -5280,7 +5306,7 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, theme, setThem
           className="btn-secondary"
           style={{width:"100%",marginTop:10}}
           onClick={()=>{
-            const samples={en:"Hello. I am your 687 travel assistant.",it:"Ciao. Sono il tuo assistente di viaggio 687.",ja:"こんにちは。687 トラベルアシスタントです。",es:"Hola. Soy tu asistente de viaje 687.",de:"Hallo. Ich bin dein 687 Reiseassistent.",fr:"Bonjour. Je suis votre assistant de voyage 687.",zh:"你好。我是你的 687 旅行助手。",ko:"안녕하세요. 저는 687 여행 도우미입니다."};
+            const samples={en:"Hello. I am your 687 travel assistant.",it:"Ciao. Sono il tuo assistente di viaggio 687.",ja:"こんにちは。687 トラベルアシスタントです。",es:"Hola. Soy tu asistente de viaje 687.",de:"Hallo. Ich bin dein 687 Reiseassistent.",fr:"Bonjour. Je suis votre assistant de voyage 687."};
             speak687Text(samples[voiceLanguage] || samples.en);
           }}
         >
@@ -5318,7 +5344,9 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, theme, setThem
 
       <div className="field">
         <label>{sc.past}</label>
-        <p className="park-hint">{sc.pastHint}</p>
+        <p className="park-hint">
+          {sc.pastHint}
+        </p>
         {(!archives || archives.length === 0) ? (
           <div className="choice-card" style={{opacity:.6}}>
             <div className="choice-icon">🗂️</div>
@@ -5342,8 +5370,17 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, theme, setThem
         })}
       </div>
 
-      <div style={{textAlign:"center",fontSize:10.5,opacity:.42,padding:"8px 0 2px",userSelect:"none",cursor:"default"}}>
-        687 Italy · TEST
+      <div
+        style={{
+          textAlign:"center",
+          fontSize:10.5,
+          opacity:.42,
+          padding:"8px 0 2px",
+          userSelect:"none",
+          cursor:"default"
+        }}
+      >
+        687 Italy · version 1.0
       </div>
     </div>
   );
@@ -10694,21 +10731,6 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection, onUiLanguageCha
   </>;
 }
 
-function VoiceAssistantFirstRun({ onDone, onLanguageChange }) {
-  const [lang,setLang]=useState(getVoiceAssistantLanguage());
-  return <div style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(248,244,236,.98)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-    <div style={{width:"min(420px,100%)",background:"#fff",borderRadius:20,padding:22,boxShadow:"0 18px 55px rgba(14,59,82,.18)"}}>
-      <div style={{fontFamily:"Fraunces,serif",fontSize:28,fontWeight:700,color:"#0E3B52"}}>687 Italy</div>
-      <div style={{fontSize:14,fontWeight:800,marginTop:6}}>Choose app & Voice Assistant language</div>
-      <div style={{fontSize:12,opacity:.68,lineHeight:1.45,marginTop:5}}>One language controls the app interface, voice commands and spoken replies. Translate remains separate.</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:16}}>
-        {VOICE_ASSISTANT_LANGUAGES.map(x=><button key={x.code} type="button" onClick={()=>setLang(x.code)} style={{padding:"11px 8px",borderRadius:11,border:lang===x.code?"2px solid #1C5A7A":"1px solid rgba(19,42,58,.16)",background:lang===x.code?"rgba(28,90,122,.08)":"#fff",fontWeight:800}}>{x.label}</button>)}
-      </div>
-      <button className="btn-primary" style={{marginTop:16}} onClick={()=>{setVoiceAssistantLanguage(lang);try{localStorage.setItem("tripengine_ui_language",lang);localStorage.setItem("tripitaly_voice_setup_done","1");}catch(_){};if(typeof onLanguageChange==="function")onLanguageChange(lang);onDone();}}>Continue</button>
-    </div>
-  </div>;
-}
-
 function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLanguage, theme, setTheme, archives, onRestoreTrip, onDeleteArchive, onSectionChange }) {
   const savedDashboardSectionRaw = loadSavedUI().section;
   const savedDashboardSection = ["tickets","car","house","phrasebook"].includes(savedDashboardSectionRaw)
@@ -10823,7 +10845,7 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
         {section === "overview" && <DashOverview data={data} setData={setData} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} lockedTotal={lockedTotal} remaining={remaining} pctUsed={pctUsed} nights={nights} dailyAmount={dailyAmount} onStartNewTrip={onStartNewTrip} />}
         {section === "wallet" && <DashWallet data={data} setData={setData} documents={documents} onAddDoc={addDoc} onRemoveDoc={removeDoc} flightTotal={flightTotal} hotelTotal={hotelTotal} carTotal={carTotal} nights={nights} onGoTo={goSection} />}
         {section === "packing" && <DashPacking data={data} setData={setData} />}
-        {section === "settings" && <DashSettings data={data} setData={setData} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} theme={theme} setTheme={setTheme} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
+        {section === "settings" && <DashSettings data={data} setData={setData} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} archives={archives} onRestoreTrip={onRestoreTrip} onDeleteArchive={onDeleteArchive} />}
         {section === "itinerary" && <DashItinerary data={data} setData={setData} onGoTo={goSection} dailyAmount={dailyAmount} />}
         {section === "nearby" && <DashNearby data={data} setData={setData} />}
         {section === "drive" && data.wantsCar && <DashDrive data={data} setData={setData} />}
@@ -10930,6 +10952,650 @@ function loadSavedTrip() {
   }
 }
 
+
+// V1.87.8 TEST — ONE PRIMARY LANGUAGE + LOCALIZED SETUP
+// The selected language controls the setup flow, dashboard menu, Voice Assistant
+// recognition and 687 spoken replies. Translate remains an independent travel tool.
+const PRIMARY_APP_LANGUAGES = VOICE_ASSISTANT_LANGUAGES;
+function detectPrimaryAppLanguage(){
+  try {
+    const raw=(navigator.languages?.[0]||navigator.language||"en").toLowerCase();
+    const base=raw.split(/[-_]/)[0];
+    return PRIMARY_APP_LANGUAGES.some(x=>x.code===base)?base:"en";
+  } catch(_) { return "en"; }
+}
+function getInitialPrimaryAppLanguage(){
+  try {
+    const savedMenu=localStorage.getItem("tripengine_ui_language");
+    const savedVoice=localStorage.getItem(VOICE_ASSISTANT_LANGUAGE_KEY);
+    const candidate=savedVoice || savedMenu || detectPrimaryAppLanguage();
+    return PRIMARY_APP_LANGUAGES.some(x=>x.code===candidate)?candidate:"en";
+  } catch(_) { return detectPrimaryAppLanguage(); }
+}
+
+const FIRST_RUN_LANGUAGE_COPY={
+  en:{title:"Choose your language",body:"This language will be used across 687 Italy and for Voice Assistant commands and replies. You can change it anytime in Settings.",button:"Continue",note:"Translate stays separate, so you can still translate conversations into other languages."},
+  it:{title:"Scegli la tua lingua",body:"Questa lingua verrà usata in 687 Italy e per i comandi e le risposte del Voice Assistant. Puoi cambiarla in qualsiasi momento nelle Impostazioni.",button:"Continua",note:"Traduci resta separato, quindi puoi continuare a tradurre conversazioni in altre lingue."},
+  ja:{title:"言語を選択",body:"この言語は 687 Italy 全体と Voice Assistant のコマンド・応答に使用されます。設定からいつでも変更できます。",button:"続ける",note:"翻訳機能は独立しているため、会話は別の言語にも翻訳できます。"},
+  es:{title:"Elige tu idioma",body:"Este idioma se usará en 687 Italy y para los comandos y respuestas del Voice Assistant. Puedes cambiarlo en cualquier momento en Ajustes.",button:"Continuar",note:"Traducir sigue siendo independiente, así que puedes traducir conversaciones a otros idiomas."},
+  de:{title:"Wähle deine Sprache",body:"Diese Sprache wird in 687 Italy sowie für Befehle und Antworten des Voice Assistant verwendet. Du kannst sie jederzeit in den Einstellungen ändern.",button:"Weiter",note:"Übersetzen bleibt getrennt, damit Gespräche weiterhin in andere Sprachen übersetzt werden können."},
+  fr:{title:"Choisissez votre langue",body:"Cette langue sera utilisée dans 687 Italy ainsi que pour les commandes et réponses du Voice Assistant. Vous pourrez la modifier à tout moment dans Paramètres.",button:"Continuer",note:"La traduction reste indépendante afin de traduire les conversations dans d’autres langues."},
+  zh:{title:"选择你的语言",body:"此语言将用于 687 Italy 的界面、Voice Assistant 指令和语音回复。你可以随时在设置中更改。",button:"继续",note:"翻译功能保持独立，因此你仍可将对话翻译成其他语言。"},
+  ko:{title:"언어 선택",body:"이 언어는 687 Italy 인터페이스, Voice Assistant 명령 및 음성 응답에 사용됩니다. 설정에서 언제든 변경할 수 있습니다.",button:"계속",note:"번역 기능은 별도이므로 대화를 다른 언어로 계속 번역할 수 있습니다."}
+};
+
+// Setup/onboarding text translator. It only runs before the dashboard (step 9).
+// This lets the existing mature booking flow keep its logic untouched while the
+// traveler sees it in the same language selected for Voice Assistant.
+const PREMENU_TEXT={
+  "Welcome to":{it:"Benvenuto in",ja:"ようこそ",es:"Bienvenido a",de:"Willkommen bei",fr:"Bienvenue sur"},
+  "Plan your trip, control your budget.":{it:"Pianifica il viaggio, controlla il budget.",ja:"旅行を計画し、予算を管理。",es:"Planifica tu viaje y controla tu presupuesto.",de:"Plane deine Reise und behalte dein Budget im Blick.",fr:"Planifiez votre voyage et maîtrisez votre budget."},
+  "Italy is never just one trip. What pulls you in?":{it:"Il Italia non è mai un solo viaggio. Cosa ti attira di più?",ja:"イタリアの旅は一つではありません。何に惹かれますか？",es:"Italia nunca es un solo viaje. ¿Qué te atrae más?",de:"Italy ist nie nur eine Reise. Was zieht dich an?",fr:"Le Italie n’est jamais un seul voyage. Qu’est-ce qui vous attire ?"},
+  "🎟️ Book ahead · official links":{it:"🎟️ Prenota in anticipo · link ufficiali",ja:"🎟️ 事前予約 · 公式リンク",es:"🎟️ Reserva con antelación · enlaces oficiales",de:"🎟️ Im Voraus buchen · offizielle Links",fr:"🎟️ Réserver à l’avance · liens officiels"},
+  "Direct ticket and reservation pages for popular attractions that can require advance booking.":{it:"Pagine dirette per biglietti e prenotazioni delle attrazioni più popolari che possono richiedere la prenotazione anticipata.",ja:"事前予約が必要な人気スポットの公式チケット・予約ページへ直接アクセスできます。",es:"Páginas directas de entradas y reservas para atracciones populares que pueden requerir reserva anticipada.",de:"Direkte Ticket- und Reservierungsseiten für beliebte Attraktionen, die eine Vorabreservierung erfordern können.",fr:"Pages directes de billets et réservations pour les attractions populaires pouvant nécessiter une réservation à l’avance."},
+  "🎫 Some spots need advance booking":{it:"🎫 Alcuni luoghi richiedono prenotazione anticipata",ja:"🎫 事前予約が必要な場所があります",es:"🎫 Algunos lugares requieren reserva anticipada",de:"🎫 Einige Orte müssen im Voraus gebucht werden",fr:"🎫 Certains lieux nécessitent une réservation à l’avance"},
+  "👆 Tap any place to open its official attraction, tourism, or ticket page. “Book ahead” marks attractions with advance ticket/reservation options.":{it:"👆 Tocca un luogo per aprire la pagina ufficiale dell’attrazione, del turismo o dei biglietti. “Prenota in anticipo” indica le attrazioni con prenotazione anticipata.",ja:"👆 場所をタップすると公式観光・施設・チケットページが開きます。「事前予約」は予約可能なスポットを示します。",es:"👆 Toca un lugar para abrir su página oficial de atracción, turismo o entradas. “Reserva con antelación” indica opciones de reserva anticipada.",de:"👆 Tippe auf einen Ort, um die offizielle Attraktions-, Tourismus- oder Ticketseite zu öffnen. „Im Voraus buchen“ kennzeichnet reservierbare Attraktionen.",fr:"👆 Touchez un lieu pour ouvrir sa page officielle d’attraction, de tourisme ou de billets. « Réserver à l’avance » signale les attractions réservables."},
+  "Book ahead ↗":{it:"Prenota in anticipo ↗",ja:"事前予約 ↗",es:"Reserva con antelación ↗",de:"Im Voraus buchen ↗",fr:"Réserver à l’avance ↗"},
+  "Book ahead":{it:"Prenota in anticipo",ja:"事前予約",es:"Reserva con antelación",de:"Im Voraus buchen",fr:"Réserver à l’avance"},
+  "🎟️ Browse skip-the-line tickets on Tiqets ↗":{it:"🎟️ Cerca biglietti salta-fila su Tiqets ↗",ja:"🎟️ Tiqets で優先入場チケットを探す ↗",es:"🎟️ Busca entradas sin cola en Tiqets ↗",de:"🎟️ Tickets ohne Anstehen bei Tiqets ansehen ↗",fr:"🎟️ Voir les billets coupe-file sur Tiqets ↗"},
+  "Start planning":{it:"Inizia a pianificare",ja:"旅行計画を始める",es:"Empezar a planificar",de:"Planung starten",fr:"Commencer la planification"},
+  "Let's plan your trip to Italy":{it:"Pianifichiamo il tuo viaggio in Italia",ja:"イタリア旅行を計画しましょう",es:"Planifiquemos tu viaje a Italia",de:"Plane deine Italyreise",fr:"Planifions votre voyage au Italie"},
+  "Set your budget, dates and travelers. We'll build the trip around what you tell us.":{it:"Imposta budget, date e viaggiatori. Costruiremo il viaggio in base alle tue scelte.",ja:"予算、日程、旅行者を設定してください。入力内容に合わせて旅行を組み立てます。",es:"Define presupuesto, fechas y viajeros. Crearemos el viaje según tus elecciones.",de:"Lege Budget, Reisedaten und Reisende fest. Wir planen die Reise nach deinen Angaben.",fr:"Définissez le budget, les dates et les voyageurs. Nous construirons le voyage selon vos choix."},
+  "Total budget":{it:"Budget totale",ja:"総予算",es:"Presupuesto total",de:"Gesamtbudget",fr:"Budget total"},
+  "Your budget stays in your home currency. Prices in Italy stay in euro and are converted only when useful.":{it:"Il budget resta nella tua valuta. I prezzi in Italia restano in euro e vengono convertiti solo quando utile.",ja:"予算は自国通貨のまま管理されます。イタリアの価格はユーロで表示し、必要な場合のみ換算します。",es:"Tu presupuesto permanece en tu moneda. Los precios en Italia se mantienen en euroes y se convierten solo cuando es útil.",de:"Dein Budget bleibt in deiner Heimatwährung. Preise in Italy bleiben in Euro und werden nur bei Bedarf umgerechnet.",fr:"Votre budget reste dans votre devise. Les prix au Italie restent en euros et ne sont convertis que si nécessaire."},
+  "Travel dates":{it:"Date del viaggio",ja:"旅行日程",es:"Fechas del viaje",de:"Reisedaten",fr:"Dates du voyage"},
+  "From":{it:"Dal",ja:"開始",es:"Desde",de:"Von",fr:"Du"},
+  "To":{it:"Al",ja:"終了",es:"Hasta",de:"Bis",fr:"Au"},
+  "Who's traveling?":{it:"Chi viaggia?",ja:"誰と旅行しますか？",es:"¿Quién viaja?",de:"Wer reist mit?",fr:"Qui voyage ?"},
+  "How many people?":{it:"Quante persone?",ja:"何人ですか？",es:"¿Cuántas personas?",de:"Wie viele Personen?",fr:"Combien de personnes ?"},
+  "How do you want to plan?":{it:"Come vuoi pianificare?",ja:"どのように計画しますか？",es:"¿Cómo quieres planificar?",de:"Wie möchtest du planen?",fr:"Comment voulez-vous planifier ?"},
+  "Plan everything":{it:"Pianifica tutto",ja:"すべて計画する",es:"Planificar todo",de:"Alles planen",fr:"Tout planifier"},
+  "Flights, hotels, car rental — we'll find options within your budget.":{it:"Voli, hotel e noleggio auto: cercheremo opzioni compatibili con il tuo budget.",ja:"フライト、ホテル、レンタカーを予算内で探します。",es:"Vuelos, hoteles y alquiler de coche: buscaremos opciones dentro de tu presupuesto.",de:"Flüge, Hotels und Mietwagen – wir suchen Optionen innerhalb deines Budgets.",fr:"Vols, hôtels et location de voiture : nous chercherons des options adaptées à votre budget."},
+  "Just track my trip":{it:"Gestisci solo il mio viaggio",ja:"旅行を管理するだけ",es:"Solo gestionar mi viaje",de:"Nur meine Reise verwalten",fr:"Gérer uniquement mon voyage"},
+  "I already booked flights and hotel — help me manage the budget on the ground.":{it:"Ho già prenotato voli e hotel: aiutami a gestire il budget durante il viaggio.",ja:"フライトとホテルは予約済みです。現地での予算管理を手伝ってください。",es:"Ya reservé vuelos y hotel; ayúdame a gestionar el presupuesto durante el viaje.",de:"Flug und Hotel sind schon gebucht – hilf mir, das Budget vor Ort zu verwalten.",fr:"J’ai déjà réservé vols et hôtel : aidez-moi à gérer le budget sur place."},
+  "How will you get around?":{it:"Come ti sposterai?",ja:"現地での移動手段は？",es:"¿Cómo te desplazarás?",de:"Wie wirst du dich fortbewegen?",fr:"Comment vous déplacerez-vous ?"},
+  "I'll drive":{it:"Userò l’auto",ja:"車で移動する",es:"Conduciré",de:"Ich fahre Auto",fr:"Je conduirai"},
+  "Nearby will start in driving mode and search a wider area.":{it:"Nearby partirà in modalità auto e cercherà in un’area più ampia.",ja:"Nearby は車モードで開始し、より広い範囲を検索します。",es:"Nearby se iniciará en modo coche y buscará en un área más amplia.",de:"Nearby startet im Fahrmodus und sucht in einem größeren Bereich.",fr:"Nearby démarrera en mode voiture et recherchera dans une zone plus large."},
+  "No car":{it:"Senza auto",ja:"車なし",es:"Sin coche",de:"Kein Auto",fr:"Sans voiture"},
+  "Nearby will start with places within walking distance.":{it:"Nearby inizierà mostrando i luoghi raggiungibili a piedi.",ja:"Nearby は徒歩圏内の場所から表示します。",es:"Nearby comenzará con lugares a poca distancia a pie.",de:"Nearby startet mit Orten in Gehweite.",fr:"Nearby commencera par les lieux accessibles à pied."},
+  "Continue":{it:"Continua",ja:"続ける",es:"Continuar",de:"Weiter",fr:"Continuer"},
+  "← Back":{it:"← Indietro",ja:"← 戻る",es:"← Atrás",de:"← Zurück",fr:"← Retour"},
+  "Your trip route":{it:"Il percorso del tuo viaggio",ja:"旅行ルート",es:"La ruta de tu viaje",de:"Deine Reiseroute",fr:"Votre itinéraire de voyage"},
+  "Since you've already booked everything, just tell us where you're going.":{it:"Dato che hai già prenotato tutto, indicaci semplicemente dove andrai.",ja:"すでに予約済みなので、行き先だけ教えてください。",es:"Como ya lo has reservado todo, solo dinos adónde vas.",de:"Da du bereits alles gebucht hast, sag uns einfach, wohin du reist.",fr:"Puisque tout est déjà réservé, indiquez-nous simplement où vous allez."},
+  "What have you already spent in total?":{it:"Quanto hai già speso in totale?",ja:"すでに合計いくら使いましたか？",es:"¿Cuánto has gastado ya en total?",de:"Wie viel hast du bereits insgesamt ausgegeben?",fr:"Combien avez-vous déjà dépensé au total ?"},
+  "Flights, hotel, car rental — combined. This sets your starting budget.":{it:"Voli, hotel e noleggio auto insieme. Questo definisce il budget iniziale.",ja:"フライト、ホテル、レンタカーの合計です。これが開始予算になります。",es:"Vuelos, hotel y alquiler de coche juntos. Esto establece tu presupuesto inicial.",de:"Flug, Hotel und Mietwagen zusammen. Damit wird dein Startbudget festgelegt.",fr:"Vols, hôtel et location de voiture réunis. Cela définit votre budget de départ."},
+  "Which city are you based in?":{it:"In quale città soggiorni?",ja:"滞在の拠点となる都市は？",es:"¿En qué ciudad te alojas?",de:"In welcher Stadt bist du untergebracht?",fr:"Dans quelle ville séjournez-vous ?"},
+  "Visiting other cities too?":{it:"Visiterai anche altre città?",ja:"他の都市も訪れますか？",es:"¿Visitarás también otras ciudades?",de:"Besuchst du auch andere Städte?",fr:"Visitez-vous aussi d’autres villes ?"},
+  "Tell us which day you arrive in each city":{it:"Indica in quale giorno arrivi in ogni città",ja:"各都市に到着する日を指定してください",es:"Indica qué día llegas a cada ciudad",de:"Sag uns, an welchem Tag du in jeder Stadt ankommst",fr:"Indiquez le jour d’arrivée dans chaque ville"},
+  "Where are you flying in from?":{it:"Da dove parti in aereo?",ja:"どこから出発しますか？",es:"¿Desde dónde vuelas?",de:"Von wo fliegst du los?",fr:"D’où partez-vous en avion ?"},
+  "We'll highlight the Italyese airports you can reach with a direct flight from your departure airport.":{it:"Evidenzieremo gli aeroporti italiani raggiungibili con un volo diretto dal tuo aeroporto di partenza.",ja:"出発空港から直行便で行けるイタリアの空港を表示します。",es:"Destacaremos los aeropuertos japoneses a los que puedes llegar con un vuelo directo desde tu aeropuerto de salida.",de:"Wir markieren die japanischen Flughäfen, die du von deinem Abflughafen direkt erreichen kannst.",fr:"Nous mettrons en évidence les aéroports japonais accessibles par vol direct depuis votre aéroport de départ."},
+  "We'll show Italyese airports you can reach with exactly one connection.":{it:"Mostreremo gli aeroporti italiani raggiungibili con un solo scalo.",ja:"乗り継ぎ1回で行けるイタリアの空港を表示します。",es:"Mostraremos los aeropuertos japoneses a los que puedes llegar con exactamente una escala.",de:"Wir zeigen japanische Flughäfen, die du mit genau einem Umstieg erreichen kannst.",fr:"Nous afficherons les aéroports japonais accessibles avec exactement une correspondance."},
+  "Departure airport":{it:"Aeroporto di partenza",ja:"出発空港",es:"Aeropuerto de salida",de:"Abflughafen",fr:"Aéroport de départ"},
+  "Flexible dates (±3 days)":{it:"Date flessibili (±3 giorni)",ja:"日程を柔軟にする（±3日）",es:"Fechas flexibles (±3 días)",de:"Flexible Daten (±3 Tage)",fr:"Dates flexibles (±3 jours)"},
+  "Flights don't run every day — widening your window finds more options and often better prices.":{it:"I voli non operano ogni giorno: ampliare le date offre più opzioni e spesso prezzi migliori.",ja:"毎日運航しているとは限りません。日程の幅を広げると選択肢が増え、より良い価格が見つかることがあります。",es:"Los vuelos no operan todos los días; ampliar tus fechas ofrece más opciones y a menudo mejores precios.",de:"Flüge verkehren nicht jeden Tag – ein größeres Zeitfenster bietet mehr Optionen und oft bessere Preise.",fr:"Les vols ne circulent pas tous les jours : élargir la période offre plus d’options et souvent de meilleurs prix."},
+  "Your gateway to Italy":{it:"Il tuo aeroporto d’ingresso in Italia",ja:"イタリアへの到着空港",es:"Tu puerta de entrada a Italia",de:"Dein Zielflughafen in Italy",fr:"Votre porte d’entrée au Italie"},
+  "Checking direct-flight availability…":{it:"Controllo disponibilità voli diretti…",ja:"直行便を確認中…",es:"Comprobando vuelos directos…",de:"Direktflüge werden geprüft…",fr:"Vérification des vols directs…"},
+  "Checking flights with exactly 1 stop…":{it:"Controllo voli con esattamente 1 scalo…",ja:"乗り継ぎ1回の便を確認中…",es:"Comprobando vuelos con exactamente 1 escala…",de:"Flüge mit genau 1 Umstieg werden geprüft…",fr:"Vérification des vols avec exactement 1 escale…"},
+  "No direct flights found":{it:"Nessun volo diretto trovato",ja:"直行便が見つかりません",es:"No se encontraron vuelos directos",de:"Keine Direktflüge gefunden",fr:"Aucun vol direct trouvé"},
+  "You can still reach Italy with one connection.":{it:"Puoi comunque raggiungere il Italia con uno scalo.",ja:"乗り継ぎ1回でイタリアへ行くことができます。",es:"Aún puedes llegar a Italia con una escala.",de:"Du kannst Italy weiterhin mit einem Umstieg erreichen.",fr:"Vous pouvez toujours rejoindre le Italie avec une correspondance."},
+  "Show flights with 1 stop":{it:"Mostra voli con 1 scalo",ja:"乗り継ぎ1回の便を表示",es:"Mostrar vuelos con 1 escala",de:"Flüge mit 1 Umstieg anzeigen",fr:"Afficher les vols avec 1 escale"},
+  "No 1-stop options found":{it:"Nessuna opzione con 1 scalo trovata",ja:"乗り継ぎ1回の便が見つかりません",es:"No se encontraron opciones con 1 escala",de:"Keine Optionen mit 1 Umstieg gefunden",fr:"Aucune option avec 1 escale trouvée"},
+  "Direct airports found":{it:"Aeroporti diretti trovati",ja:"直行便の空港",es:"Aeropuertos directos encontrados",de:"Direkt erreichbare Flughäfen",fr:"Aéroports directs trouvés"},
+  "1-stop airports found":{it:"Aeroporti con 1 scalo trovati",ja:"乗り継ぎ1回で行ける空港",es:"Aeropuertos con 1 escala encontrados",de:"Flughäfen mit 1 Umstieg",fr:"Aéroports avec 1 escale trouvés"},
+  "1 connection":{it:"1 scalo",ja:"乗り継ぎ1回",es:"1 escala",de:"1 Umstieg",fr:"1 correspondance"},
+  "Non-stop":{it:"Diretto",ja:"直行便",es:"Directo",de:"Nonstop",fr:"Sans escale"},
+  "Your flight to Italy":{it:"Il tuo volo per il Italia",ja:"イタリアへのフライト",es:"Tu vuelo a Italia",de:"Dein Flug nach Italy",fr:"Votre vol vers le Italie"},
+  "Review your route, dates and travelers, then open a real flight search.":{it:"Controlla rotta, date e viaggiatori, poi apri una ricerca voli reale.",ja:"ルート、日程、旅行者を確認してから実際のフライト検索を開きます。",es:"Revisa la ruta, las fechas y los viajeros y luego abre una búsqueda real de vuelos.",de:"Prüfe Route, Daten und Reisende und öffne dann eine echte Flugsuche.",fr:"Vérifiez l’itinéraire, les dates et les voyageurs, puis ouvrez une recherche de vols réelle."},
+  "Direct flight":{it:"Volo diretto",ja:"直行便",es:"Vuelo directo",de:"Direktflug",fr:"Vol direct"},
+  "Trip details":{it:"Dettagli del viaggio",ja:"旅行の詳細",es:"Detalles del viaje",de:"Reisedetails",fr:"Détails du voyage"},
+  "Search real flights":{it:"Cerca voli reali",ja:"実際のフライトを検索",es:"Buscar vuelos reales",de:"Echte Flüge suchen",fr:"Rechercher de vrais vols"},
+  "Affiliate partner: Aviasales":{it:"Partner affiliato: Aviasales",ja:"アフィリエイトパートナー: Aviasales",es:"Socio afiliado: Aviasales",de:"Affiliate-Partner: Aviasales",fr:"Partenaire affilié : Aviasales"},
+  "Search on Aviasales":{it:"Cerca su Aviasales",ja:"Aviasales で検索",es:"Buscar en Aviasales",de:"Auf Aviasales suchen",fr:"Rechercher sur Aviasales"},
+  "Prices and availability are shown on the partner's website. 687 Italy does not display a live fare on this screen.":{it:"Prezzi e disponibilità sono mostrati sul sito del partner. 687 Italy non mostra una tariffa in tempo reale in questa schermata.",ja:"価格と空席状況はパートナーサイトに表示されます。この画面では 687 Italy はリアルタイム運賃を表示しません。",es:"Los precios y la disponibilidad se muestran en el sitio del socio. 687 Italy no muestra una tarifa en tiempo real en esta pantalla.",de:"Preise und Verfügbarkeit werden auf der Partnerseite angezeigt. 687 Italy zeigt auf diesem Bildschirm keinen Live-Tarif an.",fr:"Les prix et disponibilités sont affichés sur le site du partenaire. 687 Italy n’affiche pas de tarif en temps réel sur cet écran."},
+  "Booked? Enter the total amount you paid:":{it:"Hai prenotato? Inserisci l’importo totale pagato:",ja:"予約済みですか？支払った合計金額を入力してください:",es:"¿Ya reservaste? Introduce el importe total pagado:",de:"Gebucht? Gib den insgesamt bezahlten Betrag ein:",fr:"Réservé ? Saisissez le montant total payé :"},
+  "Continue to bookings":{it:"Continua alle prenotazioni",ja:"予約へ進む",es:"Continuar a reservas",de:"Weiter zu Buchungen",fr:"Continuer vers les réservations"},
+  "Complete your bookings":{it:"Completa le prenotazioni",ja:"予約を完了",es:"Completa tus reservas",de:"Buchungen abschließen",fr:"Finalisez vos réservations"},
+  "Stay, car and — if you're moving around — transport between cities.":{it:"Alloggio, auto e, se ti sposti, trasporti tra le città.",ja:"宿泊、車、そして周遊する場合は都市間の移動手段を設定します。",es:"Alojamiento, coche y, si te desplazas, transporte entre ciudades.",de:"Unterkunft, Auto und – wenn du weiterreist – Verkehr zwischen Städten.",fr:"Hébergement, voiture et, si vous vous déplacez, transport entre les villes."},
+  "Where do you want to stay?":{it:"Dove vuoi soggiornare?",ja:"どこに滞在しますか？",es:"¿Dónde quieres alojarte?",de:"Wo möchtest du übernachten?",fr:"Où souhaitez-vous séjourner ?"},
+  "We've guessed based on your arrival airport — change it if you'd rather stay somewhere else nearby.":{it:"Abbiamo fatto una stima in base all’aeroporto di arrivo: cambiala se preferisci soggiornare altrove nei dintorni.",ja:"到着空港をもとに候補を設定しています。近くの別の場所に泊まる場合は変更してください。",es:"Lo hemos estimado según tu aeropuerto de llegada; cámbialo si prefieres alojarte en otro lugar cercano.",de:"Wir haben anhand deines Ankunftsflughafens geschätzt – ändere es, wenn du lieber woanders in der Nähe übernachten möchtest.",fr:"Nous avons estimé selon votre aéroport d’arrivée ; modifiez si vous préférez séjourner ailleurs à proximité."},
+  "Your accommodation":{it:"Il tuo alloggio",ja:"宿泊先",es:"Tu alojamiento",de:"Deine Unterkunft",fr:"Votre hébergement"},
+  "After booking, enter the hotel, B&B, apartment name or full address. 687 Italy will use it for directions when you are in Italy.":{it:"Dopo la prenotazione, inserisci il nome dell’hotel, B&B, appartamento o l’indirizzo completo. 687 Italy lo userà per le indicazioni quando sarai in Italia.",ja:"予約後、ホテル・B&B・アパート名または完全な住所を入力してください。イタリア滞在中のナビに使用します。",es:"Después de reservar, introduce el nombre del hotel, B&B, apartamento o la dirección completa. 687 Italy lo usará para las indicaciones en Italia.",de:"Gib nach der Buchung Hotel, B&B, Apartmentname oder die vollständige Adresse ein. 687 Italy nutzt sie für die Navigation in Italy.",fr:"Après réservation, saisissez le nom de l’hôtel, B&B, appartement ou l’adresse complète. 687 Italy l’utilisera pour la navigation au Italie."},
+  "After booking, enter the accommodation total:":{it:"Dopo la prenotazione, inserisci il totale dell’alloggio:",ja:"予約後、宿泊費の合計を入力してください:",es:"Después de reservar, introduce el total del alojamiento:",de:"Gib nach der Buchung die gesamten Unterkunftskosten ein:",fr:"Après réservation, saisissez le total de l’hébergement :"},
+  "Italy stays":{it:"Soggiorni in Italia",ja:"イタリアの宿泊",es:"Alojamientos en Italia",de:"Unterkünfte in Italy & Asien",fr:"Hébergements au Italie et en Asie"},
+  "Search on Agoda":{it:"Cerca su Agoda",ja:"Agoda で検索",es:"Buscar en Agoda",de:"Auf Agoda suchen",fr:"Rechercher sur Agoda"},
+  "Opens Agoda for this Italyese destination ↗":{it:"Apre Agoda per questa destinazione in Italia ↗",ja:"このイタリアの目的地を Agoda で開く ↗",es:"Abre Agoda para este destino en Italia ↗",de:"Öffnet Agoda für dieses Reiseziel in Italy ↗",fr:"Ouvre Agoda pour cette destination au Italie ↗"},
+  "Affiliate partner: Vrbo":{it:"Partner affiliato: Vrbo",ja:"アフィリエイトパートナー: Vrbo",es:"Socio afiliado: Vrbo",de:"Affiliate-Partner: Vrbo",fr:"Partenaire affilié : Vrbo"},
+  "Search on Vrbo":{it:"Cerca su Vrbo",ja:"Vrbo で検索",es:"Buscar en Vrbo",de:"Auf Vrbo suchen",fr:"Rechercher sur Vrbo"},
+  "Affiliate partner: Expedia":{it:"Partner affiliato: Expedia",ja:"アフィリエイトパートナー: Expedia",es:"Socio afiliado: Expedia",de:"Affiliate-Partner: Expedia",fr:"Partenaire affilié : Expedia"},
+  "Search on Expedia":{it:"Cerca su Expedia",ja:"Expedia で検索",es:"Buscar en Expedia",de:"Auf Expedia suchen",fr:"Rechercher sur Expedia"},
+  "Affiliate partner: Hotels.com":{it:"Partner affiliato: Hotels.com",ja:"アフィリエイトパートナー: Hotels.com",es:"Socio afiliado: Hotels.com",de:"Affiliate-Partner: Hotels.com",fr:"Partenaire affilié : Hotels.com"},
+  "Search on Hotels.com":{it:"Cerca su Hotels.com",ja:"Hotels.com で検索",es:"Buscar en Hotels.com",de:"Auf Hotels.com suchen",fr:"Rechercher sur Hotels.com"},
+  "Your dates & travelers already filled in ↗":{it:"Date e viaggiatori già compilati ↗",ja:"日程と旅行者は入力済みです ↗",es:"Fechas y viajeros ya completados ↗",de:"Daten und Reisende bereits eingetragen ↗",fr:"Dates et voyageurs déjà renseignés ↗"},
+  "Rental car?":{it:"Auto a noleggio?",ja:"レンタカー？",es:"¿Coche de alquiler?",de:"Mietwagen?",fr:"Voiture de location ?"},
+  "Yes, I'll drive":{it:"Sì, guiderò",ja:"はい、運転します",es:"Sí, conduciré",de:"Ja, ich fahre",fr:"Oui, je conduirai"},
+  "Your rental car":{it:"La tua auto a noleggio",ja:"レンタカー",es:"Tu coche de alquiler",de:"Dein Mietwagen",fr:"Votre voiture de location"},
+  "Affiliate partner: Kayak":{it:"Partner affiliato: Kayak",ja:"アフィリエイトパートナー: Kayak",es:"Socio afiliado: Kayak",de:"Affiliate-Partner: Kayak",fr:"Partenaire affilié : Kayak"},
+  "Search on Kayak":{it:"Cerca su Kayak",ja:"Kayak で検索",es:"Buscar en Kayak",de:"Auf Kayak suchen",fr:"Rechercher sur Kayak"},
+  "Your trip details already filled in ↗":{it:"Dettagli del viaggio già compilati ↗",ja:"旅行情報は入力済みです ↗",es:"Detalles del viaje ya completados ↗",de:"Reisedetails bereits eingetragen ↗",fr:"Détails du voyage déjà renseignés ↗"},
+  "Booked? Enter what you paid:":{it:"Hai prenotato? Inserisci quanto hai pagato:",ja:"予約済みですか？支払額を入力してください:",es:"¿Ya reservaste? Introduce lo que pagaste:",de:"Gebucht? Gib ein, was du bezahlt hast:",fr:"Réservé ? Saisissez ce que vous avez payé :"},
+  "Tell us which day you arrive in each city":{it:"Indica in quale giorno arrivi in ogni città",ja:"各都市に到着する日を指定してください",es:"Indica qué día llegas a cada ciudad",de:"Sag uns, an welchem Tag du in jeder Stadt ankommst",fr:"Indiquez le jour d’arrivée dans chaque ville"},
+  "e.g. Day 1 Rome, Day 4 Naples, Day 8 Turin, Day 11 Rome (heading home).":{it:"es. Giorno 1 Roma, Giorno 4 Napoli, Giorno 8 Torino, Giorno 11 Roma (rientro).",ja:"例: 1日目 ローマ、4日目 ナポリ、8日目 トリノ、11日目 ローマ（帰国）。",es:"p. ej. Día 1 Roma, Día 4 Nápoles, Día 8 Turín, Día 11 Roma (regreso).",de:"z. B. Tag 1 Rom, Tag 4 Neapel, Tag 8 Turin, Tag 11 Rom (Rückreise).",fr:"ex. Jour 1 Rome, jour 4 Naples, jour 8 Turin, jour 11 Rome (retour)."},
+  "+ Add":{it:"+ Aggiungi",ja:"+ 追加",es:"+ Añadir",de:"+ Hinzufügen",fr:"+ Ajouter"},
+  "No internal flight airport found for one of these cities.":{it:"Nessun aeroporto per voli interni trovato per una di queste città.",ja:"これらの都市のいずれかに対応する国内線空港が見つかりません。",es:"No se encontró un aeropuerto para vuelos internos para una de estas ciudades.",de:"Für eine dieser Städte wurde kein Flughafen für Inlandsflüge gefunden.",fr:"Aucun aéroport pour vol intérieur n’a été trouvé pour l’une de ces villes."},
+  "Finish setup":{it:"Completa configurazione",ja:"設定を完了",es:"Finalizar configuración",de:"Einrichtung abschließen",fr:"Terminer la configuration"}
+};
+
+// V1.88.0 TEST — deep full-app localization audit.
+// Exact fixed UI copy that lives outside component-local dictionaries is translated here.
+// Dynamic place names, user data and Translate content are intentionally never altered.
+const GLOBAL_UI_TEXT = {
+  "Overview":{it:"Panoramica",ja:"概要",es:"Resumen",de:"Übersicht",fr:"Aperçu"},
+  "Wallet":{it:"Portafoglio",ja:"ウォレット",es:"Cartera",de:"Reise-Wallet",fr:"Portefeuille"},
+  "Packing":{it:"Bagaglio",ja:"荷造り",es:"Equipaje",de:"Gepäck",fr:"Bagages"},
+  "Settings":{it:"Impostazioni",ja:"設定",es:"Ajustes",de:"Einstellungen",fr:"Paramètres"},
+  "Intelligent Day":{it:"Giornata intelligente",ja:"インテリジェントデイ",es:"Día inteligente",de:"Intelligenter Tag",fr:"Journée intelligente"},
+  "Itinerary":{it:"Itinerario",ja:"旅程",es:"Itinerario",de:"Reiseplan",fr:"Itinéraire"},
+  "Nearby":{it:"Nelle vicinanze",ja:"周辺",es:"Cerca de ti",de:"In der Nähe",fr:"À proximité"},
+  "Drive":{it:"Guida",ja:"ドライブ",es:"Conducir",de:"Fahren",fr:"Conduite"},
+  "Translate":{it:"Traduci",ja:"翻訳",es:"Traducir",de:"Übersetzen",fr:"Traduire"},
+  "Tools":{it:"Strumenti",ja:"ツール",es:"Herramientas",de:"Werkzeuge",fr:"Outils"},
+  "GO":{it:"VAI",ja:"案内",es:"IR",de:"LOS",fr:"ALLER"},
+  "Open":{it:"Apri",ja:"開く",es:"Abrir",de:"Öffnen",fr:"Ouvrir"},
+  "Save":{it:"Salva",ja:"保存",es:"Guardar",de:"Speichern",fr:"Enregistrer"},
+  "Saved":{it:"Salvato",ja:"保存済み",es:"Guardado",de:"Gespeichert",fr:"Enregistré"},
+  "Cancel":{it:"Annulla",ja:"キャンセル",es:"Cancelar",de:"Abbrechen",fr:"Annuler"},
+  "Delete":{it:"Elimina",ja:"削除",es:"Eliminar",de:"Löschen",fr:"Supprimer"},
+  "Replace":{it:"Sostituisci",ja:"置き換える",es:"Reemplazar",de:"Ersetzen",fr:"Remplacer"},
+  "Continue":{it:"Continua",ja:"続ける",es:"Continuar",de:"Weiter",fr:"Continuer"},
+  "Try again":{it:"Riprova",ja:"もう一度試す",es:"Intentar de nuevo",de:"Erneut versuchen",fr:"Réessayer"},
+  "From":{it:"Da",ja:"出発",es:"Desde",de:"Von",fr:"De"},
+  "To":{it:"A",ja:"到着",es:"Hasta",de:"Nach",fr:"À"},
+  "Day":{it:"Giorno",ja:"日",es:"Día",de:"Tag",fr:"Jour"},
+  "Map":{it:"Mappa",ja:"地図",es:"Mapa",de:"Karte",fr:"Carte"},
+  "Category":{it:"Categoria",ja:"カテゴリー",es:"Categoría",de:"Kategorie",fr:"Catégorie"},
+  "Selected":{it:"Selezionato",ja:"選択済み",es:"Seleccionado",de:"Ausgewählt",fr:"Sélectionné"},
+  "Your day":{it:"La tua giornata",ja:"今日の予定",es:"Tu día",de:"Dein Tag",fr:"Votre journée"},
+  "Clear day":{it:"Cancella giornata",ja:"1日をクリア",es:"Borrar día",de:"Tag leeren",fr:"Effacer la journée"},
+  "Smart Day":{it:"Smart Day",ja:"スマートデイ",es:"Smart Day",de:"Smart Day",fr:"Smart Day"},
+  "Book ahead":{it:"Prenota in anticipo",ja:"事前予約",es:"Reserva con antelación",de:"Im Voraus buchen",fr:"Réserver à l’avance"},
+  "Car rental":{it:"Noleggio auto",ja:"レンタカー",es:"Alquiler de coche",de:"Mietwagen",fr:"Location de voiture"},
+  "Rental car":{it:"Auto a noleggio",ja:"レンタカー",es:"Coche de alquiler",de:"Mietwagen",fr:"Voiture de location"},
+  "Accommodation":{it:"Alloggio",ja:"宿泊",es:"Alojamiento",de:"Unterkunft",fr:"Hébergement"},
+  "Flight":{it:"Volo",ja:"フライト",es:"Vuelo",de:"Flug",fr:"Vol"},
+  "No car":{it:"Nessuna auto",ja:"車なし",es:"Sin coche",de:"Kein Auto",fr:"Sans voiture"},
+  "← Back":{it:"← Indietro",ja:"← 戻る",es:"← Atrás",de:"← Zurück",fr:"← Retour"},
+  "✏️ edit":{it:"✏️ modifica",ja:"✏️ 編集",es:"✏️ editar",de:"✏️ bearbeiten",fr:"✏️ modifier"},
+  "🚆 Train":{it:"🚆 Treno",ja:"🚆 電車",es:"🚆 Tren",de:"🚆 Zug",fr:"🚆 Train"},
+  "🚗 By car":{it:"🚗 In auto",ja:"🚗 車で",es:"🚗 En coche",de:"🚗 Mit dem Auto",fr:"🚗 En voiture"},
+  "🚶 On foot":{it:"🚶 A piedi",ja:"🚶 徒歩",es:"🚶 A pie",de:"🚶 Zu Fuß",fr:"🚶 À pied"},
+  "✈️ Flight":{it:"✈️ Volo",ja:"✈️ フライト",es:"✈️ Vuelo",de:"✈️ Flug",fr:"✈️ Vol"},
+  "✈️ Arrival":{it:"✈️ Arrivo",ja:"✈️ 到着",es:"✈️ Llegada",de:"✈️ Ankunft",fr:"✈️ Arrivée"},
+  "🌧️ Weather":{it:"🌧️ Meteo",ja:"🌧️ 天気",es:"🌧️ Tiempo",de:"🌧️ Wetter",fr:"🌧️ Météo"},
+  "🛂 Passport":{it:"🛂 Passaporto",ja:"🛂 パスポート",es:"🛂 Pasaporte",de:"🛂 Reisepass",fr:"🛂 Passeport"},
+  "🏥 Doctor":{it:"🏥 Medico",ja:"🏥 医師",es:"🏥 Médico",de:"🏥 Arzt",fr:"🏥 Médecin"},
+  "Emergency:":{it:"Emergenza:",ja:"緊急:",es:"Emergencia:",de:"Notfall:",fr:"Urgence :"},
+  "Parking:":{it:"Parcheggio:",ja:"駐車:",es:"Aparcamiento:",de:"Parken:",fr:"Stationnement :"},
+  "Quick stops":{it:"Soste rapide",ja:"クイックストップ",es:"Paradas rápidas",de:"Schnellstopps",fr:"Arrêts rapides"},
+  "Daily target":{it:"Obiettivo giornaliero",ja:"1日の目標",es:"Objetivo diario",de:"Tagesziel",fr:"Objectif quotidien"},
+  "Good to know":{it:"Da sapere",ja:"知っておくと便利",es:"Conviene saber",de:"Gut zu wissen",fr:"Bon à savoir"},
+  "Map of Italy":{it:"Mappa del Italia",ja:"イタリア地図",es:"Mapa de Italia",de:"Karte von Italy",fr:"Carte du Italie"},
+  "Near you now":{it:"Vicino a te adesso",ja:"現在地の近く",es:"Cerca de ti ahora",de:"Jetzt in deiner Nähe",fr:"Près de vous maintenant"},
+  "Save expense":{it:"Salva spesa",ja:"支出を保存",es:"Guardar gasto",de:"Ausgabe speichern",fr:"Enregistrer la dépense"},
+  "Total budget":{it:"Budget totale",ja:"総予算",es:"Presupuesto total",de:"Gesamtbudget",fr:"Budget total"},
+  "Travel dates":{it:"Date del viaggio",ja:"旅行日程",es:"Fechas del viaje",de:"Reisedaten",fr:"Dates du voyage"},
+  "Trip details":{it:"Dettagli del viaggio",ja:"旅行の詳細",es:"Detalles del viaje",de:"Reisedetails",fr:"Détails du voyage"},
+  "Home currency":{it:"Valuta principale",ja:"自国通貨",es:"Moneda principal",de:"Heimatwährung",fr:"Devise principale"},
+  "Travel Wallet":{it:"Portafoglio di viaggio",ja:"トラベルウォレット",es:"Cartera de viaje",de:"Reise-Wallet",fr:"Portefeuille de voyage"},
+  "Trip calendar":{it:"Calendario del viaggio",ja:"旅行カレンダー",es:"Calendario del viaje",de:"Reisekalender",fr:"Calendrier du voyage"},
+  "Trip snapshot":{it:"Riepilogo del viaggio",ja:"旅行スナップショット",es:"Resumen del viaje",de:"Reiseübersicht",fr:"Aperçu du voyage"},
+  "Quick confirms":{it:"Conferme rapide",ja:"クイック確認",es:"Confirmaciones rápidas",de:"Schnellbestätigungen",fr:"Confirmations rapides"},
+  "Reports shared":{it:"Segnalazioni condivise",ja:"共有レポート",es:"Informes compartidos",de:"Geteilte Meldungen",fr:"Signalements partagés"},
+  "Today's budget":{it:"Budget di oggi",ja:"今日の予算",es:"Presupuesto de hoy",de:"Heutiges Budget",fr:"Budget du jour"},
+  "What happened?":{it:"Che cosa è successo?",ja:"何が起きましたか？",es:"¿Qué ha pasado?",de:"Was ist passiert?",fr:"Que s’est-il passé ?"},
+  "Your contribution":{it:"Il tuo contributo",ja:"あなたの協力",es:"Tu contribución",de:"Dein Beitrag",fr:"Votre contribution"},
+  "Before you drive":{it:"Prima di guidare",ja:"運転前に",es:"Antes de conducir",de:"Vor der Fahrt",fr:"Avant de conduire"},
+  "Biggest category":{it:"Categoria principale",ja:"最大カテゴリー",es:"Categoría principal",de:"Größte Kategorie",fr:"Catégorie principale"},
+  "Remaining budget":{it:"Budget rimanente",ja:"残り予算",es:"Presupuesto restante",de:"Restbudget",fr:"Budget restant"},
+  "Days traveled":{it:"Giorni di viaggio",ja:"旅行日数",es:"Días viajados",de:"Reisetage",fr:"Jours de voyage"},
+  "Spending by day":{it:"Spese per giorno",ja:"日別支出",es:"Gasto por día",de:"Ausgaben pro Tag",fr:"Dépenses par jour"},
+  "Use my location":{it:"Usa la mia posizione",ja:"現在地を使う",es:"Usar mi ubicación",de:"Meinen Standort verwenden",fr:"Utiliser ma position"},
+  "Your trip route":{it:"Il percorso del viaggio",ja:"旅行ルート",es:"Ruta del viaje",de:"Deine Reiseroute",fr:"Votre itinéraire de voyage"},
+  "Your accommodation":{it:"Il tuo alloggio",ja:"宿泊先",es:"Tu alojamiento",de:"Deine Unterkunft",fr:"Votre hébergement"},
+  "Rental car in Italy:":{it:"Auto a noleggio in Italia:",ja:"イタリアのレンタカー:",es:"Coche de alquiler en Italia:",de:"Mietwagen in Italy:",fr:"Voiture de location au Italie :"},
+  "Your rental car":{it:"La tua auto a noleggio",ja:"レンタカー",es:"Tu coche de alquiler",de:"Dein Mietwagen",fr:"Votre voiture de location"},
+  "No rental car":{it:"Nessuna auto a noleggio",ja:"レンタカーなし",es:"Sin coche de alquiler",de:"Kein Mietwagen",fr:"Pas de voiture de location"},
+  "Where did you park?":{it:"Dove hai parcheggiato?",ja:"どこに駐車しましたか？",es:"¿Dónde aparcaste?",de:"Wo hast du geparkt?",fr:"Où avez-vous stationné ?"},
+  "Parking lot / garage name":{it:"Nome parcheggio / garage",ja:"駐車場名",es:"Nombre del aparcamiento / garaje",de:"Name des Parkplatzes / Parkhauses",fr:"Nom du parking / garage"},
+  "Level / Row / Spot":{it:"Livello / Fila / Posto",ja:"階 / 列 / 区画",es:"Nivel / Fila / Plaza",de:"Ebene / Reihe / Platz",fr:"Niveau / Rangée / Place"},
+  "Parking phone number":{it:"Numero di telefono del parcheggio",ja:"駐車場の電話番号",es:"Teléfono del aparcamiento",de:"Telefonnummer des Parkplatzes",fr:"Numéro du parking"},
+  "Nothing added yet":{it:"Non hai ancora aggiunto nulla",ja:"まだ追加されていません",es:"Aún no has añadido nada",de:"Noch nichts hinzugefügt",fr:"Rien n’a encore été ajouté"},
+  "Add an item":{it:"Aggiungi un elemento",ja:"項目を追加",es:"Añadir un elemento",de:"Eintrag hinzufügen",fr:"Ajouter un élément"},
+  "Offline essentials":{it:"Essenziali offline",ja:"オフライン必需品",es:"Esenciales sin conexión",de:"Offline-Essentials",fr:"Essentiels hors ligne"},
+  "Quick phrases for Italy":{it:"Frasi rapide per il Italia",ja:"イタリアで使えるフレーズ",es:"Frases rápidas para Italia",de:"Schnelle Sätze für Italy",fr:"Phrases utiles au Italie"},
+  "Translate anything to Italyese":{it:"Traduci qualsiasi cosa in italiano",ja:"イタリア語に翻訳",es:"Traduce cualquier cosa al japonés",de:"Alles ins Italyische übersetzen",fr:"Traduire en japonais"},
+  "Speaking language":{it:"Lingua parlata",ja:"話す言語",es:"Idioma hablado",de:"Gesprochene Sprache",fr:"Langue parlée"},
+  "Voice input not available on this device":{it:"Input vocale non disponibile su questo dispositivo",ja:"この端末では音声入力を利用できません",es:"La entrada por voz no está disponible en este dispositivo",de:"Spracheingabe ist auf diesem Gerät nicht verfügbar",fr:"La saisie vocale n’est pas disponible sur cet appareil"},
+  "Check the weather":{it:"Controlla il meteo",ja:"天気を確認",es:"Consultar el tiempo",de:"Wetter prüfen",fr:"Consulter la météo"},
+  "Weather right now":{it:"Meteo adesso",ja:"現在の天気",es:"Tiempo ahora",de:"Wetter jetzt",fr:"Météo maintenant"},
+  "Loading weather…":{it:"Caricamento meteo…",ja:"天気を読み込み中…",es:"Cargando el tiempo…",de:"Wetter wird geladen…",fr:"Chargement de la météo…"},
+  "Home & Italy time":{it:"Ora di casa e del Italia",ja:"自宅とイタリアの時刻",es:"Hora de casa y de Italia",de:"Heimat- und Italyzeit",fr:"Heure locale et au Italie"},
+  "Live map in Italy":{it:"Mappa live in Italia",ja:"イタリアのライブマップ",es:"Mapa en vivo de Italia",de:"Live-Karte in Italy",fr:"Carte en direct au Italie"},
+  "Live map available in Italy":{it:"Mappa live disponibile in Italia",ja:"イタリアでライブマップを利用できます",es:"Mapa en vivo disponible en Italia",de:"Live-Karte in Italy verfügbar",fr:"Carte en direct disponible au Italie"},
+  "Live Nearby in Italy":{it:"Nearby live in Italia",ja:"イタリアのライブ周辺検索",es:"Cerca de ti en vivo en Italia",de:"Live in der Nähe in Italy",fr:"À proximité en direct au Italie"},
+  "Live Nearby is available in Italy":{it:"Nearby live è disponibile in Italia",ja:"イタリアでライブ周辺検索を利用できます",es:"Cerca de ti en vivo está disponible en Italia",de:"Live-Suche in der Nähe ist in Italy verfügbar",fr:"À proximité en direct est disponible au Italie"},
+  "Searching nearby…":{it:"Ricerca nelle vicinanze…",ja:"周辺を検索中…",es:"Buscando cerca…",de:"Suche in der Nähe…",fr:"Recherche à proximité…"},
+  "Finding your location…":{it:"Ricerca della tua posizione…",ja:"現在地を取得中…",es:"Buscando tu ubicación…",de:"Standort wird ermittelt…",fr:"Recherche de votre position…"},
+  "Getting your current location…":{it:"Rilevamento della posizione attuale…",ja:"現在地を取得中…",es:"Obteniendo tu ubicación actual…",de:"Aktueller Standort wird ermittelt…",fr:"Obtention de votre position actuelle…"},
+  "📍 Checking your location…":{it:"📍 Controllo della posizione…",ja:"📍 現在地を確認中…",es:"📍 Comprobando tu ubicación…",de:"📍 Standort wird geprüft…",fr:"📍 Vérification de votre position…"},
+  "Your current location":{it:"La tua posizione attuale",ja:"現在地",es:"Tu ubicación actual",de:"Dein aktueller Standort",fr:"Votre position actuelle"},
+  "📍 You are here":{it:"📍 Sei qui",ja:"📍 現在地",es:"📍 Estás aquí",de:"📍 Du bist hier",fr:"📍 Vous êtes ici"},
+  "Nearby map":{it:"Mappa Nearby",ja:"周辺マップ",es:"Mapa cercano",de:"Karte in der Nähe",fr:"Carte à proximité"},
+  "Find real places with Nearby":{it:"Trova luoghi reali con Nearby",ja:"周辺検索で実在する場所を探す",es:"Encuentra lugares reales con Cerca de ti",de:"Finde echte Orte mit In der Nähe",fr:"Trouvez de vrais lieux avec À proximité"},
+  "Tap a place to preview the direction on the map.":{it:"Tocca un luogo per vedere la direzione sulla mappa.",ja:"場所をタップすると地図で方向を確認できます。",es:"Toca un lugar para ver la dirección en el mapa.",de:"Tippe auf einen Ort, um die Richtung auf der Karte zu sehen.",fr:"Touchez un lieu pour voir la direction sur la carte."},
+  "Your plan for this day":{it:"Il tuo programma per questo giorno",ja:"この日の予定",es:"Tu plan para este día",de:"Dein Plan für diesen Tag",fr:"Votre programme pour ce jour"},
+  "Nothing planned yet":{it:"Non hai ancora pianificato nulla",ja:"まだ予定はありません",es:"Aún no hay nada planificado",de:"Noch nichts geplant",fr:"Rien de prévu pour le moment"},
+  "Nothing planned yet. Add places from Nearby.":{it:"Non hai ancora pianificato nulla. Aggiungi luoghi da Nearby.",ja:"まだ予定はありません。周辺検索から場所を追加してください。",es:"Aún no hay nada planificado. Añade lugares desde Cerca de ti.",de:"Noch nichts geplant. Füge Orte aus In der Nähe hinzu.",fr:"Rien de prévu. Ajoutez des lieux depuis À proximité."},
+  "No plans saved for this day yet.":{it:"Nessun programma salvato per questo giorno.",ja:"この日の予定はまだ保存されていません。",es:"Aún no hay planes guardados para este día.",de:"Für diesen Tag sind noch keine Pläne gespeichert.",fr:"Aucun programme enregistré pour ce jour."},
+  "No stops planned yet for this day.":{it:"Nessuna tappa pianificata per questo giorno.",ja:"この日はまだ立ち寄り先がありません。",es:"Aún no hay paradas planificadas para este día.",de:"Für diesen Tag sind noch keine Stopps geplant.",fr:"Aucun arrêt prévu pour ce jour."},
+  "Add a note or place":{it:"Aggiungi una nota o un luogo",ja:"メモや場所を追加",es:"Añadir una nota o un lugar",de:"Notiz oder Ort hinzufügen",fr:"Ajouter une note ou un lieu"},
+  "Dinner, train, museum...":{it:"Cena, treno, museo...",ja:"夕食、電車、美術館…",es:"Cena, tren, museo...",de:"Abendessen, Zug, Museum...",fr:"Dîner, train, musée..."},
+  "Tap any day to open its plan":{it:"Tocca un giorno per aprire il programma",ja:"日付をタップして予定を開く",es:"Toca un día para abrir su plan",de:"Tippe auf einen Tag, um den Plan zu öffnen",fr:"Touchez un jour pour ouvrir son programme"},
+  "687 Italy Itinerary":{it:"Itinerario 687 Italy",ja:"687 Italy 旅程",es:"Itinerario 687 Italy",de:"687 Italy Reiseplan",fr:"Itinéraire 687 Italy"},
+  "📄 Save itinerary as PDF":{it:"📄 Salva itinerario come PDF",ja:"📄 旅程をPDFで保存",es:"📄 Guardar itinerario como PDF",de:"📄 Reiseplan als PDF speichern",fr:"📄 Enregistrer l’itinéraire en PDF"},
+  "Generated from your saved 687 Italy itinerary.":{it:"Generato dal tuo itinerario 687 Italy salvato.",ja:"保存済みの687 Italy旅程から生成されました。",es:"Generado a partir de tu itinerario guardado de 687 Italy.",de:"Aus deinem gespeicherten 687 Italy Reiseplan erstellt.",fr:"Généré à partir de votre itinéraire 687 Italy enregistré."},
+  "Your flight to Italy":{it:"Il tuo volo per il Italia",ja:"イタリアへのフライト",es:"Tu vuelo a Italia",de:"Dein Flug nach Italy",fr:"Votre vol vers le Italie"},
+  "✈️ Flights & tickets":{it:"✈️ Voli e biglietti",ja:"✈️ フライトとチケット",es:"✈️ Vuelos y billetes",de:"✈️ Flüge und Tickets",fr:"✈️ Vols et billets"},
+  "Search real flights":{it:"Cerca voli reali",ja:"実際のフライトを検索",es:"Buscar vuelos reales",de:"Echte Flüge suchen",fr:"Rechercher de vrais vols"},
+  "Search on Aviasales":{it:"Cerca su Aviasales",ja:"Aviasalesで検索",es:"Buscar en Aviasales",de:"Auf Aviasales suchen",fr:"Rechercher sur Aviasales"},
+  "Check flights":{it:"Controlla i voli",ja:"フライトを確認",es:"Consultar vuelos",de:"Flüge prüfen",fr:"Consulter les vols"},
+  "Complete your bookings":{it:"Completa le prenotazioni",ja:"予約を完了",es:"Completa tus reservas",de:"Buchungen abschließen",fr:"Finalisez vos réservations"},
+  "Continue to bookings":{it:"Continua alle prenotazioni",ja:"予約へ進む",es:"Continuar a reservas",de:"Weiter zu Buchungen",fr:"Continuer vers les réservations"},
+  "Search on Agoda":{it:"Cerca su Agoda",ja:"Agodaで検索",es:"Buscar en Agoda",de:"Auf Agoda suchen",fr:"Rechercher sur Agoda"},
+  "Search on Vrbo":{it:"Cerca su Vrbo",ja:"Vrboで検索",es:"Buscar en Vrbo",de:"Auf Vrbo suchen",fr:"Rechercher sur Vrbo"},
+  "Search on Expedia":{it:"Cerca su Expedia",ja:"Expediaで検索",es:"Buscar en Expedia",de:"Auf Expedia suchen",fr:"Rechercher sur Expedia"},
+  "Search on Hotels.com":{it:"Cerca su Hotels.com",ja:"Hotels.comで検索",es:"Buscar en Hotels.com",de:"Auf Hotels.com suchen",fr:"Rechercher sur Hotels.com"},
+  "Search on Kayak":{it:"Cerca su Kayak",ja:"Kayakで検索",es:"Buscar en Kayak",de:"Auf Kayak suchen",fr:"Rechercher sur Kayak"},
+  "What can I do now?":{it:"Cosa posso fare adesso?",ja:"今何ができますか？",es:"¿Qué puedo hacer ahora?",de:"Was kann ich jetzt tun?",fr:"Que puis-je faire maintenant ?"},
+  "What makes sense now":{it:"Cosa ha senso fare adesso",ja:"今おすすめの行動",es:"Qué tiene sentido ahora",de:"Was jetzt sinnvoll ist",fr:"Ce qui est pertinent maintenant"},
+  "Next hours":{it:"Prossime ore",ja:"今後数時間",es:"Próximas horas",de:"Nächste Stunden",fr:"Prochaines heures"},
+  "Next fixed plan":{it:"Prossimo impegno fisso",ja:"次の固定予定",es:"Próximo plan fijo",de:"Nächster fester Plan",fr:"Prochain plan fixe"},
+  "Next fixed plan time":{it:"Orario del prossimo impegno",ja:"次の予定時刻",es:"Hora del próximo plan fijo",de:"Zeit des nächsten festen Plans",fr:"Heure du prochain plan fixe"},
+  "Auto updates":{it:"Aggiornamenti automatici",ja:"自動更新",es:"Actualizaciones automáticas",de:"Automatische Updates",fr:"Mises à jour automatiques"},
+  "687 Prevent":{it:"687 Prevenzione",ja:"687 予防",es:"687 Prevención",de:"687 Vorbeugen",fr:"687 Prévention"},
+  "687 Live Signals":{it:"687 Segnali live",ja:"687 ライブシグナル",es:"687 Señales en vivo",de:"687 Live-Signale",fr:"687 Signaux en direct"},
+  "687 Italy · NOW":{it:"687 Italy · ADESSO",ja:"687 Italy · 今",es:"687 Italy · AHORA",de:"687 Italy · JETZT",fr:"687 Italy · MAINTENANT"},
+  "Weather through your day":{it:"Meteo durante la giornata",ja:"1日の天気",es:"Tiempo durante el día",de:"Wetter im Tagesverlauf",fr:"Météo au fil de la journée"},
+  "Important information, even when you are not looking at NOW":{it:"Informazioni importanti anche quando non stai guardando ADESSO",ja:"「今」を見ていない時でも重要な情報",es:"Información importante incluso cuando no estás mirando AHORA",de:"Wichtige Informationen, auch wenn du JETZT nicht geöffnet hast",fr:"Informations importantes même lorsque vous ne consultez pas MAINTENANT"},
+  "Active signals near your day":{it:"Segnali attivi vicino alla tua giornata",ja:"今日の予定周辺のアクティブなシグナル",es:"Señales activas cerca de tu día",de:"Aktive Signale rund um deinen Tag",fr:"Signaux actifs autour de votre journée"},
+  "What is happening on your stops and routes":{it:"Cosa sta succedendo nelle tue tappe e sui percorsi",ja:"立ち寄り先やルートで起きていること",es:"Qué ocurre en tus paradas y rutas",de:"Was an deinen Stopps und Routen passiert",fr:"Ce qui se passe à vos étapes et sur vos trajets"},
+  "No active reports near your current location or today's route.":{it:"Nessuna segnalazione attiva vicino alla tua posizione o al percorso di oggi.",ja:"現在地や今日のルート付近にアクティブな報告はありません。",es:"No hay informes activos cerca de tu ubicación o ruta de hoy.",de:"Keine aktiven Meldungen in der Nähe deines Standorts oder der heutigen Route.",fr:"Aucun signalement actif près de votre position ou de l’itinéraire du jour."},
+  "Pause Guardian":{it:"Metti Guardian in pausa",ja:"Guardianを一時停止",es:"Pausar Guardian",de:"Guardian pausieren",fr:"Mettre Guardian en pause"},
+  "🔔 Enable Guardian":{it:"🔔 Attiva Guardian",ja:"🔔 Guardianを有効化",es:"🔔 Activar Guardian",de:"🔔 Guardian aktivieren",fr:"🔔 Activer Guardian"},
+  "Send test notification":{it:"Invia notifica di prova",ja:"テスト通知を送信",es:"Enviar notificación de prueba",de:"Testbenachrichtigung senden",fr:"Envoyer une notification de test"},
+  "Check location again":{it:"Controlla di nuovo la posizione",ja:"位置を再確認",es:"Comprobar ubicación de nuevo",de:"Standort erneut prüfen",fr:"Vérifier à nouveau la position"},
+  "🆘 Something went wrong?":{it:"🆘 Qualcosa è andato storto?",ja:"🆘 問題が起きましたか？",es:"🆘 ¿Algo salió mal?",de:"🆘 Ist etwas schiefgegangen?",fr:"🆘 Un problème ?"},
+  "Where is the problem?":{it:"Dov'è il problema?",ja:"どこで問題が起きましたか？",es:"¿Dónde está el problema?",de:"Wo liegt das Problem?",fr:"Où est le problème ?"},
+  "Fix this in NOW":{it:"Risolvi in ADESSO",ja:"「今」で解決",es:"Resolver en AHORA",de:"In JETZT lösen",fr:"Résoudre dans MAINTENANT"},
+  "✨ Fix in NOW":{it:"✨ Risolvi in ADESSO",ja:"✨ 「今」で解決",es:"✨ Resolver en AHORA",de:"✨ In JETZT lösen",fr:"✨ Résoudre dans MAINTENANT"},
+  "✨ Build Smart Day":{it:"✨ Crea Smart Day",ja:"✨ Smart Dayを作成",es:"✨ Crear Smart Day",de:"✨ Smart Day erstellen",fr:"✨ Créer Smart Day"},
+  "✨ Smart route":{it:"✨ Percorso smart",ja:"✨ スマートルート",es:"✨ Ruta inteligente",de:"✨ Smarte Route",fr:"✨ Itinéraire intelligent"},
+  "🗺️ Open Itinerary":{it:"🗺️ Apri Itinerario",ja:"🗺️ 旅程を開く",es:"🗺️ Abrir itinerario",de:"🗺️ Reiseplan öffnen",fr:"🗺️ Ouvrir l’itinéraire"},
+  "📍 Open Nearby":{it:"📍 Apri Nearby",ja:"📍 周辺を開く",es:"📍 Abrir Cerca de ti",de:"📍 In der Nähe öffnen",fr:"📍 Ouvrir À proximité"},
+  "Daily budget status":{it:"Stato budget giornaliero",ja:"1日の予算状況",es:"Estado del presupuesto diario",de:"Status des Tagesbudgets",fr:"État du budget quotidien"},
+  "Total trip budget":{it:"Budget totale del viaggio",ja:"旅行の総予算",es:"Presupuesto total del viaje",de:"Gesamtes Reisebudget",fr:"Budget total du voyage"},
+  "Total spent on the ground":{it:"Totale speso durante il viaggio",ja:"現地での総支出",es:"Total gastado durante el viaje",de:"Gesamtausgaben vor Ort",fr:"Total dépensé sur place"},
+  "Spending across your trip":{it:"Spese durante il viaggio",ja:"旅行中の支出",es:"Gastos durante tu viaje",de:"Ausgaben während deiner Reise",fr:"Dépenses pendant votre voyage"},
+  "Updated after your spending":{it:"Aggiornato dopo le tue spese",ja:"支出後に更新",es:"Actualizado tras tus gastos",de:"Nach deinen Ausgaben aktualisiert",fr:"Mis à jour après vos dépenses"},
+  "Verified-price rule":{it:"Regola prezzo verificato",ja:"確認済み価格ルール",es:"Regla de precio verificado",de:"Regel für bestätigte Preise",fr:"Règle de prix vérifié"},
+  "Safe today recalculates itself":{it:"Il budget sicuro di oggi si ricalcola automaticamente",ja:"今日の安全予算は自動で再計算されます",es:"El presupuesto seguro de hoy se recalcula automáticamente",de:"Das sichere Tagesbudget berechnet sich automatisch neu",fr:"Le budget sûr du jour se recalcule automatiquement"},
+  "Smart Building uses the budget signal":{it:"Smart Building usa il segnale del budget",ja:"Smart Buildingは予算シグナルを使用します",es:"Smart Building usa la señal de presupuesto",de:"Smart Building nutzt das Budgetsignal",fr:"Smart Building utilise le signal de budget"},
+  "687 Voice Assistant":{it:"687 Voice Assistant",ja:"687 Voice Assistant",es:"687 Voice Assistant",de:"687 Voice Assistant",fr:"687 Voice Assistant"},
+  "Close voice assistant":{it:"Chiudi Voice Assistant",ja:"Voice Assistantを閉じる",es:"Cerrar Voice Assistant",de:"Voice Assistant schließen",fr:"Fermer Voice Assistant"},
+  "Start a new trip":{it:"Inizia un nuovo viaggio",ja:"新しい旅行を開始",es:"Empezar un nuevo viaje",de:"Neue Reise starten",fr:"Commencer un nouveau voyage"},
+  "🎉 Trip complete":{it:"🎉 Viaggio completato",ja:"🎉 旅行完了",es:"🎉 Viaje completado",de:"🎉 Reise abgeschlossen",fr:"🎉 Voyage terminé"},
+  "Your Italy trip is complete":{it:"Il tuo viaggio in Italia è completo",ja:"イタリア旅行が完了しました",es:"Tu viaje a Italia está completo",de:"Deine Italyreise ist abgeschlossen",fr:"Votre voyage au Italie est terminé"},
+  "📄 Save trip memory as PDF":{it:"📄 Salva il ricordo del viaggio in PDF",ja:"📄 旅の記録をPDFで保存",es:"📄 Guardar recuerdo del viaje en PDF",de:"📄 Reiseerinnerung als PDF speichern",fr:"📄 Enregistrer le souvenir du voyage en PDF"},
+  "Enter a budget to continue.":{it:"Inserisci un budget per continuare.",ja:"続けるには予算を入力してください。",es:"Introduce un presupuesto para continuar.",de:"Gib ein Budget ein, um fortzufahren.",fr:"Saisissez un budget pour continuer."},
+  "Select your travel dates.":{it:"Seleziona le date del viaggio.",ja:"旅行日程を選択してください。",es:"Selecciona las fechas del viaje.",de:"Wähle deine Reisedaten.",fr:"Sélectionnez vos dates de voyage."},
+  "Choose how you want to plan.":{it:"Scegli come vuoi pianificare.",ja:"計画方法を選択してください。",es:"Elige cómo quieres planificar.",de:"Wähle, wie du planen möchtest.",fr:"Choisissez comment vous souhaitez planifier."},
+  "Choose how you'll get around in Italy.":{it:"Scegli come ti sposterai in Italia.",ja:"イタリアでの移動手段を選択してください。",es:"Elige cómo te desplazarás por Italia.",de:"Wähle, wie du dich in Italy fortbewegst.",fr:"Choisissez comment vous vous déplacerez au Italie."},
+  "We couldn't check flight availability right now. Please try again.":{it:"Non siamo riusciti a controllare la disponibilità dei voli. Riprova.",ja:"現在フライトの空席状況を確認できません。もう一度お試しください。",es:"No hemos podido comprobar la disponibilidad de vuelos. Inténtalo de nuevo.",de:"Die Flugverfügbarkeit konnte gerade nicht geprüft werden. Bitte versuche es erneut.",fr:"Impossible de vérifier la disponibilité des vols pour le moment. Réessayez."},
+  "Tell us your departure airport.":{it:"Indica il tuo aeroporto di partenza.",ja:"出発空港を入力してください。",es:"Indica tu aeropuerto de salida.",de:"Gib deinen Abflughafen an.",fr:"Indiquez votre aéroport de départ."},
+  "Choose a Italyese gateway first.":{it:"Scegli prima un aeroporto di arrivo in Italia.",ja:"まずイタリアの到着空港を選択してください。",es:"Elige primero un aeropuerto de llegada en Italia.",de:"Wähle zuerst einen Ankunftsflughafen in Italy.",fr:"Choisissez d’abord un aéroport d’arrivée au Italie."},
+  "Enter an amount first.":{it:"Inserisci prima un importo.",ja:"まず金額を入力してください。",es:"Introduce primero un importe.",de:"Gib zuerst einen Betrag ein.",fr:"Saisissez d’abord un montant."},
+  "Location is not supported on this device.":{it:"La posizione non è supportata su questo dispositivo.",ja:"この端末では位置情報を利用できません。",es:"La ubicación no es compatible con este dispositivo.",de:"Standort wird auf diesem Gerät nicht unterstützt.",fr:"La localisation n’est pas prise en charge sur cet appareil."},
+  "Location verification is temporarily unavailable.":{it:"La verifica della posizione non è temporaneamente disponibile.",ja:"位置情報の確認は一時的に利用できません。",es:"La verificación de ubicación no está disponible temporalmente.",de:"Die Standortprüfung ist vorübergehend nicht verfügbar.",fr:"La vérification de la position est temporairement indisponible."},
+  "No Nearby result is available for that voice command yet.":{it:"Non c'è ancora un risultato Nearby disponibile per questo comando vocale.",ja:"この音声コマンドで使える周辺検索結果はまだありません。",es:"Aún no hay un resultado de Cerca de ti disponible para ese comando de voz.",de:"Für diesen Sprachbefehl ist noch kein Ergebnis in der Nähe verfügbar.",fr:"Aucun résultat À proximité n’est encore disponible pour cette commande vocale."},
+  "No verified public toilets found nearby.":{it:"Nessun bagno pubblico verificato trovato nelle vicinanze.",ja:"近くに確認済みの公衆トイレが見つかりません。",es:"No se encontraron baños públicos verificados cerca.",de:"Keine bestätigten öffentlichen Toiletten in der Nähe gefunden.",fr:"Aucune toilette publique vérifiée trouvée à proximité."},
+  "No results found nearby for this category.":{it:"Nessun risultato trovato nelle vicinanze per questa categoria.",ja:"このカテゴリーの周辺結果は見つかりませんでした。",es:"No se encontraron resultados cercanos para esta categoría.",de:"Keine Ergebnisse in der Nähe für diese Kategorie gefunden.",fr:"Aucun résultat à proximité pour cette catégorie."},
+  "Couldn't reach nearby search right now.":{it:"Impossibile raggiungere la ricerca Nearby in questo momento.",ja:"現在、周辺検索に接続できません。",es:"No se puede acceder a la búsqueda cercana en este momento.",de:"Die Suche in der Nähe ist derzeit nicht erreichbar.",fr:"Impossible d’accéder à la recherche à proximité pour le moment."},
+  "Couldn't translate right now — try again.":{it:"Impossibile tradurre in questo momento — riprova.",ja:"現在翻訳できません。もう一度お試しください。",es:"No se puede traducir ahora — inténtalo de nuevo.",de:"Übersetzung derzeit nicht möglich — bitte erneut versuchen.",fr:"Impossible de traduire pour le moment — réessayez."},
+  "Couldn't reach the translator right now.":{it:"Impossibile raggiungere il traduttore in questo momento.",ja:"現在翻訳サービスに接続できません。",es:"No se puede acceder al traductor en este momento.",de:"Der Übersetzer ist derzeit nicht erreichbar.",fr:"Impossible d’accéder au traducteur pour le moment."},
+  "Microphone recognition couldn't start on this browser.":{it:"Il riconoscimento del microfono non può avviarsi su questo browser.",ja:"このブラウザでは音声認識を開始できません。",es:"El reconocimiento por micrófono no pudo iniciarse en este navegador.",de:"Die Mikrofonerkennung konnte in diesem Browser nicht gestartet werden.",fr:"La reconnaissance vocale n’a pas pu démarrer dans ce navigateur."},
+  "Couldn't load weather right now.":{it:"Impossibile caricare il meteo in questo momento.",ja:"現在天気を読み込めません。",es:"No se puede cargar el tiempo ahora.",de:"Das Wetter konnte gerade nicht geladen werden.",fr:"Impossible de charger la météo pour le moment."},
+  "Couldn't reach the weather service.":{it:"Impossibile raggiungere il servizio meteo.",ja:"天気サービスに接続できません。",es:"No se puede acceder al servicio meteorológico.",de:"Der Wetterdienst ist nicht erreichbar.",fr:"Impossible d’accéder au service météo."},
+  "Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later.":{it:"Iniziare un nuovo viaggio? Il viaggio attuale verrà prima archiviato, compresi i documenti del Portafoglio di viaggio, così potrai ripristinarlo in seguito.",ja:"新しい旅行を開始しますか？現在の旅行はトラベルウォレットの書類を含めて先にアーカイブされ、後で復元できます。",es:"¿Empezar un nuevo viaje? El viaje actual se archivará primero, incluidos los documentos de la Cartera de viaje, para que puedas restaurarlo después.",de:"Neue Reise starten? Deine aktuelle Reise wird zuerst einschließlich der Reise-Wallet-Dokumente archiviert, damit du sie später wiederherstellen kannst.",fr:"Commencer un nouveau voyage ? Votre voyage actuel sera d’abord archivé, y compris les documents du Portefeuille de voyage, afin de pouvoir le restaurer plus tard."},
+  "Restore this trip? Your current trip will be archived first if it contains data.":{it:"Ripristinare questo viaggio? Il viaggio attuale verrà prima archiviato se contiene dati.",ja:"この旅行を復元しますか？現在の旅行にデータがある場合は先にアーカイブされます。",es:"¿Restaurar este viaje? El viaje actual se archivará primero si contiene datos.",de:"Diese Reise wiederherstellen? Deine aktuelle Reise wird zuerst archiviert, wenn sie Daten enthält.",fr:"Restaurer ce voyage ? Votre voyage actuel sera d’abord archivé s’il contient des données."},
+  "Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.":{it:"Eliminare definitivamente questo viaggio archiviato e i documenti salvati nel Portafoglio? L'operazione non può essere annullata.",ja:"このアーカイブ旅行と保存済みウォレット書類を完全に削除しますか？元に戻せません。",es:"¿Eliminar permanentemente este viaje archivado y sus documentos guardados en la Cartera? No se puede deshacer.",de:"Diese archivierte Reise und ihre gespeicherten Wallet-Dokumente dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",fr:"Supprimer définitivement ce voyage archivé et ses documents enregistrés dans le Portefeuille ? Cette action est irréversible."},
+  "Reduce the pace today":{it:"Riduci il ritmo oggi",ja:"今日はペースを落とす",es:"Reduce el ritmo hoy",de:"Heute etwas langsamer machen",fr:"Ralentissez le rythme aujourd’hui"},
+  "Budget getting low":{it:"Il budget si sta riducendo",ja:"予算が少なくなっています",es:"El presupuesto se está agotando",de:"Das Budget wird knapp",fr:"Le budget diminue"},
+  "Spending pace looks comfortable":{it:"Il ritmo di spesa è sostenibile",ja:"支出ペースは余裕があります",es:"El ritmo de gasto parece cómodo",de:"Das Ausgabentempo ist entspannt",fr:"Le rythme de dépenses est confortable"},
+  "NOW already uses a low-budget signal when it chooses what kinds of nearby places to suggest.":{it:"ADESSO usa già un segnale di budget basso quando sceglie quali tipi di luoghi vicini suggerire.",ja:"「今」は周辺候補を選ぶ際に、すでに低予算シグナルを使用しています。",es:"AHORA ya utiliza una señal de presupuesto bajo al elegir qué tipos de lugares cercanos sugerir.",de:"JETZT verwendet bereits ein Niedrigbudget-Signal, wenn passende Orte in der Nähe vorgeschlagen werden.",fr:"MAINTENANT utilise déjà un signal de budget faible lorsqu’il choisit les types de lieux proches à suggérer."},
+  "Intelligent Day can keep balancing time, weather, location and budget without changing your itinerary.":{it:"Giornata intelligente può continuare a bilanciare tempo, meteo, posizione e budget senza modificare il tuo itinerario.",ja:"インテリジェントデイは旅程を変更せずに、時間・天気・位置・予算のバランスを取り続けます。",es:"Día inteligente puede seguir equilibrando tiempo, clima, ubicación y presupuesto sin cambiar tu itinerario.",de:"Intelligenter Tag kann Zeit, Wetter, Standort und Budget weiter ausbalancieren, ohne deinen Reiseplan zu ändern.",fr:"Journée intelligente peut continuer à équilibrer heure, météo, position et budget sans modifier votre itinéraire."},
+  "A place affects the exact budget calculation only when a real monetary amount/range is supplied. Price unavailable never means cheap.":{it:"Un luogo influisce sul calcolo esatto del budget solo quando viene fornito un importo o intervallo monetario reale. Prezzo non disponibile non significa economico.",ja:"実際の金額または価格帯が提供された場合のみ、その場所が正確な予算計算に影響します。価格不明は安いという意味ではありません。",es:"Un lugar afecta al cálculo exacto del presupuesto solo cuando se proporciona un importe o rango monetario real. Precio no disponible nunca significa barato.",de:"Ein Ort beeinflusst die genaue Budgetberechnung nur, wenn ein echter Geldbetrag oder Preisbereich angegeben wird. Kein Preis bedeutet niemals günstig.",fr:"Un lieu n’influence le calcul exact du budget que lorsqu’un montant ou une fourchette monétaire réelle est fourni. Prix indisponible ne signifie jamais bon marché."},
+  "Spending today changes the amount that is safely available across the remaining days.":{it:"Le spese di oggi modificano l'importo che può essere speso in sicurezza nei giorni rimanenti.",ja:"今日の支出に応じて、残りの日に安全に使える金額が変わります。",es:"El gasto de hoy cambia la cantidad que puede gastarse de forma segura durante los días restantes.",de:"Die heutigen Ausgaben verändern den Betrag, der an den verbleibenden Tagen sicher verfügbar ist.",fr:"Les dépenses d’aujourd’hui modifient le montant disponible en toute sécurité pour les jours restants."},
+  "Smart Building uses the budget signal":{it:"Smart Building usa il segnale del budget",ja:"Smart Buildingは予算シグナルを使用します",es:"Smart Building usa la señal de presupuesto",de:"Smart Building nutzt das Budgetsignal",fr:"Smart Building utilise le signal de budget"},
+  "NOW/Smart Building compares verified monetary prices when the place/provider supplies a real price or range. FREE is zero. A place that exceeds today's remaining budget is strongly deprioritized; safe verified prices are favored. Unknown prices remain neutral and are never guessed.":{it:"ADESSO/Smart Building confronta prezzi monetari verificati quando il luogo o fornitore indica un prezzo reale o un intervallo. GRATIS vale zero. Un luogo che supera il budget rimanente di oggi viene fortemente penalizzato; vengono favoriti prezzi verificati compatibili. I prezzi sconosciuti restano neutrali e non vengono mai inventati.",ja:"「今」/Smart Buildingは、場所や提供元が実際の価格または価格帯を示す場合に確認済み価格を比較します。無料は0です。今日の残り予算を超える場所は優先度が大きく下がり、安全な確認済み価格が優先されます。不明な価格は中立で、推測しません。",es:"AHORA/Smart Building compara precios monetarios verificados cuando el lugar o proveedor ofrece un precio real o rango. GRATIS equivale a cero. Un lugar que supera el presupuesto restante de hoy pierde mucha prioridad; se favorecen precios verificados seguros. Los precios desconocidos permanecen neutrales y nunca se inventan.",de:"JETZT/Smart Building vergleicht bestätigte Geldpreise, wenn der Ort oder Anbieter einen echten Preis oder Bereich liefert. KOSTENLOS entspricht null. Orte über dem heutigen Restbudget werden stark nachrangig behandelt; sichere bestätigte Preise werden bevorzugt. Unbekannte Preise bleiben neutral und werden nie geschätzt.",fr:"MAINTENANT/Smart Building compare les prix monétaires vérifiés lorsque le lieu ou le fournisseur indique un prix réel ou une fourchette. GRATUIT vaut zéro. Un lieu dépassant le budget restant du jour est fortement dépriorisé ; les prix vérifiés sûrs sont favorisés. Les prix inconnus restent neutres et ne sont jamais inventés."},
+  "Searching…":{it:"Ricerca…",ja:"検索中…",es:"Buscando…",de:"Suche…",fr:"Recherche…"},
+  "· Open now":{it:"· Aperto ora",ja:"· 営業中",es:"· Abierto ahora",de:"· Jetzt geöffnet",fr:"· Ouvert maintenant"},
+  "· Closed":{it:"· Chiuso",ja:"· 閉店",es:"· Cerrado",de:"· Geschlossen",fr:"· Fermé"},
+  "+ Add document":{it:"+ Aggiungi documento",ja:"+ 書類を追加",es:"+ Añadir documento",de:"+ Dokument hinzufügen",fr:"+ Ajouter un document"},
+  "+ Log an expense":{it:"+ Registra una spesa",ja:"+ 支出を記録",es:"+ Registrar un gasto",de:"+ Ausgabe erfassen",fr:"+ Enregistrer une dépense"},
+  "Accommodation:":{it:"Alloggio:",ja:"宿泊:",es:"Alojamiento:",de:"Unterkunft:",fr:"Hébergement :"},
+  "🚗 Car rental":{it:"🚗 Noleggio auto",ja:"🚗 レンタカー",es:"🚗 Alquiler de coche",de:"🚗 Mietwagen",fr:"🚗 Location de voiture"},
+  "🏨 Accommodation":{it:"🏨 Alloggio",ja:"🏨 宿泊",es:"🏨 Alojamiento",de:"🏨 Unterkunft",fr:"🏨 Hébergement"},
+  "⛽ Fuel near me":{it:"⛽ Carburante vicino a me",ja:"⛽ 近くのガソリンスタンド",es:"⛽ Combustible cerca de mí",de:"⛽ Tanken in der Nähe",fr:"⛽ Carburant près de moi"},
+  "🅿️ Parking near me":{it:"🅿️ Parcheggi vicino a me",ja:"🅿️ 近くの駐車場",es:"🅿️ Aparcamiento cerca de mí",de:"🅿️ Parken in der Nähe",fr:"🅿️ Parking près de moi"},
+  "📍 Google Maps":{it:"📍 Google Maps",ja:"📍 Google Maps",es:"📍 Google Maps",de:"📍 Google Maps",fr:"📍 Google Maps"},
+  "🗺️ Apple Maps":{it:"🗺️ Apple Maps",ja:"🗺️ Apple Maps",es:"🗺️ Apple Maps",de:"🗺️ Apple Maps",fr:"🗺️ Apple Maps"},
+  "🗺️ Saved route":{it:"🗺️ Percorso salvato",ja:"🗺️ 保存済みルート",es:"🗺️ Ruta guardada",de:"🗺️ Gespeicherte Route",fr:"🗺️ Itinéraire enregistré"},
+  "ZTL zones ahead":{it:"Zone a traffico limitato più avanti",ja:"この先に交通規制区域",es:"Zonas de tráfico restringido más adelante",de:"Verkehrsbeschränkte Zonen voraus",fr:"Zones de circulation restreinte à venir"},
+  "✈️ Check flights":{it:"✈️ Controlla i voli",ja:"✈️ フライトを確認",es:"✈️ Consultar vuelos",de:"✈️ Flüge prüfen",fr:"✈️ Consulter les vols"},
+  "🚆 Route problems":{it:"🚆 Problemi sul percorso",ja:"🚆 ルートの問題",es:"🚆 Problemas en la ruta",de:"🚆 Probleme auf der Route",fr:"🚆 Problèmes sur le trajet"},
+  "Travelers helped*":{it:"Viaggiatori aiutati*",ja:"支援した旅行者*",es:"Viajeros ayudados*",de:"Unterstützte Reisende*",fr:"Voyageurs aidés*"},
+  "🗺️ Trip itinerary":{it:"🗺️ Itinerario di viaggio",ja:"🗺️ 旅行の旅程",es:"🗺️ Itinerario del viaje",de:"🗺️ Reiseplan",fr:"🗺️ Itinéraire du voyage"},
+  "🌧️ Weather changes":{it:"🌧️ Cambiamenti meteo",ja:"🌧️ 天候の変化",es:"🌧️ Cambios meteorológicos",de:"🌧️ Wetteränderungen",fr:"🌧️ Changements météo"},
+  "↺ Rebuild remaining":{it:"↺ Ricostruisci il resto",ja:"↺ 残りを再構築",es:"↺ Reconstruir lo restante",de:"↺ Rest neu planen",fr:"↺ Replanifier le reste"},
+  "⏰ Leave-time alerts":{it:"⏰ Avvisi orario di partenza",ja:"⏰ 出発時刻アラート",es:"⏰ Alertas de hora de salida",de:"⏰ Abfahrtszeit-Warnungen",fr:"⏰ Alertes d’heure de départ"},
+  "📡 Important Signals":{it:"📡 Segnali importanti",ja:"📡 重要なシグナル",es:"📡 Señales importantes",de:"📡 Wichtige Signale",fr:"📡 Signaux importants"},
+  "Car pickup (airport)":{it:"Ritiro auto (aeroporto)",ja:"レンタカー受取（空港）",es:"Recogida del coche (aeropuerto)",de:"Mietwagenabholung (Flughafen)",fr:"Prise en charge de la voiture (aéroport)"},
+  "🚨 Emergency in Italy":{it:"🚨 Emergenza in Italia",ja:"🚨 イタリアでの緊急時",es:"🚨 Emergencia en Italia",de:"🚨 Notfall in Italy",fr:"🚨 Urgence au Italie"},
+  "Your driving calendar":{it:"Il tuo calendario di guida",ja:"ドライブカレンダー",es:"Tu calendario de conducción",de:"Dein Fahrkalender",fr:"Votre calendrier de conduite"},
+  "Use my current location":{it:"Usa la mia posizione attuale",ja:"現在地を使用",es:"Usar mi ubicación actual",de:"Meinen aktuellen Standort verwenden",fr:"Utiliser ma position actuelle"},
+  "Travel to your next city":{it:"Vai alla prossima città",ja:"次の都市へ移動",es:"Viaja a tu próxima ciudad",de:"Zur nächsten Stadt reisen",fr:"Aller vers votre prochaine ville"},
+  "🚆 Official train booking":{it:"🚆 Prenotazione treni ufficiale",ja:"🚆 公式列車予約",es:"🚆 Reserva oficial de tren",de:"🚆 Offizielle Zugbuchung",fr:"🚆 Réservation officielle de train"},
+  "Car at departure airport:":{it:"Auto all'aeroporto di partenza:",ja:"出発空港の車:",es:"Coche en el aeropuerto de salida:",de:"Auto am Abflughafen:",fr:"Voiture à l’aéroport de départ :"},
+  "No driving days saved yet":{it:"Nessun giorno di guida salvato",ja:"運転日はまだ保存されていません",es:"Aún no hay días de conducción guardados",de:"Noch keine Fahrtage gespeichert",fr:"Aucun jour de conduite enregistré"},
+  "Check location & use Nearby":{it:"Controlla la posizione e usa Nearby",ja:"現在地を確認して周辺検索を使う",es:"Comprueba la ubicación y usa Cerca de ti",de:"Standort prüfen und In der Nähe verwenden",fr:"Vérifiez la position et utilisez À proximité"},
+  "Saved in your plan for today":{it:"Salvato nel programma di oggi",ja:"今日の予定に保存済み",es:"Guardado en tu plan de hoy",de:"Im heutigen Plan gespeichert",fr:"Enregistré dans votre programme du jour"},
+  "Tap to open in Google Maps ↗":{it:"Tocca per aprire in Google Maps ↗",ja:"タップしてGoogle Mapsで開く ↗",es:"Toca para abrir en Google Maps ↗",de:"Tippen, um in Google Maps zu öffnen ↗",fr:"Touchez pour ouvrir dans Google Maps ↗"},
+  "Check location & open live map":{it:"Controlla la posizione e apri la mappa live",ja:"現在地を確認してライブマップを開く",es:"Comprueba la ubicación y abre el mapa en vivo",de:"Standort prüfen und Live-Karte öffnen",fr:"Vérifiez la position et ouvrez la carte en direct"},
+  "Live map is available in Italy":{it:"La mappa live è disponibile in Italia",ja:"イタリアでライブマップを利用できます",es:"El mapa en vivo está disponible en Italia",de:"Die Live-Karte ist in Italy verfügbar",fr:"La carte en direct est disponible au Italie"},
+  "Police 110 · Ambulance / Fire 119":{it:"Polizia 110 · Ambulanza / Vigili del fuoco 119",ja:"警察 110 · 救急 / 消防 119",es:"Policía 110 · Ambulancia / Bomberos 119",de:"Polizei 110 · Rettung / Feuerwehr 119",fr:"Police 110 · Ambulance / Pompiers 119"},
+  "Live suggestions are available in Italy.":{it:"I suggerimenti live sono disponibili in Italia.",ja:"イタリアでライブ提案を利用できます。",es:"Las sugerencias en vivo están disponibles en Italia.",de:"Live-Vorschläge sind in Italy verfügbar.",fr:"Les suggestions en direct sont disponibles au Italie."},
+  "Watch for toll roads & local restrictions":{it:"Attenzione a pedaggi e restrizioni locali",ja:"有料道路と地域規制に注意",es:"Atención a peajes y restricciones locales",de:"Auf Mautstraßen und lokale Beschränkungen achten",fr:"Attention aux péages et restrictions locales"},
+  "Where's your rental car parked right now?":{it:"Dove è parcheggiata adesso la tua auto a noleggio?",ja:"レンタカーは今どこに駐車していますか？",es:"¿Dónde está aparcado ahora tu coche de alquiler?",de:"Wo steht dein Mietwagen gerade?",fr:"Où votre voiture de location est-elle garée ?"},
+  "Left your own car at the departure airport?":{it:"Hai lasciato la tua auto all'aeroporto di partenza?",ja:"出発空港に自分の車を置きましたか？",es:"¿Dejaste tu coche en el aeropuerto de salida?",de:"Hast du dein eigenes Auto am Abflughafen gelassen?",fr:"Avez-vous laissé votre voiture à l’aéroport de départ ?"},
+  "Live weather from your current GPS position":{it:"Meteo live dalla tua posizione GPS attuale",ja:"現在のGPS位置のライブ天気",es:"Tiempo en vivo desde tu posición GPS actual",de:"Live-Wetter an deinem aktuellen GPS-Standort",fr:"Météo en direct depuis votre position GPS actuelle"},
+  "Your live route from now. Change it anytime.":{it:"Il tuo percorso live da adesso. Puoi modificarlo in qualsiasi momento.",ja:"今からのライブ経路です。いつでも変更できます。",es:"Tu ruta en vivo desde ahora. Cámbiala cuando quieras.",de:"Deine Live-Route ab jetzt. Jederzeit änderbar.",fr:"Votre itinéraire en direct à partir de maintenant. Modifiez-le à tout moment."},
+  "Location isn't supported on this device/browser.":{it:"La posizione non è supportata su questo dispositivo/browser.",ja:"この端末/ブラウザでは位置情報を利用できません。",es:"La ubicación no es compatible con este dispositivo/navegador.",de:"Standort wird auf diesem Gerät/Browser nicht unterstützt.",fr:"La localisation n’est pas prise en charge sur cet appareil/navigateur."},
+  "So you can find it again when you land back home.":{it:"Così potrai ritrovarla quando torni a casa.",ja:"帰国した時にもう一度見つけられます。",es:"Así podrás encontrarlo de nuevo cuando vuelvas a casa.",de:"Damit du es nach der Rückkehr wiederfindest.",fr:"Pour pouvoir le retrouver à votre retour."},
+  "Location permission is needed for live suggestions.":{it:"È necessario il permesso di posizione per i suggerimenti live.",ja:"ライブ提案には位置情報の許可が必要です。",es:"Se necesita permiso de ubicación para las sugerencias en vivo.",de:"Für Live-Vorschläge ist die Standortberechtigung erforderlich.",fr:"L’autorisation de localisation est nécessaire pour les suggestions en direct."},
+  "See real, live weather for wherever you are right now.":{it:"Guarda il meteo reale e live ovunque ti trovi.",ja:"現在地のリアルタイム天気を確認できます。",es:"Consulta el tiempo real y en vivo donde estés.",de:"Sieh das echte Live-Wetter an deinem aktuellen Standort.",fr:"Consultez la météo réelle en direct où que vous soyez."},
+  "Optional. Add it only if you have something you must not miss.":{it:"Facoltativo. Aggiungilo solo se hai qualcosa che non puoi perdere.",ja:"任意です。絶対に外せない予定がある場合のみ追加してください。",es:"Opcional. Añádelo solo si tienes algo que no puedes perderte.",de:"Optional. Nur hinzufügen, wenn du etwas auf keinen Fall verpassen darfst.",fr:"Facultatif. Ajoutez-le seulement si vous avez quelque chose à ne pas manquer."},
+  "Add another city in Your Route to create your driving calendar.":{it:"Aggiungi un'altra città nel tuo percorso per creare il calendario di guida.",ja:"旅行ルートに別の都市を追加してドライブカレンダーを作成してください。",es:"Añade otra ciudad a Tu ruta para crear tu calendario de conducción.",de:"Füge deiner Route eine weitere Stadt hinzu, um den Fahrkalender zu erstellen.",fr:"Ajoutez une autre ville à votre itinéraire pour créer le calendrier de conduite."},
+  "🎤 Voice input not available on this device — typing works fine.":{it:"🎤 Input vocale non disponibile su questo dispositivo — puoi comunque scrivere.",ja:"🎤 この端末では音声入力を利用できません。入力は使えます。",es:"🎤 La entrada por voz no está disponible en este dispositivo — puedes escribir.",de:"🎤 Spracheingabe ist auf diesem Gerät nicht verfügbar — Tippen funktioniert.",fr:"🎤 La saisie vocale n’est pas disponible sur cet appareil — vous pouvez écrire."},
+  "Choose a planned stop or the route you are currently travelling.":{it:"Scegli una tappa pianificata o il percorso che stai percorrendo.",ja:"予定された立ち寄り先または現在移動中のルートを選択してください。",es:"Elige una parada planificada o la ruta que estás recorriendo.",de:"Wähle einen geplanten Stopp oder die Route, auf der du gerade unterwegs bist.",fr:"Choisissez une étape prévue ou le trajet que vous effectuez actuellement."},
+  "Live search around you when your GPS confirms you are in Italy →":{it:"Ricerca live intorno a te quando il GPS conferma che sei in Italia →",ja:"GPSでイタリア滞在を確認すると周辺をライブ検索 →",es:"Búsqueda en vivo a tu alrededor cuando el GPS confirma que estás en Italia →",de:"Live-Suche in deiner Umgebung, sobald GPS bestätigt, dass du in Italy bist →",fr:"Recherche en direct autour de vous lorsque le GPS confirme que vous êtes au Italie →"},
+  "You can still use trains, flights and other transport from your itinerary.":{it:"Puoi comunque usare treni, voli e altri trasporti dal tuo itinerario.",ja:"旅程から電車、フライト、その他の交通手段を引き続き利用できます。",es:"Puedes seguir usando trenes, vuelos y otros transportes desde tu itinerario.",de:"Du kannst weiterhin Züge, Flüge und andere Verkehrsmittel aus deinem Reiseplan nutzen.",fr:"Vous pouvez toujours utiliser trains, vols et autres transports depuis votre itinéraire."},
+  "*Based on new confirmations received on your shared reports on this device.":{it:"*Basato sulle nuove conferme ricevute per le segnalazioni condivise su questo dispositivo.",ja:"*この端末で共有した報告に届いた新しい確認に基づきます。",es:"*Basado en nuevas confirmaciones recibidas en tus informes compartidos en este dispositivo.",de:"*Basierend auf neuen Bestätigungen zu deinen auf diesem Gerät geteilten Meldungen.",fr:"*Basé sur les nouvelles confirmations reçues pour vos signalements partagés sur cet appareil."},
+  "No stops in Today yet. You can still report something on your current route.":{it:"Non ci sono ancora tappe in Oggi. Puoi comunque segnalare qualcosa sul percorso attuale.",ja:"今日にはまだ立ち寄り先がありません。現在のルート上の出来事は報告できます。",es:"Aún no hay paradas en Hoy. Puedes informar de algo en tu ruta actual.",de:"Heute sind noch keine Stopps vorhanden. Du kannst trotzdem etwas auf deiner aktuellen Route melden.",fr:"Aucune étape dans Aujourd’hui pour le moment. Vous pouvez tout de même signaler quelque chose sur votre trajet actuel."},
+  "Location access is disabled. Enable location permission for 687 Italy and try again.":{it:"L'accesso alla posizione è disattivato. Abilita il permesso di posizione per 687 Italy e riprova.",ja:"位置情報へのアクセスが無効です。687 Italyの位置情報許可を有効にして再試行してください。",es:"El acceso a la ubicación está desactivado. Activa el permiso de ubicación para 687 Italy e inténtalo de nuevo.",de:"Der Standortzugriff ist deaktiviert. Aktiviere die Standortberechtigung für 687 Italy und versuche es erneut.",fr:"L’accès à la localisation est désactivé. Activez l’autorisation pour 687 Italy et réessayez."},
+  "City-centre restrictions may apply — always check local signs and official ZTL information":{it:"Possono esserci restrizioni nei centri città — controlla sempre la segnaletica locale e le informazioni ufficiali sulle ZTL",ja:"市中心部では交通規制がある場合があります。現地標識と公式の規制情報を必ず確認してください",es:"Puede haber restricciones en el centro — comprueba siempre las señales locales y la información oficial de zonas restringidas",de:"In Innenstädten können Beschränkungen gelten — prüfe immer lokale Schilder und offizielle Informationen",fr:"Des restrictions peuvent s’appliquer en centre-ville — vérifiez toujours la signalisation locale et les informations officielles"},
+  "Your full trip picture. Every daily expense moves money from Remaining budget into Ground expenses.":{it:"Il quadro completo del viaggio. Ogni spesa giornaliera sposta denaro dal Budget rimanente alle Spese sul posto.",ja:"旅行全体の状況です。毎日の支出は残り予算から現地支出へ移動します。",es:"La imagen completa de tu viaje. Cada gasto diario mueve dinero del Presupuesto restante a Gastos en destino.",de:"Das Gesamtbild deiner Reise. Jede Tagesausgabe verschiebt Geld vom Restbudget zu den Ausgaben vor Ort.",fr:"La vue complète de votre voyage. Chaque dépense quotidienne déplace de l’argent du Budget restant vers les Dépenses sur place."},
+  "When you move to another city, tap that day to see train, flight and driving options for the transfer.":{it:"Quando ti sposti in un'altra città, tocca quel giorno per vedere opzioni di treno, volo e auto per il trasferimento.",ja:"別の都市へ移動する日は、その日をタップして電車・フライト・車の移動方法を確認できます。",es:"Cuando te traslades a otra ciudad, toca ese día para ver opciones de tren, vuelo y coche.",de:"Wenn du in eine andere Stadt wechselst, tippe auf den Tag, um Zug-, Flug- und Fahroptionen zu sehen.",fr:"Lorsque vous changez de ville, touchez ce jour pour voir les options train, vol et voiture."},
+  "Check road signs, parking rules and route conditions before driving through cities or using toll roads.":{it:"Controlla segnaletica, regole di parcheggio e condizioni del percorso prima di guidare nelle città o usare strade a pedaggio.",ja:"市街地や有料道路を運転する前に、道路標識、駐車規則、ルート状況を確認してください。",es:"Comprueba señales, normas de aparcamiento y condiciones de la ruta antes de conducir por ciudades o usar autopistas de peaje.",de:"Prüfe Verkehrsschilder, Parkregeln und Streckenbedingungen, bevor du durch Städte oder über Mautstraßen fährst.",fr:"Vérifiez les panneaux, règles de stationnement et conditions de trajet avant de conduire en ville ou sur des routes à péage."},
+  "Prevent checks weather and active traveler reports against today's itinerary before they become a problem.":{it:"Prevenzione confronta meteo e segnalazioni attive dei viaggiatori con l'itinerario di oggi prima che diventino un problema.",ja:"予防は問題になる前に、天気と旅行者のアクティブな報告を今日の旅程と照合します。",es:"Prevención compara el clima y los informes activos de viajeros con el itinerario de hoy antes de que se conviertan en un problema.",de:"Vorbeugen prüft Wetter und aktive Reisendenmeldungen gegen den heutigen Reiseplan, bevor sie zum Problem werden.",fr:"Prévenir compare la météo et les signalements actifs des voyageurs à l’itinéraire du jour avant qu’ils ne deviennent un problème."},
+  "Nothing is deleted automatically. Keep your trip, save a memory PDF, or archive it when you start a new one.":{it:"Nulla viene eliminato automaticamente. Conserva il viaggio, salva un PDF ricordo oppure archiviarlo quando ne inizi uno nuovo.",ja:"自動的に削除されるものはありません。旅行を保存し、記念PDFを作成するか、新しい旅行開始時にアーカイブできます。",es:"Nada se elimina automáticamente. Conserva tu viaje, guarda un PDF de recuerdo o archívalo al empezar uno nuevo.",de:"Nichts wird automatisch gelöscht. Behalte deine Reise, speichere ein Erinnerungs-PDF oder archiviere sie beim Start einer neuen Reise.",fr:"Rien n’est supprimé automatiquement. Conservez votre voyage, enregistrez un PDF souvenir ou archivez-le lorsque vous en commencez un nouveau."},
+  "Flights, rental car and accommodation — details and travel documents in one place. No credit cards or identity documents.":{it:"Voli, auto a noleggio e alloggio — dettagli e documenti di viaggio in un unico posto. Nessuna carta di credito o documento d'identità.",ja:"フライト、レンタカー、宿泊の詳細と旅行書類を1か所に。クレジットカードや身分証明書は保存しません。",es:"Vuelos, coche de alquiler y alojamiento — detalles y documentos de viaje en un solo lugar. Sin tarjetas de crédito ni documentos de identidad.",de:"Flüge, Mietwagen und Unterkunft — Details und Reisedokumente an einem Ort. Keine Kreditkarten oder Ausweisdokumente.",fr:"Vols, voiture de location et hébergement — détails et documents de voyage au même endroit. Aucune carte bancaire ni pièce d’identité."},
+  "Connected to the total budget above. Each slice is one day: red = over budget, green = within budget, grey = no spending yet.":{it:"Collegato al budget totale sopra. Ogni segmento rappresenta un giorno: rosso = oltre budget, verde = entro budget, grigio = nessuna spesa ancora.",ja:"上の総予算と連動します。各区分は1日を表し、赤=予算超過、緑=予算内、灰色=まだ支出なしです。",es:"Conectado al presupuesto total de arriba. Cada segmento es un día: rojo = sobre presupuesto, verde = dentro del presupuesto, gris = sin gastos todavía.",de:"Mit dem Gesamtbudget oben verbunden. Jeder Abschnitt ist ein Tag: rot = über Budget, grün = im Budget, grau = noch keine Ausgaben.",fr:"Lié au budget total ci-dessus. Chaque segment représente un jour : rouge = dépassement, vert = dans le budget, gris = aucune dépense."},
+  "Guardian is the notification layer of Intelligent Day. It will use the same itinerary, weather, route and Signals context — never a second plan.":{it:"Guardian è il livello di notifiche di Giornata intelligente. Usa lo stesso itinerario, meteo, percorso e contesto dei Segnali — mai un secondo piano.",ja:"Guardianはインテリジェントデイの通知レイヤーです。同じ旅程、天気、ルート、シグナルの情報を使用し、別の計画は作りません。",es:"Guardian es la capa de notificaciones de Día inteligente. Usa el mismo itinerario, clima, ruta y contexto de Señales — nunca un segundo plan.",de:"Guardian ist die Benachrichtigungsebene von Intelligenter Tag. Es nutzt denselben Reiseplan-, Wetter-, Routen- und Signal-Kontext — niemals einen zweiten Plan.",fr:"Guardian est la couche de notification de Journée intelligente. Il utilise le même itinéraire, la météo, le trajet et le contexte des Signaux — jamais un second plan."},
+  "Signals is connected to Today's plan. If something happens at a stop or while you are travelling between stops, report it in two taps. GPS and time are automatic.":{it:"Segnali è collegato al programma di Oggi. Se succede qualcosa in una tappa o durante il tragitto tra le tappe, segnalalo con due tocchi. GPS e orario sono automatici.",ja:"シグナルは今日の予定と連動しています。立ち寄り先や移動中に何か起きたら2回のタップで報告できます。GPSと時刻は自動です。",es:"Señales está conectado al plan de Hoy. Si ocurre algo en una parada o durante el trayecto entre paradas, infórmalo con dos toques. GPS y hora son automáticos.",de:"Signale ist mit dem heutigen Plan verbunden. Wenn an einem Stopp oder unterwegs etwas passiert, melde es mit zwei Fingertipps. GPS und Zeit sind automatisch.",fr:"Signaux est connecté au programme d’Aujourd’hui. Si quelque chose se produit à une étape ou entre deux étapes, signalez-le en deux gestes. GPS et heure sont automatiques."}
+};
+
+const GLOBAL_UI_ATTR = {
+  "Type a phrase in your language...":{it:"Scrivi una frase nella tua lingua...",ja:"あなたの言語で入力してください…",es:"Escribe una frase en tu idioma...",de:"Gib einen Satz in deiner Sprache ein...",fr:"Saisissez une phrase dans votre langue..."},
+  "e.g. Kyoto, Nara, Osaka...":{it:"es. Kyoto, Nara, Osaka...",ja:"例: 京都、奈良、大阪…",es:"p. ej. Kioto, Nara, Osaka...",de:"z. B. Kyoto, Nara, Osaka...",fr:"ex. Kyoto, Nara, Osaka..."},
+  "Street, garage, level, row or spot":{it:"Via, garage, livello, fila o posto",ja:"通り、駐車場、階、列、区画",es:"Calle, garaje, nivel, fila o plaza",de:"Straße, Garage, Ebene, Reihe oder Platz",fr:"Rue, garage, niveau, rangée ou place"},
+  "e.g. Terminal 2, Level 3, Row B, Spot 112":{it:"es. Terminal 2, Livello 3, Fila B, Posto 112",ja:"例: ターミナル2、3階、B列、112番",es:"p. ej. Terminal 2, Nivel 3, Fila B, Plaza 112",de:"z. B. Terminal 2, Ebene 3, Reihe B, Platz 112",fr:"ex. Terminal 2, niveau 3, rangée B, place 112"},
+  "Dinner, train, museum...":{it:"Cena, treno, museo...",ja:"夕食、電車、美術館…",es:"Cena, tren, museo...",de:"Abendessen, Zug, Museum...",fr:"Dîner, train, musée..."}
+};
+
+// Simplified Chinese + Korean deep localization for the most frequently visible app controls.
+const ASIAN_UI_TEXT={
+  "Overview":["概览","개요"],"Wallet":["旅行钱包","여행 지갑"],"Packing":["行李清单","짐 꾸리기"],"Settings":["设置","설정"],"Intelligent Day":["智能行程","스마트 데이"],"Itinerary":["行程","일정"],"Nearby":["附近","주변"],"Drive":["驾车","운전"],"Translate":["翻译","번역"],"Tools":["工具","도구"],
+  "GO":["出发","이동"],"Open":["打开","열기"],"Save":["保存","저장"],"Saved":["已保存","저장됨"],"Cancel":["取消","취소"],"Delete":["删除","삭제"],"Replace":["替换","교체"],"Continue":["继续","계속"],"Try again":["重试","다시 시도"],"From":["从","출발"],"To":["到","도착"],"Day":["天","일"],"Map":["地图","지도"],"Category":["类别","카테고리"],"Selected":["已选择","선택됨"],
+  "Your day":["你的一天","오늘 일정"],"Clear day":["清空当天","오늘 지우기"],"Smart Day":["智能日程","스마트 데이"],"Book ahead":["提前预订","미리 예약"],"Car rental":["租车","렌터카"],"Rental car":["租车","렌터카"],"Accommodation":["住宿","숙소"],"Flight":["航班","항공편"],"No car":["不租车","차량 없음"],"← Back":["← 返回","← 뒤로"],
+  "Quick stops":["快速停靠","빠른 정차"],"Daily target":["每日目标","일일 목표"],"Good to know":["实用提示","알아두면 좋은 점"],"Map of Italy":["イタリア地图","이탈리아 지도"],"Near you now":["你现在附近","현재 주변"],"Save expense":["保存支出","지출 저장"],"Total budget":["总预算","총 예산"],"Travel dates":["旅行日期","여행 날짜"],"Trip details":["旅行详情","여행 정보"],"Home currency":["主要货币","기준 통화"],
+  "Travel Wallet":["旅行钱包","여행 지갑"],"Trip calendar":["旅行日历","여행 캘린더"],"Trip snapshot":["旅行概览","여행 요약"],"Today's budget":["今日预算","오늘 예산"],"Remaining budget":["剩余预算","남은 예산"],"Days traveled":["已旅行天数","여행한 일수"],"Spending by day":["每日支出","일별 지출"],"Use my location":["使用我的位置","내 위치 사용"],
+  "Your trip route":["你的旅行路线","여행 경로"],"Your accommodation":["你的住宿","숙소"],"Your rental car":["你的租车","렌터카"],"No rental car":["没有租车","렌터카 없음"],"Where did you park?":["你把车停在哪里？","어디에 주차했나요?"],"Nothing added yet":["尚未添加内容","아직 추가된 항목이 없습니다"],"Add an item":["添加项目","항목 추가"],
+  "Offline essentials":["离线必备","오프라인 필수 정보"],"Quick phrases for Italy":["イタリア常用短语","이탈리아 여행 필수 표현"],"Translate anything to Italyese":["将任何内容翻译成日语","무엇이든 이탈리아어로 번역"],"Speaking language":["说话语言","말하는 언어"],"Check the weather":["查看天气","날씨 확인"],"Weather right now":["当前天气","현재 날씨"],"Home & Italy time":["本地与イタリア时间","현지 및 이탈리아 시간"],
+  "Live map in Italy":["イタリア实时地图","이탈리아 실시간 지도"],"Live map available in Italy":["イタリア可使用实时地图","이탈리아에서 실시간 지도 사용 가능"],"Live Nearby in Italy":["イタリア实时附近地点","이탈리아 실시간 주변 검색"],"Searching nearby…":["正在搜索附近…","주변 검색 중…"],"Finding your location…":["正在查找你的位置…","현재 위치 찾는 중…"],"Your current location":["你当前的位置","현재 위치"],"Nearby map":["附近地图","주변 지도"],
+  "Find real places with Nearby":["使用 Nearby 查找真实地点","Nearby로 실제 장소 찾기"],"Your plan for this day":["当天计划","오늘 계획"],"Nothing planned yet":["尚无计划","아직 계획이 없습니다"],"Add a note or place":["添加备注或地点","메모 또는 장소 추가"],"Tap any day to open its plan":["点击任意日期打开当天计划","날짜를 눌러 계획 열기"],"687 Italy Itinerary":["687 Italy 行程","687 Italy 일정"],
+  "Your flight to Italy":["前往イタリア的航班","이탈리아행 항공편"],"Search real flights":["搜索真实航班","실제 항공편 검색"],"Check flights":["查看航班","항공편 확인"],"Complete your bookings":["完成预订","예약 완료"],"Continue to bookings":["继续前往预订","예약으로 계속"],
+  "What can I do now?":["我现在可以做什么？","지금 무엇을 할 수 있나요?"],"What makes sense now":["现在最合适的选择","지금 가장 적절한 선택"],"Next hours":["接下来几小时","앞으로 몇 시간"],"Auto updates":["自动更新","자동 업데이트"],"687 Prevent":["687 预防","687 예방"],"687 Live Signals":["687 实时信号","687 실시간 신호"],"687 Italy · NOW":["687 Italy · 现在","687 Italy · 지금"],
+  "Pause Guardian":["暂停 Guardian","Guardian 일시정지"],"🔔 Enable Guardian":["🔔 启用 Guardian","🔔 Guardian 활성화"],"Send test notification":["发送测试通知","테스트 알림 보내기"],"Check location again":["重新检查位置","위치 다시 확인"],"🆘 Something went wrong?":["🆘 出现问题？","🆘 문제가 생겼나요?"],"Where is the problem?":["问题在哪里？","문제가 어디에 있나요?"],"✨ Build Smart Day":["✨ 创建智能日程","✨ 스마트 데이 만들기"],"🗺️ Open Itinerary":["🗺️ 打开行程","🗺️ 일정 열기"],"📍 Open Nearby":["📍 打开附近","📍 주변 열기"],
+  "Daily budget status":["每日预算状态","일일 예산 상태"],"Total trip budget":["旅行总预算","총 여행 예산"],"Total spent on the ground":["旅行途中总支出","현지 총 지출"],"Spending across your trip":["整个旅行的支出","여행 전체 지출"],"687 Voice Assistant":["687 语音助手","687 Voice Assistant"],"Close voice assistant":["关闭语音助手","Voice Assistant 닫기"],"Start a new trip":["开始新旅行","새 여행 시작"],
+  "Enter a budget to continue.":["输入预算以继续。","계속하려면 예산을 입력하세요."],"Select your travel dates.":["选择旅行日期。","여행 날짜를 선택하세요."],"Choose how you want to plan.":["选择你的规划方式。","여행 계획 방식을 선택하세요."],"Choose how you'll get around in Italy.":["选择你在イタリア的交通方式。","이탈리아에서 이동할 방법을 선택하세요."],"Tell us your departure airport.":["请输入出发机场。","출발 공항을 알려주세요."],
+  "Location is not supported on this device.":["此设备不支持定位。","이 기기에서는 위치 기능을 지원하지 않습니다."],"No verified public toilets found nearby.":["附近没有找到已验证的公共厕所。","주변에서 확인된 공중화장실을 찾지 못했습니다."],"No results found nearby for this category.":["附近没有找到此类别的结果。","주변에서 이 카테고리의 결과를 찾지 못했습니다."],"Couldn't reach nearby search right now.":["当前无法连接附近搜索。","현재 주변 검색에 연결할 수 없습니다."],"Couldn't translate right now — try again.":["当前无法翻译，请重试。","현재 번역할 수 없습니다. 다시 시도하세요."],
+  "Searching…":["正在搜索…","검색 중…"],"· Open now":["· 现在营业","· 영업 중"],"· Closed":["· 已关闭","· 영업 종료"],"+ Add document":["+ 添加文件","+ 문서 추가"],"+ Log an expense":["+ 记录支出","+ 지출 기록"],"🏨 Accommodation":["🏨 住宿","🏨 숙소"],"⛽ Fuel near me":["⛽ 附近加油站","⛽ 주변 주유소"],"🅿️ Parking near me":["🅿️ 附近停车场","🅿️ 주변 주차장"],"✈️ Check flights":["✈️ 查看航班","✈️ 항공편 확인"],"🚆 Route problems":["🚆 路线问题","🚆 경로 문제"],
+  "Your driving calendar":["你的驾车日历","운전 일정"],"Use my current location":["使用我当前位置","현재 위치 사용"],"Travel to your next city":["前往下一个城市","다음 도시로 이동"],"🚆 Official train booking":["🚆 官方列车预订","🚆 공식 열차 예약"],"No driving days saved yet":["尚未保存驾车日期","저장된 운전 일정이 없습니다"],"Check location & use Nearby":["检查位置并使用 Nearby","위치 확인 후 Nearby 사용"],"Saved in your plan for today":["已保存到今天的计划","오늘 계획에 저장됨"],
+  "Police 110 · Ambulance / Fire 119":["警察 110 · 急救 / 消防 119","경찰 110 · 구급 / 소방 119"],"Live suggestions are available in Italy.":["イタリア可使用实时建议。","이탈리아에서 실시간 추천을 사용할 수 있습니다."],"Where's your rental car parked right now?":["你的租车现在停在哪里？","렌터카를 지금 어디에 주차했나요?"],"Live weather from your current GPS position":["基于当前 GPS 位置的实时天气","현재 GPS 위치의 실시간 날씨"],"Your live route from now. Change it anytime.":["从现在开始的实时路线，可随时更改。","지금부터의 실시간 경로입니다. 언제든 변경할 수 있습니다."],
+  "Privacy & support":["隐私与支持","개인정보 및 지원"],"Privacy":["隐私","개인정보"],"Terms":["条款","이용약관"],"Support":["支持","지원"],"Local data":["本地数据","로컬 데이터"]
+};
+function applyAsianTranslations(table){
+  Object.entries(ASIAN_UI_TEXT).forEach(([key,pair])=>{ if(table[key]){ table[key].zh=pair[0]; table[key].ko=pair[1]; } });
+}
+Object.assign(ASIAN_UI_TEXT,{
+  "Welcome to":["欢迎使用","환영합니다"],
+  "Plan your trip, control your budget.":["规划旅行，掌控预算。","여행을 계획하고 예산을 관리하세요."],
+  "Italy is never just one trip. What pulls you in?":["イタリア从来不只是一种旅行。什么最吸引你？","이탈리아 여행은 한 가지가 아닙니다. 무엇이 가장 끌리나요?"],
+  "🎟️ Book ahead · official links":["🎟️ 提前预订 · 官方链接","🎟️ 미리 예약 · 공식 링크"],
+  "Direct ticket and reservation pages for popular attractions that can require advance booking.":["可直接打开热门景点的官方门票和预约页面；部分景点需要提前预订。","사전 예약이 필요한 인기 명소의 공식 티켓 및 예약 페이지로 바로 이동합니다."],
+  "🎫 Some spots need advance booking":["🎫 部分景点需要提前预订","🎫 일부 장소는 사전 예약이 필요합니다"],
+  "👆 Tap any place to open its official attraction, tourism, or ticket page. “Book ahead” marks attractions with advance ticket/reservation options.":["👆 点击任意地点即可打开其官方景点、旅游或票务页面。“提前预订”表示该景点提供预售门票或预约。","👆 장소를 누르면 공식 관광지, 관광 또는 티켓 페이지가 열립니다. ‘미리 예약’은 사전 티켓/예약이 가능한 장소를 뜻합니다."],
+  "Book ahead ↗":["提前预订 ↗","미리 예약 ↗"],"Book ahead":["提前预订","미리 예약"],
+  "🎟️ Browse skip-the-line tickets on Tiqets ↗":["🎟️ 在 Tiqets 查看免排队门票 ↗","🎟️ Tiqets에서 줄 서지 않는 티켓 보기 ↗"],
+  "Start planning":["开始规划","계획 시작"],
+  "Let's plan your trip to Italy":["开始规划你的イタリア之旅","이탈리아 여행을 계획해 보세요"],
+  "Set your budget, dates and travelers. We'll build the trip around what you tell us.":["设置预算、日期和旅行人数。我们会根据你的信息构建旅行计划。","예산, 날짜, 여행 인원을 설정하세요. 입력한 내용을 바탕으로 여행을 구성합니다."],
+  "Total budget":["总预算","총 예산"],
+  "Your budget stays in your home currency. Prices in Italy stay in euro and are converted only when useful.":["预算保持为你的主要货币。イタリア当地价格仍以欧元显示，只在需要时换算。","예산은 기준 통화로 유지됩니다. 이탈리아 현지 가격은 유로로 표시되며 필요할 때만 환산됩니다."],
+  "Travel dates":["旅行日期","여행 날짜"],"From":["从","출발"],"To":["到","도착"],
+  "Who's traveling?":["谁一起旅行？","누가 여행하나요?"],"How many people?":["几个人？","몇 명인가요?"],
+  "How do you want to plan?":["你想如何规划？","어떻게 계획할까요?"],
+  "Plan everything":["全部规划","전체 계획"],
+  "Flights, hotels, car rental — we'll find options within your budget.":["航班、酒店、租车——我们会在你的预算范围内寻找选项。","항공편, 호텔, 렌터카 — 예산 안에서 선택지를 찾아드립니다."],
+  "Just track my trip":["只管理我的旅行","내 여행만 관리"],
+  "I already booked flights and hotel — help me manage the budget on the ground.":["我已经预订了航班和酒店——帮我管理旅行中的实际预算。","항공편과 호텔은 이미 예약했습니다. 현지 예산 관리를 도와주세요."],
+  "How will you get around?":["你准备如何出行？","어떻게 이동할 예정인가요?"],
+  "I'll drive":["我会开车","직접 운전할게요"],
+  "Nearby will start in driving mode and search a wider area.":["Nearby 将以驾车模式启动，并搜索更大的范围。","Nearby가 운전 모드로 시작되어 더 넓은 범위를 검색합니다."],
+  "No car":["不租车","차량 없음"],
+  "Nearby will start with places within walking distance.":["Nearby 将优先显示步行范围内的地点。","Nearby가 도보 거리의 장소부터 표시합니다."],
+  "Continue":["继续","계속"],"← Back":["← 返回","← 뒤로"],
+  "Your trip route":["你的旅行路线","여행 경로"],
+  "Since you've already booked everything, just tell us where you're going.":["既然你已经完成预订，只需告诉我们你要去哪里。","이미 예약을 마쳤다면 어디로 가는지만 알려주세요."],
+  "What have you already spent in total?":["你已经总共花了多少？","지금까지 총 얼마를 지출했나요?"],
+  "Flights, hotel, car rental — combined. This sets your starting budget.":["航班、酒店和租车的合计金额。它将用于计算你的起始预算。","항공편, 호텔, 렌터카를 합친 금액입니다. 시작 예산 계산에 사용됩니다."],
+  "Which city are you based in?":["你主要住在哪个城市？","어느 도시에 머무르나요?"],
+  "Visiting other cities too?":["还会去其他城市吗？","다른 도시도 방문하나요?"],
+  "Tell us which day you arrive in each city":["告诉我们你在哪一天到达每个城市","각 도시에 도착하는 날짜를 알려주세요"],
+  "Where are you flying in from?":["你从哪里出发飞往イタリア？","어디에서 이탈리아으로 출발하나요?"],
+  "We'll highlight the Italyese airports you can reach with a direct flight from your departure airport.":["我们会标出从你的出发机场可以直飞到达的イタリア机场。","출발 공항에서 직항으로 갈 수 있는 이탈리아 공항을 표시합니다."],
+  "We'll show Italyese airports you can reach with exactly one connection.":["我们会显示只需一次转机即可到达的イタリア机场。","정확히 한 번 환승으로 갈 수 있는 이탈리아 공항을 표시합니다."],
+  "Departure airport":["出发机场","출발 공항"],
+  "Flexible dates (±3 days)":["灵活日期（±3天）","유연한 날짜(±3일)"],
+  "Flights don't run every day — widening your window finds more options and often better prices.":["航班并非每天都有——扩大日期范围通常能找到更多选择和更好的价格。","항공편은 매일 운항하지 않을 수 있습니다. 날짜 범위를 넓히면 더 많은 선택지와 더 좋은 가격을 찾기 쉽습니다."],
+  "Your gateway to Italy":["你的イタリア入境机场","이탈리아 입국 공항"],
+  "Checking direct-flight availability…":["正在检查直飞航班…","직항편 확인 중…"],
+  "Checking flights with exactly 1 stop…":["正在检查一次转机航班…","1회 경유 항공편 확인 중…"],
+  "No direct flights found":["未找到直飞航班","직항편을 찾지 못했습니다"],
+  "You can still reach Italy with one connection.":["你仍可通过一次转机抵达イタリア。","한 번 환승하면 이탈리아에 갈 수 있습니다."],
+  "Show flights with 1 stop":["显示一次转机航班","1회 경유 항공편 보기"],
+  "No 1-stop options found":["未找到一次转机选项","1회 경유 옵션을 찾지 못했습니다"],
+  "Direct airports found":["找到可直飞机场","직항 가능 공항"],"1-stop airports found":["找到一次转机机场","1회 경유 가능 공항"],
+  "1 connection":["1次转机","1회 환승"],"Non-stop":["直飞","직항"],
+  "Your flight to Italy":["前往イタリア的航班","이탈리아행 항공편"],
+  "Review your route, dates and travelers, then open a real flight search.":["确认路线、日期和旅客信息，然后打开真实航班搜索。","경로, 날짜, 여행 인원을 확인한 뒤 실제 항공편 검색을 여세요."],
+  "Direct flight":["直飞航班","직항편"],"Trip details":["旅行详情","여행 정보"],
+  "Search real flights":["搜索真实航班","실제 항공편 검색"],"Affiliate partner: Aviasales":["合作伙伴：Aviasales","제휴 파트너: Aviasales"],
+  "Search on Aviasales":["在 Aviasales 搜索","Aviasales에서 검색"],
+  "Prices and availability are shown on the partner's website. 687 Italy does not display a live fare on this screen.":["价格和可用性显示在合作伙伴网站上。687 Italy 不会在此页面显示实时票价。","가격과 좌석 가능 여부는 제휴사 웹사이트에서 표시됩니다. 687 Italy은 이 화면에서 실시간 운임을 표시하지 않습니다."],
+  "Booked? Enter the total amount you paid:":["已经预订？输入你支付的总金额：","예약했나요? 지불한 총액을 입력하세요:"],
+  "Continue to bookings":["继续前往预订","예약으로 계속"],
+  "Complete your bookings":["完成预订","예약 완료"],
+  "Stay, car and — if you're moving around — transport between cities.":["住宿、租车，以及如需跨城市移动时的交通。","숙소, 렌터카, 그리고 도시 간 이동이 있다면 교통편을 준비하세요."],
+  "Where do you want to stay?":["你想住在哪里？","어디에 머물고 싶나요?"],
+  "We've guessed based on your arrival airport — change it if you'd rather stay somewhere else nearby.":["我们根据你的抵达机场做了建议——如果你想住在附近其他地方，可以修改。","도착 공항을 기준으로 추천했습니다. 근처 다른 곳에 머물고 싶다면 변경하세요."],
+  "Your accommodation":["你的住宿","숙소"],
+  "After booking, enter the hotel, B&B, apartment name or full address. 687 Italy will use it for directions when you are in Italy.":["预订后，输入酒店、民宿、公寓名称或完整地址。你在イタリア时，687 Italy 会用它提供导航。","예약 후 호텔, B&B, 아파트 이름 또는 전체 주소를 입력하세요. 이탈리아에서 길 안내에 사용됩니다."],
+  "After booking, enter the accommodation total:":["预订后，输入住宿总金额：","예약 후 숙박 총액을 입력하세요:"],
+  "Italy stays":["イタリア及亚洲住宿","이탈리아 및 아시아 숙소"],"Search on Agoda":["在 Agoda 搜索","Agoda에서 검색"],
+  "Opens Agoda for this Italyese destination ↗":["打开此イタリア目的地的 Agoda 页面 ↗","이 이탈리아 목적지의 Agoda 페이지 열기 ↗"],
+  "Affiliate partner: Vrbo":["合作伙伴：Vrbo","제휴 파트너: Vrbo"],"Search on Vrbo":["在 Vrbo 搜索","Vrbo에서 검색"],
+  "Affiliate partner: Expedia":["合作伙伴：Expedia","제휴 파트너: Expedia"],"Search on Expedia":["在 Expedia 搜索","Expedia에서 검색"],
+  "Affiliate partner: Hotels.com":["合作伙伴：Hotels.com","제휴 파트너: Hotels.com"],"Search on Hotels.com":["在 Hotels.com 搜索","Hotels.com에서 검색"],
+  "Your dates & travelers already filled in ↗":["日期和旅客信息已自动填写 ↗","날짜와 여행 인원이 이미 입력되어 있습니다 ↗"],
+  "Rental car?":["需要租车吗？","렌터카가 필요한가요?"],"Yes, I'll drive":["是，我会开车","네, 운전할게요"],
+  "Your rental car":["你的租车","렌터카"],"Affiliate partner: Kayak":["合作伙伴：Kayak","제휴 파트너: Kayak"],"Search on Kayak":["在 Kayak 搜索","Kayak에서 검색"],
+  "Your trip details already filled in ↗":["旅行详情已自动填写 ↗","여행 정보가 이미 입력되어 있습니다 ↗"],
+  "Booked? Enter what you paid:":["已经预订？输入你支付的金额：","예약했나요? 지불한 금액을 입력하세요:"],
+  "e.g. Day 1 Rome, Day 4 Naples, Day 8 Turin, Day 11 Rome (heading home).":["例如：第1天罗马，第4天那不勒斯，第8天都灵，第11天罗马（返程）。","예: 1일차 로마, 4일차 나폴리, 8일차 토리노, 11일차 로마(귀가)."],
+  "+ Add":["+ 添加","+ 추가"],
+  "No internal flight airport found for one of these cities.":["其中一个城市未找到适合的国内航班机场。","이 도시 중 하나에서 국내선 공항을 찾지 못했습니다."],
+  "Finish setup":["完成设置","설정 완료"]
+});
+applyAsianTranslations(PREMENU_TEXT);
+applyAsianTranslations(GLOBAL_UI_TEXT);
+
+function translateGlobalUiString(value,lang,table=GLOBAL_UI_TEXT){
+  if(!value) return value;
+  const raw=String(value), trimmed=raw.trim();
+  const merged = table===GLOBAL_UI_TEXT ? {...PREMENU_TEXT,...GLOBAL_UI_TEXT} : table;
+  if(merged[trimmed]){
+    const target = lang === "en" ? trimmed : merged[trimmed]?.[lang];
+    return target ? raw.replace(trimmed,target) : value;
+  }
+  // Switching language must also work from already translated UI text.
+  for(const [en,langs] of Object.entries(merged)){
+    for(const v of Object.values(langs||{})){
+      if(trimmed===v){
+        const target = lang === "en" ? en : langs[lang];
+        return target ? raw.replace(trimmed,target) : value;
+      }
+    }
+  }
+  // Common dynamic UI fragments.
+  if(lang!=="en"){
+    const dyn={
+      it:[[/^Day (\d+)$/,"Giorno $1"],[/^([·•]?\s*)Open now$/,"$1Aperto ora"],[/^([·•]?\s*)Closed$/,"$1Chiuso"],[/^Parking: (.+)$/,"Parcheggio: $1"],[/^Emergency: (.+)$/,"Emergenza: $1"],[/^(\d+) days left$/,"$1 giorni rimasti"],[/^Smart pace · Budget influence: (NORMAL|LOW|OVER)$/,"Ritmo smart · Influenza budget: $1"]],
+      ja:[[/^Day (\d+)$/,"$1日目"],[/^([·•]?\s*)Open now$/,"$1営業中"],[/^([·•]?\s*)Closed$/,"$1閉店"],[/^Parking: (.+)$/,"駐車: $1"],[/^Emergency: (.+)$/,"緊急: $1"],[/^(\d+) days left$/,"残り$1日"]],
+      es:[[/^Day (\d+)$/,"Día $1"],[/^([·•]?\s*)Open now$/,"$1Abierto ahora"],[/^([·•]?\s*)Closed$/,"$1Cerrado"],[/^Parking: (.+)$/,"Aparcamiento: $1"],[/^Emergency: (.+)$/,"Emergencia: $1"],[/^(\d+) days left$/,"Quedan $1 días"]],
+      de:[[/^Day (\d+)$/,"Tag $1"],[/^([·•]?\s*)Open now$/,"$1Jetzt geöffnet"],[/^([·•]?\s*)Closed$/,"$1Geschlossen"],[/^Parking: (.+)$/,"Parken: $1"],[/^Emergency: (.+)$/,"Notfall: $1"],[/^(\d+) days left$/,"$1 Tage übrig"]],
+      fr:[[/^Day (\d+)$/,"Jour $1"],[/^([·•]?\s*)Open now$/,"$1Ouvert maintenant"],[/^([·•]?\s*)Closed$/,"$1Fermé"],[/^Parking: (.+)$/,"Stationnement : $1"],[/^Emergency: (.+)$/,"Urgence : $1"],[/^(\d+) days left$/,"$1 jours restants"]],
+      zh:[[/^Day (\d+)$/,"第 $1 天"],[/^([·•]?\s*)Open now$/,"$1现在营业"],[/^([·•]?\s*)Closed$/,"$1已关闭"],[/^Parking: (.+)$/,"停车：$1"],[/^Emergency: (.+)$/,"紧急：$1"],[/^(\d+) days left$/,"剩余 $1 天"]],
+      ko:[[/^Day (\d+)$/,"$1일차"],[/^([·•]?\s*)Open now$/,"$1영업 중"],[/^([·•]?\s*)Closed$/,"$1영업 종료"],[/^Parking: (.+)$/,"주차: $1"],[/^Emergency: (.+)$/,"긴급: $1"],[/^(\d+) days left$/,"$1일 남음"]]
+    }[lang]||[];
+    for(const [re,repl] of dyn){ if(re.test(trimmed)) return raw.replace(trimmed,trimmed.replace(re,repl)); }
+  }
+  return value;
+}
+
+function localizeFullAppDOM(lang){
+  const root=document.querySelector(".app"); if(!root) return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[]; let n; while((n=walker.nextNode())) nodes.push(n);
+  nodes.forEach(node=>{
+    // Skip script/style-like and editable user-entered content.
+    const parent=node.parentElement;
+    if(!parent || ["SCRIPT","STYLE","TEXTAREA","OPTION"].includes(parent.tagName) && parent.tagName==="TEXTAREA") return;
+    const next=translateGlobalUiString(node.nodeValue,lang);
+    if(next!==node.nodeValue) node.nodeValue=next;
+  });
+  root.querySelectorAll("input[placeholder],textarea[placeholder]").forEach(el=>{
+    const current=el.getAttribute("placeholder");
+    let next=translateGlobalUiString(current,lang,{...PREMENU_ATTR,...GLOBAL_UI_ATTR});
+    if(next!==current) el.setAttribute("placeholder",next);
+  });
+  root.querySelectorAll("[title],[aria-label]").forEach(el=>{
+    for(const attr of ["title","aria-label"]){
+      if(!el.hasAttribute(attr)) continue;
+      const current=el.getAttribute(attr); const next=translateGlobalUiString(current,lang);
+      if(next!==current) el.setAttribute(attr,next);
+    }
+  });
+}
+
+const PREMENU_ATTR={
+  "e.g. 2000":{it:"es. 2000",ja:"例: 2000",es:"p. ej. 2000",de:"z. B. 2000",fr:"ex. 2000"},
+  "e.g. 900":{it:"es. 900",ja:"例: 900",es:"p. ej. 900",de:"z. B. 900",fr:"ex. 900"},
+  "e.g. hotel name in Tokyo or full address in Italy":{it:"es. nome hotel a Tokyo o indirizzo completo in Italia",ja:"例: 東京のホテル名またはイタリアの完全な住所",es:"p. ej. nombre del hotel en Tokio o dirección completa en Italia",de:"z. B. Hotelname in Tokio oder vollständige Adresse in Italy",fr:"ex. nom de l’hôtel à Tokyo ou adresse complète au Italie"}
+};
+if(PREMENU_ATTR["e.g. 2000"]){PREMENU_ATTR["e.g. 2000"].zh="例如 2000";PREMENU_ATTR["e.g. 2000"].ko="예: 2000";}
+if(PREMENU_ATTR["e.g. 900"]){PREMENU_ATTR["e.g. 900"].zh="例如 900";PREMENU_ATTR["e.g. 900"].ko="예: 900";}
+if(PREMENU_ATTR["e.g. hotel name in Tokyo or full address in Italy"]){PREMENU_ATTR["e.g. hotel name in Tokyo or full address in Italy"].zh="例如：东京酒店名称或イタリア完整地址";PREMENU_ATTR["e.g. hotel name in Tokyo or full address in Italy"].ko="예: 도쿄 호텔 이름 또는 이탈리아의 전체 주소";}
+function translatePremenuString(value,lang,table=PREMENU_TEXT){
+  if(!value) return value;
+  const trimmed=String(value).trim();
+  if(table[trimmed]) {
+    const target = lang === "en" ? trimmed : table[trimmed]?.[lang];
+    return target ? String(value).replace(trimmed,target) : value;
+  }
+  // allow switching directly from any supported language, including back to English
+  for(const [en,langs] of Object.entries(table)){
+    for(const v of Object.values(langs||{})){
+      if(trimmed===v){
+        const target = lang === "en" ? en : langs[lang];
+        return target ? String(value).replace(trimmed,target) : value;
+      }
+    }
+  }
+  return value;
+}
+function localizePremenuDOM(lang){
+  localizeFullAppDOM(lang);
+}
+function VoiceAssistantFirstRun({ onDone, onLanguageChange }) {
+  const [lang,setLang] = React.useState(()=>getInitialPrimaryAppLanguage());
+  const c=FIRST_RUN_LANGUAGE_COPY[lang]||FIRST_RUN_LANGUAGE_COPY.en;
+  return <div style={{position:"fixed",inset:0,zIndex:20000,background:"var(--paper)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div style={{width:"min(430px,100%)",background:"var(--paper)",borderRadius:22,padding:22,boxShadow:"0 18px 60px rgba(0,0,0,.16)",border:"1px solid var(--line)"}}>
+      <div style={{fontSize:30,marginBottom:8}}>🌐</div>
+      <div style={{fontSize:22,fontWeight:900,marginBottom:7}}>{c.title}</div>
+      <div className="park-hint" style={{fontSize:13.5,lineHeight:1.5,marginBottom:16}}>{c.body}</div>
+      <select className="plain" value={lang} onChange={e=>setLang(e.target.value)}>
+        {PRIMARY_APP_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.label}</option>)}
+      </select>
+      <button type="button" className="btn-primary" style={{width:"100%",marginTop:14}} onClick={()=>{
+        const safe=setVoiceAssistantLanguage(lang);
+        try{ localStorage.setItem("tripengine_ui_language",safe); localStorage.setItem(VOICE_ASSISTANT_SETUP_KEY,"1"); }catch(_){}
+        if(onLanguageChange) onLanguageChange(safe);
+        onDone();
+      }}>
+        {c.button}
+      </button>
+      <div className="park-hint" style={{fontSize:11.5,textAlign:"center",marginTop:10}}>{c.note}</div>
+    </div>
+  </div>;
+}
+
+function setupStepLabels(lang, onsite){
+  const L={
+    en:{step:"Step",of:"of",budget:"Budget",route:"Your Route",departure:"Departure & Gateway",flights:"Flights",bookings:"Bookings",back:"← Back"},
+    it:{step:"Passaggio",of:"di",budget:"Budget",route:"Il tuo percorso",departure:"Partenza e arrivo",flights:"Voli",bookings:"Prenotazioni",back:"← Indietro"},
+    ja:{step:"ステップ",of:"/",budget:"予算",route:"旅行ルート",departure:"出発・到着空港",flights:"フライト",bookings:"予約",back:"← 戻る"},
+    es:{step:"Paso",of:"de",budget:"Presupuesto",route:"Tu ruta",departure:"Salida y llegada",flights:"Vuelos",bookings:"Reservas",back:"← Atrás"},
+    de:{step:"Schritt",of:"von",budget:"Budget",route:"Deine Route",departure:"Abflug & Ankunft",flights:"Flüge",bookings:"Buchungen",back:"← Zurück"},
+    fr:{step:"Étape",of:"sur",budget:"Budget",route:"Votre itinéraire",departure:"Départ et arrivée",flights:"Vols",bookings:"Réservations",back:"← Retour"},
+    zh:{step:"步骤",of:"共",budget:"预算",route:"你的路线",departure:"出发与抵达",flights:"航班",bookings:"预订",back:"← 返回"},
+    ko:{step:"단계",of:"/",budget:"예산",route:"여행 경로",departure:"출발 및 도착",flights:"항공편",bookings:"예약",back:"← 뒤로"}
+  }[lang]||null;
+  const c=L||{step:"Step",of:"of",budget:"Budget",route:"Your Route",departure:"Departure & Gateway",flights:"Flights",bookings:"Bookings",back:"← Back"};
+  return {c,steps: onsite?{1:c.budget,2:c.route}:{1:c.budget,2:c.departure,3:c.flights,4:c.bookings}};
+}
+
+
 function App() {
   const savedTrip = loadSavedTrip();
   const savedUI = loadSavedUI();
@@ -10940,7 +11606,7 @@ function App() {
   });
   const [archives, setArchives] = useState(() => loadTripArchive());
   const [showVoiceSetup, setShowVoiceSetup] = useState(() => {
-    try { return localStorage.getItem("tripitaly_voice_setup_done") !== "1"; } catch(_) { return true; }
+    try { return localStorage.getItem(VOICE_ASSISTANT_SETUP_KEY) !== "1"; } catch(_) { return true; }
   });
   // Shared Trip Engine UI preferences. Country-specific apps can reuse these
   // without duplicating Settings logic. Legacy 687 Italy keys are read once
@@ -10948,11 +11614,7 @@ function App() {
   const TRIP_ENGINE_UI_LANGUAGE_KEY = "tripengine_ui_language";
   const TRIP_ENGINE_THEME_KEY = "tripengine_theme";
 
-  const [uiLanguage, setUiLanguageState] = useState(() =>
-    localStorage.getItem(TRIP_ENGINE_UI_LANGUAGE_KEY) ||
-    localStorage.getItem("tripitaly_ui_language") ||
-    "en"
-  );
+  const [uiLanguage, setUiLanguageState] = useState(() => getInitialPrimaryAppLanguage());
   const [theme, setThemeState] = useState(() =>
     localStorage.getItem(TRIP_ENGINE_THEME_KEY) ||
     localStorage.getItem("tripitaly_theme") ||
@@ -10963,6 +11625,27 @@ function App() {
     setUiLanguageState(lang);
     try { localStorage.setItem(TRIP_ENGINE_UI_LANGUAGE_KEY, lang); } catch(e) {}
   };
+
+  React.useEffect(() => {
+    const syncVoiceLanguageToMenu = (e) => {
+      const next = e?.detail || getVoiceAssistantLanguage();
+      if (next && next !== uiLanguage) setUiLanguage(next);
+    };
+    window.addEventListener("tripitaly-voice-language-changed", syncVoiceLanguageToMenu);
+    return () => window.removeEventListener("tripitaly-voice-language-changed", syncVoiceLanguageToMenu);
+  }, [uiLanguage]);
+
+  React.useEffect(() => {
+    if (showVoiceSetup) return;
+    let raf = requestAnimationFrame(() => localizePremenuDOM(uiLanguage));
+    const observer = new MutationObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => localizePremenuDOM(uiLanguage));
+    });
+    const root = document.querySelector(".app");
+    if (root) observer.observe(root,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:["placeholder","title","aria-label"]});
+    return () => { cancelAnimationFrame(raf); observer.disconnect(); };
+  }, [uiLanguage, step, showVoiceSetup]);
   const setTheme = (nextTheme) => {
     setThemeState(nextTheme);
     try { localStorage.setItem(TRIP_ENGINE_THEME_KEY, nextTheme); } catch(e) {}
@@ -10999,7 +11682,7 @@ function App() {
 
   const startNewTrip = async () => {
     const ok = window.confirm(
-      "Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later."
+      translateGlobalUiString("Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later.", getVoiceAssistantLanguage())
     );
     if (!ok) return;
 
@@ -11028,7 +11711,7 @@ function App() {
     const list = loadTripArchive();
     const item = list.find(x => x.archiveId === archiveId);
     if (!item) return;
-    const ok = window.confirm("Restore this trip? Your current trip will be archived first if it contains data.");
+    const ok = window.confirm(translateGlobalUiString("Restore this trip? Your current trip will be archived first if it contains data.", getVoiceAssistantLanguage()));
     if (!ok) return;
 
     if (data?.budget) {
@@ -11053,7 +11736,7 @@ function App() {
   };
 
   const deleteArchivedTrip = async (archiveId) => {
-    const ok = window.confirm("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.");
+    const ok = window.confirm(translateGlobalUiString("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.", getVoiceAssistantLanguage()));
     if (!ok) return;
     await deleteArchivedTravelDocuments(archiveId);
     const next = loadTripArchive().filter(x => x.archiveId !== archiveId);
@@ -11061,9 +11744,8 @@ function App() {
     setArchives(next);
   };
 
-  const steps = data.mode === "onsite"
-    ? { 1: "Budget", 2: "Your Route" }
-    : { 1: "Budget", 2: "Departure & Gateway", 3: "Flights", 4: "Bookings" };
+  const setupLabels = setupStepLabels(uiLanguage, data.mode === "onsite");
+  const steps = setupLabels.steps;
   const totalSteps = data.mode === "onsite" ? 2 : 4;
 
   if (step === 0) {
@@ -11086,7 +11768,7 @@ function App() {
               saveUIState({step:4, anchor:""});
               setStep(4);
             }
-          }}>← Back</div>
+          }}>{setupLabels.c.back}</div>
           <div className="brand">687 <span className="accent">Italy</span></div>
           <div style={{width:44}}></div>
         </div>
@@ -11104,7 +11786,7 @@ function App() {
         <div className="progress-track">
           <div className="progress-fill" style={{width: `${(step/totalSteps)*100}%`}}></div>
         </div>
-        <div className="step-label">Step {step} of {totalSteps} · {steps[step]}</div>
+        <div className="step-label">{setupLabels.c.step} {step} {setupLabels.c.of} {totalSteps} · {steps[step]}</div>
       </div>
 
       {step === 1 && <ScreenBudget data={data} setData={setData} onNext={() => setStep(2)} onBack={() => setStep(0)} />}
