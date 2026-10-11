@@ -11529,6 +11529,8 @@ function loadSavedTrip() {
 }
 
 
+const VOICE_ASSISTANT_SETUP_KEY = "tripitaly_voice_assistant_setup_done";
+
 // V1.87.8 TEST — ONE PRIMARY LANGUAGE + LOCALIZED SETUP
 // The selected language controls the setup flow, dashboard menu, Voice Assistant
 // recognition and 687 spoken replies. Translate remains an independent travel tool.
@@ -12383,7 +12385,6 @@ function App() {
       {step === 2 && data.mode !== "onsite" && <ScreenOrigin data={data} setData={setData} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
       {step === 3 && <ScreenFlights data={data} setData={setData} onNext={() => setStep(4)} onBack={() => setStep(2)} />}
       {step === 4 && <ScreenBookings data={data} setData={setData} onNext={() => setStep(9)} onBack={() => setStep(3)} />}
-      {showVoiceSetup && <VoiceAssistantFirstRun onDone={()=>setShowVoiceSetup(false)} onLanguageChange={setUiLanguage} />}
     </div>
   );
 }
