@@ -2699,6 +2699,83 @@
 
 
 
+/* ---- 687 Italy Test V1.14.3 · Signals buttons (layout only) ---- */
+/* Italy lacked the .iday-secondary definition used by route and Gone buttons. */
+.iday-shell button.iday-secondary {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  max-width:100%;
+  min-height:40px;
+  padding:9px 12px;
+  border:1.5px solid #1C5A7A;
+  border-radius:10px;
+  background:#F0F7FB;
+  color:#0E3B52;
+  -webkit-text-fill-color:#0E3B52;
+  font-family:'Sora',sans-serif;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.35;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  touch-action:manipulation;
+}
+.iday-shell button.iday-secondary:focus-visible {
+  outline:3px solid #F4B93E;
+  outline-offset:2px;
+}
+.iday-shell button.iday-secondary:active {transform:translateY(1px)}
+.iday-shell .iday-signal-targets {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:stretch;
+  gap:8px;
+  margin-top:8px;
+}
+.iday-shell .iday-signal-targets button.iday-secondary {
+  justify-content:flex-start;
+  text-align:left;
+  flex:0 1 auto;
+}
+.iday-shell .iday-signal-targets button.iday-secondary.route-target {
+  flex:1 1 100%;
+}
+.iday-shell .iday-signal-targets button.iday-secondary.active {
+  background:#1C5A7A;
+  border-color:#0E3B52;
+  color:#fff;
+  -webkit-text-fill-color:#fff;
+  box-shadow:0 0 0 2px rgba(28,90,122,.12);
+}
+.iday-shell .iday-signal-report-row {
+  display:grid;
+  grid-template-columns:22px minmax(0,1fr);
+  column-gap:9px;
+  row-gap:7px;
+  align-items:start;
+}
+.iday-shell .iday-signal-report-row .iday-signal-votes {
+  grid-column:2;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-start;
+  gap:8px;
+  margin:0;
+  width:100%;
+}
+.iday-shell .iday-signal-report-row .iday-signal-votes button {
+  min-height:38px;
+}
+@media (max-width:430px) {
+  .iday-shell .iday-signal-targets button.iday-secondary {flex:1 1 100%}
+  .iday-shell .iday-signal-report-row .iday-signal-votes {margin:0}
+}
+
 /* ---- Intelligent Day / Rescue — adapted from 687 Japan V1.84 ---- */
 .rescue-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
 .rescue-chip{border:1px solid #111;border-radius:999px;background:#fff;color:#222;padding:8px 10px;font-size:10.5px;font-weight:900;cursor:pointer}
@@ -10249,11 +10326,12 @@ function ItalyIntelligentDaySignals({ data }){
       </div>
     </div>
 
-    <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
+    <div className="iday-signal-targets">
       {targets.map((x,i)=><button
         key={`${x.scopeType}-${i}`}
-        className={"iday-secondary"+(target&&target.scopeType===x.scopeType&&target.target===x.target?" active":"")}
-        style={target&&target.scopeType===x.scopeType&&target.target===x.target?{background:"#ffe8ed",borderColor:"#8f1734"}:{}}
+        type="button"
+        className={"iday-secondary"+(x.scopeType==="route"?" route-target":"")+(target&&target.scopeType===x.scopeType&&target.target===x.target?" active":"")}
+        aria-pressed={!!(target&&target.scopeType===x.scopeType&&target.target===x.target)}
         onClick={()=>setTarget(x)}
       >{x.icon} {x.target}</button>)}
     </div>
@@ -10281,7 +10359,7 @@ function ItalyIntelligentDaySignals({ data }){
         ? relevant.slice(0,12).map(x=>{
             const voted=voteFor(x);
             const own=isOwnSignal(x);
-            return <div className="iday-row" key={x.id}>
+            return <div className="iday-row iday-signal-report-row" key={x.id}>
               <div>{x.icon}</div>
               <div className="iday-row-main">
                 <div className="iday-row-h">{x.label}</div>
@@ -10295,7 +10373,7 @@ function ItalyIntelligentDaySignals({ data }){
               </div>
               <div className="iday-signal-votes">
                 {!own&&x.serverId&&<button className={"iday-confirm"+(voted?" done":"")} onClick={()=>confirm(x)}>{voted==="confirm"?"✓ Confirmed":"✓ Confirm"}</button>}
-                <button className="iday-secondary" onClick={()=>gone(x)}>Gone</button>
+                <button type="button" className="iday-secondary" onClick={()=>gone(x)}>Gone</button>
               </div>
             </div>;
           })
