@@ -10200,177 +10200,73 @@ function ItalyIntelligentDayPrevent({ data, onOpenNow }){
 }
 
 function ItalyIntelligentDayBudget({ data, dailyAmount, onOpenItinerary, compact=false }){
+  const ic = IDAY_LOCALIZED[getVoiceAssistantLanguage()] || IDAY_LOCALIZED.en;
   const workingDay = italyIntelligentWorkingDay(data);
   const totalDays = tripLengthDays(data);
-
-  const spentToday = (data.expenses || [])
-    .filter(e => Number(e.dayNum || e.day || 0) === workingDay)
-    .reduce((sum,e) => sum + Number(e.amount || 0), 0);
-
+  const spentToday = (data.expenses || []).filter(e => Number(e.dayNum || e.day || 0) === workingDay).reduce((sum,e) => sum + Number(e.amount || 0), 0);
   const spentAll = totalSpent(data);
 
   const flightTotal = data.mode === "onsite" ? 0 : Number(data.flightPrice || 0);
   const hotelTotal = data.mode === "onsite" ? Number(data.prepaidTotal || 0) : Number(data.hotelPrice || 0);
   const carTotal = data.mode === "onsite" ? 0 : (data.wantsCar ? Number(data.carPrice || 0) : 0);
   const lockedTotal = flightTotal + hotelTotal + carTotal;
-
   const groundBudget = Math.max(0, Number(data.budget || 0) - lockedTotal);
   const tripRemaining = Math.max(0, groundBudget - spentAll);
   const daysLeftInclToday = Math.max(1, totalDays - workingDay + 1);
   const safeToday = tripRemaining / daysLeftInclToday;
   const originalLeftToday = Number(dailyAmount || 0) - spentToday;
-  const pctToday = Number(dailyAmount || 0) > 0
-    ? Math.round((spentToday / Number(dailyAmount || 0)) * 100)
-    : 0;
-
+  const pctToday = Number(dailyAmount || 0) > 0 ? Math.round((spentToday / Number(dailyAmount || 0)) * 100) : 0;
   const overToday = originalLeftToday < 0;
-  const lowToday = !overToday
-    && Number(dailyAmount || 0) > 0
-    && originalLeftToday < Number(dailyAmount || 0) * .25;
-
+  const lowToday = !overToday && Number(dailyAmount || 0) > 0 && originalLeftToday < Number(dailyAmount || 0) * .25;
   const noBudget = !(Number(data.budget || 0) > 0);
 
   if(compact){
     return <div className={"iday-card iday-budget-mini"+(overToday?" over":lowToday?" low":"")} style={{marginTop:10}}>
-      <div className="iday-kicker">Budget · Day {workingDay}</div>
+      <div className="iday-kicker">{ic.budget} · {ic.day} {workingDay}</div>
       <div className="iday-budget-mini-grid">
-        <div><span>Spent today</span><b>{formatHomeMoney(data, spentToday)}</b></div>
-        <div><span>Left today</span><b>{noBudget?"—":formatHomeMoney(data, Math.max(0,originalLeftToday))}</b></div>
-        <div><span>Safe today</span><b>{noBudget?"—":formatHomeMoney(data, safeToday)}</b></div>
+        <div><span>{ic.spent}</span><b>{formatHomeMoney(data, spentToday)}</b></div>
+        <div><span>{ic.left}</span><b>{noBudget?"—":formatHomeMoney(data, Math.max(0,originalLeftToday))}</b></div>
+        <div><span>{ic.safe}</span><b>{noBudget?"—":formatHomeMoney(data, safeToday)}</b></div>
       </div>
       <div className="iday-sub" style={{marginTop:8}}>
-        {noBudget
-          ? "Set your trip budget first; Intelligent Day reads daily expenses from your itinerary."
-          : overToday
-            ? `You're ${formatHomeMoney(data, Math.abs(originalLeftToday))} over the original daily target. Intelligent Day will favor lower-cost options.`
-            : lowToday
-              ? "Today's budget is getting low. NOW will favor lower-cost options when it builds suggestions."
-              : `You're using ${Math.max(0,pctToday)}% of today's original target.`}
+        {noBudget ? ic.budgetSet : overToday ? `${formatHomeMoney(data, Math.abs(originalLeftToday))} ${ic.over}` : lowToday ? ic.budgetLow : `${ic.using} ${Math.max(0,pctToday)}% ${ic.target}`}
       </div>
-      <button className="live-mini-btn now-secondary-btn" style={{marginTop:10}} onClick={onOpenItinerary}>
-        Open today's itinerary
-      </button>
+      <button className="live-mini-btn now-secondary-btn" style={{marginTop:10}} onClick={onOpenItinerary}>{ic.openIt}</button>
     </div>;
   }
 
   return <div>
     <div className="iday-card iday-budget-card" style={{marginBottom:10}}>
-      <div className="iday-kicker">687 Budget Intelligence</div>
-      <div className="iday-title">Know what is safe to spend today</div>
-      <div className="iday-sub">
-        Uses the trip budget plus the expenses entered in your itinerary. No second budget is created.
-      </div>
+      <div className="iday-kicker">{ic.budgetIntel}</div>
+      <div className="iday-title">{ic.know}</div>
+      <div className="iday-sub">{ic.uses}</div>
     </div>
 
     <div className="iday-budget-grid">
-      <div className="iday-card">
-        <div className="iday-kicker">Spent today</div>
-        <div className="iday-budget-value">{formatHomeMoney(data, spentToday)}</div>
-        <div className="iday-sub">Day {workingDay}</div>
-      </div>
-
-      <div className="iday-card">
-        <div className="iday-kicker">Original target left</div>
-        <div className="iday-budget-value">
-          {noBudget?"—":formatHomeMoney(data, Math.max(0,originalLeftToday))}
-        </div>
-        <div className="iday-sub">
-          Original daily target {formatHomeMoney(data, Number(dailyAmount||0))}
-        </div>
-      </div>
-
-      <div className="iday-card">
-        <div className="iday-kicker">Safe to spend today</div>
-        <div className="iday-budget-value">
-          {noBudget?"—":formatHomeMoney(data, safeToday)}
-        </div>
-        <div className="iday-sub">Recalculated from remaining trip money</div>
-      </div>
-
-      <div className="iday-card">
-        <div className="iday-kicker">Trip money remaining</div>
-        <div className="iday-budget-value">
-          {noBudget?"—":formatHomeMoney(data, tripRemaining)}
-        </div>
-        <div className="iday-sub">
-          Across {daysLeftInclToday} day{daysLeftInclToday!==1?"s":""} including today
-        </div>
-      </div>
+      <div className="iday-card"><div className="iday-kicker">{ic.spent}</div><div className="iday-budget-value">{formatHomeMoney(data, spentToday)}</div><div className="iday-sub">{ic.day} {workingDay}</div></div>
+      <div className="iday-card"><div className="iday-kicker">{ic.originalLeft}</div><div className="iday-budget-value">{noBudget?"—":formatHomeMoney(data, Math.max(0,originalLeftToday))}</div><div className="iday-sub">{ic.originalTarget} {formatHomeMoney(data, Number(dailyAmount||0))}</div></div>
+      <div className="iday-card"><div className="iday-kicker">{ic.safeSpend}</div><div className="iday-budget-value">{noBudget?"—":formatHomeMoney(data, safeToday)}</div><div className="iday-sub">{ic.recalc}</div></div>
+      <div className="iday-card"><div className="iday-kicker">{ic.tripRemaining}</div><div className="iday-budget-value">{noBudget?"—":formatHomeMoney(data, tripRemaining)}</div><div className="iday-sub">Across {daysLeftInclToday} day{daysLeftInclToday!==1?"s":""} {ic.including}</div></div>
     </div>
 
     {!noBudget && <div className={"iday-card iday-budget-advice"+(overToday?" over":lowToday?" low":"")} style={{marginTop:10}}>
-      <div className="iday-kicker">
-        Smart pace · Budget influence: {overToday ? "OVER" : lowToday ? "LOW" : "NORMAL"}
-      </div>
-      <div className="iday-title">
-        {overToday
-          ? "Reduce the pace today"
-          : lowToday
-            ? "Budget getting low"
-            : "Spending pace looks comfortable"}
-      </div>
+      <div className="iday-kicker">Smart pace · Budget influence: {overToday ? "OVER" : lowToday ? "LOW" : "NORMAL"}</div>
+      <div className="iday-title">{overToday ? "Reduce the pace today" : lowToday ? "Budget getting low" : "Spending pace looks comfortable"}</div>
       <div className="iday-sub" style={{marginTop:6}}>
-        {overToday
-          ? `You are ${formatHomeMoney(data, Math.abs(originalLeftToday))} above the original daily target. The safe figure above spreads the remaining money over the rest of the trip.`
-          : lowToday
-            ? "NOW already uses a low-budget signal when it chooses what kinds of nearby places to suggest."
-            : "Intelligent Day can keep balancing time, weather, location and budget without changing your itinerary."}
+        {overToday ? `You are ${formatHomeMoney(data, Math.abs(originalLeftToday))} above the original daily target. The safe figure above spreads the remaining money over the rest of the trip.` : lowToday ? "NOW already uses a low-budget signal when it chooses what kinds of nearby places to suggest." : "Intelligent Day can keep balancing time, weather, location and budget without changing your itinerary."}
       </div>
     </div>}
 
     <div className="iday-card" style={{marginTop:10}}>
-      <div className="iday-kicker">One shared budget</div>
-
-      <div className="iday-row">
-        <div>🗺️</div>
-        <div className="iday-row-main">
-          <div className="iday-row-h">Your itinerary expenses are the source</div>
-          <div className="iday-row-d">
-            Add or edit today's expenses in Itinerary. Intelligent Day reads them automatically.
-          </div>
-        </div>
-      </div>
-
-      <div className="iday-row">
-        <div>⚡</div>
-        <div className="iday-row-main">
-          <div className="iday-row-h">Smart Building uses the budget signal</div>
-          <div className="iday-row-d">
-            NOW/Smart Building compares verified monetary prices when the place/provider supplies a real price or range.
-            FREE is zero. A place that exceeds today's remaining budget is strongly deprioritized; safe verified prices are favored.
-            Unknown prices remain neutral and are never guessed.
-          </div>
-        </div>
-      </div>
-
-      <div className="iday-row">
-        <div>🧠</div>
-        <div className="iday-row-main">
-          <div className="iday-row-h">Safe today recalculates itself</div>
-          <div className="iday-row-d">
-            Spending today changes the amount that is safely available across the remaining days.
-          </div>
-        </div>
-      </div>
-
-      <div className="iday-row">
-        <div>💶</div>
-        <div className="iday-row-main">
-          <div className="iday-row-h">Verified-price rule</div>
-          <div className="iday-row-d">
-            A place affects the exact budget calculation only when a real monetary amount/range is supplied.
-            Price unavailable never means cheap.
-          </div>
-        </div>
-      </div>
-
-      <button className="live-mini-btn now-action-btn" style={{marginTop:10}} onClick={onOpenItinerary}>
-        Add / edit today's expenses
-      </button>
+      <div className="iday-kicker">{ic.oneBudget}</div>
+      <div className="iday-row"><div>🗺️</div><div className="iday-row-main"><div className="iday-row-h">{ic.source}</div><div className="iday-row-d">{ic.sourceD}</div></div></div>
+      <div className="iday-row"><div>⚡</div><div className="iday-row-main"><div className="iday-row-h">Smart Building uses the budget signal</div><div className="iday-row-d">NOW/Smart Building compares verified monetary prices when the place/provider supplies a real price or range. FREE is zero. A place that exceeds today's remaining budget is strongly deprioritized; safe verified prices are favored. Unknown prices remain neutral and are never guessed.</div></div></div>
+      <div className="iday-row"><div>🧠</div><div className="iday-row-main"><div className="iday-row-h">Safe today recalculates itself</div><div className="iday-row-d">Spending today changes the amount that is safely available across the remaining days.</div></div></div>
+      <div className="iday-row"><div>💶</div><div className="iday-row-main"><div className="iday-row-h">Verified-price rule</div><div className="iday-row-d">A place affects the exact budget calculation only when a real monetary amount/range is supplied. Price unavailable never means cheap.</div></div></div>
+      <button className="live-mini-btn now-primary-btn" style={{marginTop:10}} onClick={onOpenItinerary}>{ic.edit}</button>
     </div>
   </div>;
 }
-
 
 function ItalyIntelligentDayRescue({data,onGoTo,onOpenNow}){
   const [kind,setKind]=React.useState("train");
@@ -10553,31 +10449,67 @@ function ItalyIntelligentDayRescue({data,onGoTo,onOpenNow}){
 
 
 function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
+  const ic = IDAY_LOCALIZED[getVoiceAssistantLanguage()] || IDAY_LOCALIZED.en;
   const [active,setActive]=React.useState("today");
-  const nav=[["today","☀️","Today"],["now","⚡","NOW"],["budget","👛","Budget"],["prevent","🛡️","Prevent"],["guardian","🔔","Guardian"],["signals","📡","Signals"],["rescue","🆘","Rescue"]];
-  const titleMap={today:"Today",now:"NOW · What can I do now?",budget:"Budget",prevent:"Prevent",guardian:"Trip Guardian",signals:"Live Signals",rescue:"Rescue"};
-  const subtitleMap={today:"",now:"What makes sense right now.",budget:"What is safe to spend today.",prevent:"Check conditions before they become a problem.",guardian:"Important trip notifications.",signals:"Live reports around your trip.",rescue:"Fast help when something has already gone wrong."};
-  return <div className="iday-shell"><aside className="iday-side">{nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}</aside><main className="iday-main"><div className="iday-head"><h1>{titleMap[active]}</h1>{subtitleMap[active]&&<p>{subtitleMap[active]}</p>}</div>{active==="today"
-  ? <ItalyIntelligentToday data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
-  : active==="now"
-    ? <ItalyDashNow data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>
-    : active==="budget"
-      ? <ItalyIntelligentDayBudget data={data} dailyAmount={dailyAmount} onOpenItinerary={()=>onGoTo("itinerary")}/>
-      : active==="prevent"
-        ? <ItalyIntelligentDayPrevent data={data} onOpenNow={()=>setActive("now")}/>
-        : active==="guardian"
-          ? <ItalyIntelligentDayGuardian data={data}/>
-          : active==="signals"
-            ? <ItalyIntelligentDaySignals data={data}/>
-            : active==="rescue"
-              ? <ItalyIntelligentDayRescue data={data} onGoTo={onGoTo} onOpenNow={()=>setActive("now")}/>
-              : <div className="iday-card">
-                  <div className="iday-kicker">687 Italy · Intelligent Day</div>
-                  <div className="iday-title">{titleMap[active]}</div>
-                  <div className="iday-sub">This section will be connected in its dedicated porting step.</div>
-                </div>}</main></div>;
-}
 
+  React.useEffect(()=>{
+    const handler=(e)=>{
+      const target=String(e?.detail||"").toLowerCase();
+      if(["today","now","budget","prevent","guardian","signals","rescue"].includes(target)){
+        setActive(target);
+      }
+    };
+    window.addEventListener("tripitaly-open-intelligent",handler);
+    return ()=>window.removeEventListener("tripitaly-open-intelligent",handler);
+  },[]);
+
+  const nav=[
+    ["today","☀️",ic.today],
+    ["now","⚡",ic.now],
+    ["budget","👛",ic.budget],
+    ["prevent","🛡️",ic.prevent],
+    ["guardian","🔔",ic.guardian],
+    ["signals","📡",ic.signals],
+    ["rescue","🆘",ic.rescue]
+  ];
+
+  const titleMap={today:ic.today,now:ic.nowTitle,budget:ic.budget,prevent:ic.prevent,guardian:ic.guardianTitle,signals:ic.signalsTitle,rescue:ic.rescue};
+  const subtitleMap={today:"",now:ic.subNow,budget:ic.subBudget,prevent:ic.subPrevent,guardian:ic.subGuardian,signals:ic.subSignals,rescue:ic.subRescue};
+
+  const renderPanel=()=>{
+    if(active==="today") return <ItalyIntelligentToday data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>;
+    if(active==="now") return <ItalyDashNow data={data} setData={setData} dailyAmount={dailyAmount} onGoTo={onGoTo}/>;
+    if(active==="budget") return <ItalyIntelligentDayBudget data={data} dailyAmount={dailyAmount} onOpenItinerary={()=>onGoTo("itinerary")}/>;
+    if(active==="prevent") return <ItalyIntelligentDayPrevent data={data} onOpenNow={()=>setActive("now")}/>;
+    if(active==="guardian") return <ItalyIntelligentDayGuardian data={data}/>;
+    if(active==="signals") return <ItalyIntelligentDaySignals data={data}/>;
+    if(active==="rescue") return <ItalyIntelligentDayRescue data={data} onGoTo={onGoTo} onOpenNow={()=>setActive("now")}/>;
+    return null;
+  };
+
+  return <div className="iday-shell">
+    <aside className="iday-side">
+      {nav.map(n=><button className={"iday-nav"+(active===n[0]?" active":"")} key={n[0]} onClick={()=>setActive(n[0])}><span className="ico">{n[1]}</span><span>{n[2]}</span></button>)}
+    </aside>
+    <main className="iday-main">
+      <div className="iday-head"><h1>{titleMap[active] || "687 Intelligent Day"}</h1>{subtitleMap[active] && <p>{subtitleMap[active]}</p>}</div>
+      {active==="today" && <ItalyIntelligentDayLocationClock />}
+      {renderPanel()}
+      {active==="today" && <ItalyIntelligentDayBudget data={data} dailyAmount={dailyAmount} onOpenItinerary={()=>onGoTo("itinerary")} compact={true}/>}
+      {active==="today" && <div className="iday-card" style={{marginTop:10}}>
+        <div className="iday-kicker">{ic.how}</div>
+        <div className="iday-title">{ic.center}</div>
+        <div className="iday-row"><div>⚡</div><div className="iday-row-main"><div className="iday-row-h">{ic.now}</div><div className="iday-row-d">{ic.nowD}</div></div></div>
+        <div className="iday-row"><div>👛</div><div className="iday-row-main"><div className="iday-row-h">{ic.budget}</div><div className="iday-row-d">{ic.budgetD}</div></div></div>
+        <div className="iday-row"><div>🛡️</div><div className="iday-row-main"><div className="iday-row-h">{ic.prevent}</div><div className="iday-row-d">{ic.preventD}</div></div></div>
+        <div className="iday-row"><div>🔔</div><div className="iday-row-main"><div className="iday-row-h">{ic.guardian}</div><div className="iday-row-d">{ic.guardianD}</div></div></div>
+        <div className="iday-row"><div>📡</div><div className="iday-row-main"><div className="iday-row-h">{ic.signals}</div><div className="iday-row-d">{ic.signalsD}</div></div></div>
+        <div className="iday-row"><div>🆘</div><div className="iday-row-main"><div className="iday-row-h">{ic.rescue}</div><div className="iday-row-d">{ic.rescueD}</div></div></div>
+        <div className="iday-sub" style={{marginTop:8,fontWeight:800}}>{ic.shared}</div>
+      </div>}
+    </main>
+  </div>;
+}
 
 function DashboardVoiceAssistant({ onGoTo, data, currentSection, onUiLanguageChange }) {
   const [listening,setListening]=useState(false);
