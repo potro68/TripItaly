@@ -10745,179 +10745,564 @@ function IntelligentDayMenuShell({ onGoTo,data,setData,dailyAmount }){
   </div>;
 }
 
-function DashboardVoiceAssistant({ onGoTo, data, currentSection, onUiLanguageChange }) {
-  const [listening,setListening]=useState(false);
-  const [quickOpen,setQuickOpen]=useState(false);
-  const [helpOpen,setHelpOpen]=useState(false);
-  const [settingsOpen,setSettingsOpen]=useState(false);
-  const [message,setMessage]=useState("");
-  const [voiceLanguage,setVoiceLanguageState]=useState(getVoiceAssistantLanguage());
-
-  const COPY={
-    en:{heard:"I heard",ready:"Ready",unsupported:"Voice recognition is not available on this browser.",help:"What can I say?",settings:"Voice settings",reset:"RESET TO ENGLISH",opening:{itinerary:"Opening your itinerary."}},
-    it:{heard:"Ho sentito",ready:"Pronto",unsupported:"Il riconoscimento vocale non è disponibile in questo browser.",help:"Cosa posso dire?",settings:"Impostazioni voce",reset:"TORNA ALL’INGLESE",opening:{itinerary:"Apro il tuo itinerario."}},
-    ja:{heard:"聞き取り",ready:"準備完了",unsupported:"このブラウザでは音声認識を利用できません。",help:"何と言えばいい？",settings:"音声設定",reset:"英語に戻す",opening:{itinerary:"旅程を開きます。"}},
-    es:{heard:"He oído",ready:"Listo",unsupported:"El reconocimiento de voz no está disponible en este navegador.",help:"¿Qué puedo decir?",settings:"Ajustes de voz",reset:"VOLVER AL INGLÉS",opening:{itinerary:"Abriendo tu itinerario."}},
-    de:{heard:"Verstanden",ready:"Bereit",unsupported:"Spracherkennung ist in diesem Browser nicht verfügbar.",help:"Was kann ich sagen?",settings:"Spracheinstellungen",reset:"AUF ENGLISCH ZURÜCKSETZEN",opening:{itinerary:"Öffne deinen Reiseplan."}},
-    fr:{heard:"J’ai entendu",ready:"Prêt",unsupported:"La reconnaissance vocale n’est pas disponible dans ce navigateur.",help:"Que puis-je dire ?",settings:"Réglages vocaux",reset:"REVENIR À L’ANGLAIS",opening:{itinerary:"J’ouvre votre itinéraire."}},
-    zh:{heard:"我听到",ready:"准备好了",unsupported:"此浏览器不支持语音识别。",help:"我可以说什么？",settings:"语音设置",reset:"重置为英语",opening:{itinerary:"正在打开你的行程。"}},
-    ko:{heard:"들었어요",ready:"준비됨",unsupported:"이 브라우저에서는 음성 인식을 사용할 수 없습니다.",help:"무엇을 말할 수 있나요?",settings:"음성 설정",reset:"영어로 재설정",opening:{itinerary:"일정을 엽니다."}},
+function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
+  const [listening, setListening] = React.useState(false);
+  const [panelOpen, setPanelOpen] = React.useState(false);
+  const [quickMenuOpen, setQuickMenuOpen] = React.useState(false);
+  const [heard, setHeard] = React.useState("");
+  const panelCloseTimerRef = React.useRef(null);
+  const dockRef = React.useRef(null);
+  const dockDragRef = React.useRef(null);
+  const dockDragMovedRef = React.useRef(false);
+  const DOCK_POSITION_KEY = "tripitaly_voice_dock_position_v1";
+  const [dockPosition, setDockPosition] = React.useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DOCK_POSITION_KEY) || "null");
+      if (saved && (saved.side === "left" || saved.side === "right") && Number.isFinite(saved.top)) return saved;
+    } catch (_) {}
+    return { side:"right", top:null };
+  });
+  const [dockDragPosition, setDockDragPosition] = React.useState(null);
+  const [dockDragging, setDockDragging] = React.useState(false);
+  const closePanelSoon = (delay=1000) => {
+    if (panelCloseTimerRef.current) window.clearTimeout(panelCloseTimerRef.current);
+    panelCloseTimerRef.current = window.setTimeout(() => setPanelOpen(false), delay);
   };
-  const c=COPY[voiceLanguage]||COPY.en;
-  const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim();
-  const has=(s,arr)=>arr.some(x=>s.includes(norm(x)));
-  const say=(msg)=>{setMessage(msg);speak687Text(msg);setTimeout(()=>setMessage(""),1200);};
+  React.useEffect(() => () => { if (panelCloseTimerRef.current) window.clearTimeout(panelCloseTimerRef.current); }, []);
+  React.useEffect(() => {
+    const onResize = () => {
+      setDockPosition(prev => {
+        if (!Number.isFinite(prev?.top)) return prev;
+        const h = dockRef.current?.offsetHeight || 66;
+        const maxTop = Math.max(8, window.innerHeight - h - 82);
+        const top = Math.max(8, Math.min(prev.top, maxTop));
+        if (top === prev.top) return prev;
+        const next = {...prev, top};
+        try { localStorage.setItem(DOCK_POSITION_KEY, JSON.stringify(next)); } catch (_) {}
+        return next;
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  const [voiceLanguage, setVoiceLanguageState] = React.useState(()=>getVoiceAssistantLanguage());
+  const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micSupported = isIOSDevice() || !!SpeechRecognitionClass || hasNativeSpeechBridge();
 
-  const city=(data?.stayCity||guessedStayCity(data)||"").trim();
-  const openExternal=(url)=>{ try { openExternalWebsite(url,{step:9,section:currentSection||"overview"}); } catch(_) { window.location.href=url; } };
+  const COPY = {
+    en:{ready:"Tap the microphone and speak.",listening:"Listening…",problem:"Microphone problem. Please try again.",unavailable:"Voice commands are not available on this device.",nohear:"Couldn't hear you. Please try again.",nomatch:"I didn't recognize that command.",suggest:"Try: toilets nearby, search flights, find a hotel, rental car, budget, rescue, itinerary or Translate.",opening:{toilets:"Opening public toilets nearby.",food:"Opening restaurants nearby.",services:"Opening practical places nearby.",shopping:"Opening shopping nearby.",culture:"Opening culture nearby.",nature:"Opening nature nearby.",onsen:"Opening onsen nearby.",anime:"Opening anime and entertainment nearby.",itinerary:"Opening your itinerary.",translate:"Opening Translate.",packing:"Opening your packing list.",wallet:"Opening Wallet.",settings:"Opening Settings.",live:"Opening Intelligent Day.",overview:"Opening Overview.",nearby:"Opening Nearby.",tools:"Opening Tools.",drive:"Opening Drive.",offline:"Opening Offline.",flights:"Opening Aviasales flight search.",hotel:"Opening Agoda hotel search.",car:"Opening Kayak car rental search.",budget:"Opening Budget.",rescue:"Opening Rescue.",go:"Opening navigation.",add:"Adding the selected place to your itinerary."}},
+    it:{ready:"Tocca il microfono e parla.",listening:"Ti ascolto…",problem:"Problema con il microfono. Riprova.",unavailable:"I comandi vocali non sono disponibili su questo dispositivo.",nohear:"Non ti ho sentito. Riprova.",nomatch:"Non ho riconosciuto il comando.",suggest:"Prova: bagni vicini, cerca voli, trova hotel, noleggio auto, budget, soccorso, itinerario o Traduci.",opening:{toilets:"Apro i bagni pubblici nelle vicinanze.",food:"Apro i ristoranti nelle vicinanze.",services:"Apro i servizi utili nelle vicinanze.",shopping:"Apro i negozi nelle vicinanze.",culture:"Apro cultura e attrazioni nelle vicinanze.",nature:"Apro natura nelle vicinanze.",onsen:"Apro gli onsen nelle vicinanze.",anime:"Apro anime e intrattenimento nelle vicinanze.",itinerary:"Apro il tuo itinerario.",translate:"Apro Traduci.",packing:"Apro la lista bagaglio.",wallet:"Apro Wallet.",settings:"Apro Impostazioni.",live:"Apro Giornata intelligente.",overview:"Apro Panoramica.",nearby:"Apro Nelle vicinanze.",tools:"Apro Strumenti.",drive:"Apro Guida.",offline:"Apro Offline.",flights:"Apro la ricerca voli su Aviasales.",hotel:"Apro la ricerca hotel su Agoda.",car:"Apro il noleggio auto su Kayak.",budget:"Apro Budget.",rescue:"Apro Soccorso.",go:"Apro la navigazione.",add:"Aggiungo il luogo selezionato al tuo itinerario."}},
+    ja:{ready:"マイクをタップして話してください。",listening:"聞いています…",problem:"マイクに問題があります。もう一度お試しください。",unavailable:"この端末では音声コマンドを利用できません。",nohear:"聞き取れませんでした。もう一度お試しください。",nomatch:"コマンドを認識できませんでした。",suggest:"近くのトイレ、フライト検索、ホテル、レンタカー、予算、レスキュー、旅程、翻訳を試してください。",opening:{toilets:"近くの公衆トイレを開きます。",food:"近くの飲食店を開きます。",services:"近くの便利なサービスを開きます。",shopping:"近くの買い物スポットを開きます。",culture:"近くの文化スポットを開きます。",nature:"近くの自然スポットを開きます。",onsen:"近くの温泉を開きます。",anime:"近くのアニメ・エンタメを開きます。",itinerary:"旅程を開きます。",translate:"翻訳を開きます。",packing:"荷造りリストを開きます。",wallet:"ウォレットを開きます。",settings:"設定を開きます。",live:"インテリジェントデイを開きます。",overview:"概要を開きます。",nearby:"周辺を開きます。",tools:"ツールを開きます。",drive:"ドライブを開きます。",offline:"オフラインを開きます。",flights:"Aviasalesのフライト検索を開きます。",hotel:"Agodaのホテル検索を開きます。",car:"Kayakのレンタカー検索を開きます。",budget:"予算を開きます。",rescue:"レスキューを開きます。",go:"ナビゲーションを開きます。",add:"選択した場所を旅程に追加します。"}},
+    es:{ready:"Toca el micrófono y habla.",listening:"Escuchando…",problem:"Problema con el micrófono. Inténtalo de nuevo.",unavailable:"Los comandos de voz no están disponibles en este dispositivo.",nohear:"No te he oído. Inténtalo de nuevo.",nomatch:"No he reconocido ese comando.",suggest:"Prueba baños cercanos, buscar vuelos, hotel, alquiler de coche, presupuesto, rescate, itinerario o Traducir.",opening:{toilets:"Abriendo baños públicos cercanos.",food:"Abriendo restaurantes cercanos.",services:"Abriendo servicios útiles cercanos.",shopping:"Abriendo tiendas cercanas.",culture:"Abriendo cultura cercana.",nature:"Abriendo naturaleza cercana.",onsen:"Abriendo onsen cercanos.",anime:"Abriendo anime y entretenimiento cercanos.",itinerary:"Abriendo tu itinerario.",translate:"Abriendo Traducir.",packing:"Abriendo tu lista de equipaje.",wallet:"Abriendo Wallet.",settings:"Abriendo Ajustes.",live:"Abriendo Día inteligente.",overview:"Abriendo Resumen.",nearby:"Abriendo Cerca de ti.",tools:"Abriendo Herramientas.",drive:"Abriendo Conducir.",offline:"Abriendo Sin conexión.",flights:"Abriendo la búsqueda de vuelos en Aviasales.",hotel:"Abriendo la búsqueda de hoteles en Agoda.",car:"Abriendo alquiler de coche en Kayak.",budget:"Abriendo Presupuesto.",rescue:"Abriendo Rescate.",go:"Abriendo navegación.",add:"Añadiendo el lugar seleccionado a tu itinerario."}},
+    de:{ready:"Tippe auf das Mikrofon und sprich.",listening:"Ich höre zu…",problem:"Mikrofonproblem. Bitte erneut versuchen.",unavailable:"Sprachbefehle sind auf diesem Gerät nicht verfügbar.",nohear:"Ich habe dich nicht verstanden. Bitte erneut versuchen.",nomatch:"Diesen Befehl habe ich nicht erkannt.",suggest:"Versuche Toiletten in der Nähe, Flüge suchen, Hotel, Mietwagen, Budget, Hilfe, Reiseplan oder Übersetzen.",opening:{toilets:"Öffne öffentliche Toiletten in der Nähe.",food:"Öffne Restaurants in der Nähe.",services:"Öffne praktische Orte in der Nähe.",shopping:"Öffne Einkaufsmöglichkeiten in der Nähe.",culture:"Öffne Kultur in der Nähe.",nature:"Öffne Natur in der Nähe.",onsen:"Öffne Onsen in der Nähe.",anime:"Öffne Anime und Unterhaltung in der Nähe.",itinerary:"Öffne deinen Reiseplan.",translate:"Öffne Übersetzen.",packing:"Öffne deine Packliste.",wallet:"Öffne Wallet.",settings:"Öffne Einstellungen.",live:"Öffne Intelligenter Tag.",overview:"Öffne Übersicht.",nearby:"Öffne In der Nähe.",tools:"Öffne Werkzeuge.",drive:"Öffne Fahren.",offline:"Öffne Offline.",flights:"Öffne die Flugsuche bei Aviasales.",hotel:"Öffne die Hotelsuche bei Agoda.",car:"Öffne die Mietwagensuche bei Kayak.",budget:"Öffne Budget.",rescue:"Öffne Hilfe.",go:"Öffne Navigation.",add:"Füge den ausgewählten Ort zum Reiseplan hinzu."}},
+    fr:{ready:"Touchez le micro et parlez.",listening:"J'écoute…",problem:"Problème de microphone. Réessayez.",unavailable:"Les commandes vocales ne sont pas disponibles sur cet appareil.",nohear:"Je ne vous ai pas entendu. Réessayez.",nomatch:"Je n'ai pas reconnu cette commande.",suggest:"Essayez toilettes à proximité, rechercher des vols, hôtel, location de voiture, budget, secours, itinéraire ou Traduire.",opening:{toilets:"J'ouvre les toilettes publiques à proximité.",food:"J'ouvre les restaurants à proximité.",services:"J'ouvre les services utiles à proximité.",shopping:"J'ouvre les magasins à proximité.",culture:"J'ouvre les lieux culturels à proximité.",nature:"J'ouvre la nature à proximité.",onsen:"J'ouvre les onsen à proximité.",anime:"J'ouvre anime et divertissement à proximité.",itinerary:"J'ouvre votre itinéraire.",translate:"J'ouvre Traduire.",packing:"J'ouvre votre liste de bagages.",wallet:"J'ouvre Wallet.",settings:"J'ouvre Paramètres.",live:"J'ouvre Journée intelligente.",overview:"J'ouvre Aperçu.",nearby:"J'ouvre À proximité.",tools:"J'ouvre Outils.",drive:"J'ouvre Conduite.",offline:"J'ouvre Hors ligne.",flights:"J'ouvre la recherche de vols sur Aviasales.",hotel:"J'ouvre la recherche d'hôtels sur Agoda.",car:"J'ouvre la location de voiture sur Kayak.",budget:"J'ouvre Budget.",rescue:"J'ouvre Secours.",go:"J'ouvre la navigation.",add:"J'ajoute le lieu sélectionné à votre itinéraire."}},
+    zh:{ready:"点击麦克风并说话。",listening:"正在聆听…",problem:"麦克风出现问题，请重试。",unavailable:"此设备不支持语音指令。",nohear:"没有听清，请重试。",nomatch:"我没有识别出这个指令。",suggest:"试试：附近厕所、搜索航班、找酒店、租车、预算、救援、行程或翻译。",opening:{toilets:"正在打开附近的公共厕所。",food:"正在打开附近的餐厅。",services:"正在打开附近的实用地点。",shopping:"正在打开附近的购物地点。",culture:"正在打开附近的文化景点。",nature:"正在打开附近的自然景点。",onsen:"正在打开附近的温泉。",anime:"正在打开附近的动漫和娱乐地点。",itinerary:"正在打开你的行程。",translate:"正在打开翻译。",packing:"正在打开行李清单。",wallet:"正在打开旅行钱包。",settings:"正在打开设置。",live:"正在打开智能行程。",overview:"正在打开概览。",nearby:"正在打开附近。",tools:"正在打开工具。",drive:"正在打开驾车。",offline:"正在打开离线。",flights:"正在打开 Aviasales 航班搜索。",hotel:"正在打开 Agoda 酒店搜索。",car:"正在打开 Kayak 租车搜索。",budget:"正在打开预算。",rescue:"正在打开救援。",go:"正在打开导航。",add:"正在把所选地点加入行程。"}},
+    ko:{ready:"마이크를 누르고 말하세요.",listening:"듣고 있습니다…",problem:"마이크 문제가 발생했습니다. 다시 시도하세요.",unavailable:"이 기기에서는 음성 명령을 사용할 수 없습니다.",nohear:"잘 듣지 못했습니다. 다시 시도하세요.",nomatch:"해당 명령을 인식하지 못했습니다.",suggest:"주변 화장실, 항공편 검색, 호텔 찾기, 렌터카, 예산, 구조, 일정 또는 번역을 말해 보세요.",opening:{toilets:"주변 공중화장실을 엽니다.",food:"주변 식당을 엽니다.",services:"주변 편의 시설을 엽니다.",shopping:"주변 쇼핑 장소를 엽니다.",culture:"주변 문화 명소를 엽니다.",nature:"주변 자연 명소를 엽니다.",onsen:"주변 온천을 엽니다.",anime:"주변 애니메이션 및 엔터테인먼트 장소를 엽니다.",itinerary:"일정을 엽니다.",translate:"번역을 엽니다.",packing:"짐 꾸리기 목록을 엽니다.",wallet:"여행 지갑을 엽니다.",settings:"설정을 엽니다.",live:"스마트 데이를 엽니다.",overview:"개요를 엽니다.",nearby:"주변을 엽니다.",tools:"도구를 엽니다.",drive:"운전을 엽니다.",offline:"오프라인을 엽니다.",flights:"Aviasales 항공편 검색을 엽니다.",hotel:"Agoda 호텔 검색을 엽니다.",car:"Kayak 렌터카 검색을 엽니다.",budget:"예산을 엽니다.",rescue:"구조를 엽니다.",go:"내비게이션을 엽니다.",add:"선택한 장소를 일정에 추가합니다."}}
+  };
 
-  const openNearby=(filter,mode)=>{
+  const langCfg = voiceLanguageConfig(voiceLanguage);
+  const copy = COPY[voiceLanguage] || COPY.en;
+
+  const VOICE_HELP = {
+    en:{title:"What can I say?",subtitle:"Speak naturally — you do not need to use the exact button name.",groups:[
+      ["Travel search",["Search flights","Search hotel on Agoda","Search hotel on Vrbo","Search hotel on Expedia","Search hotel on Hotels.com","Rent a car"]],
+      ["Nearby search",["Find restaurants nearby","Find restaurants on foot","Find restaurants by car","Find a public toilet","Find a pharmacy","Find an ATM","Find a station"]],
+      ["Nearby results",["Go to the first one","Go to the second one","Go to the third one","Add the first one to my itinerary","Add the second one to my itinerary","Add the third one to my itinerary"]],
+      ["My trip",["Open itinerary","Open budget","Open packing list","Open Wallet","Open Translate"]],
+      ["Intelligent Day & safety",["What should I do now?","Open Guardian","Show Signals","Open Prevent","Open Rescue"]],
+      ["App navigation",["Open Nearby","Open Settings","Open Tools","Open Drive","Open Offline","Open Overview"]]
+    ]},
+    it:{title:"Cosa posso dire?",subtitle:"Parla normalmente: non devi usare il nome esatto del pulsante.",groups:[
+      ["Ricerca viaggio",["Cerca voli","Cerca hotel su Agoda","Cerca hotel su Vrbo","Cerca hotel su Expedia","Cerca hotel su Hotels.com","Noleggio auto"]],
+      ["Nelle vicinanze",["Cerca ristoranti vicino a me","Cerca ristoranti a piedi","Cerca ristoranti in macchina","Cerca un bagno pubblico","Cerca una farmacia","Cerca un bancomat","Cerca una stazione"]],
+      ["Risultati Nearby",["Vai al primo","Vai al secondo","Vai al terzo","Aggiungi il primo all’itinerario","Aggiungi il secondo all’itinerario","Aggiungi il terzo all’itinerario"]],
+      ["Il mio viaggio",["Apri itinerario","Apri budget","Apri lista bagaglio","Apri Wallet","Apri Traduci"]],
+      ["Giornata intelligente e sicurezza",["Cosa posso fare adesso?","Apri Guardian","Mostra Signals","Apri Prevent","Apri Soccorso"]],
+      ["Navigazione app",["Apri Nelle vicinanze","Apri Impostazioni","Apri Strumenti","Apri Guida","Apri Offline","Apri Panoramica"]]
+    ]},
+    ja:{title:"何と言えばいい？",subtitle:"自然に話してください。ボタン名を正確に言う必要はありません。",groups:[
+      ["旅行検索",["フライトを探して","Agodaでホテルを探して","Vrboでホテルを探して","Expediaでホテルを探して","Hotels.comでホテルを探して","レンタカーを開いて"]],
+      ["周辺検索",["近くのレストランを探して","徒歩でレストランを探して","車でレストランを探して","公衆トイレを探して","薬局を探して","ATMを探して","駅を探して"]],
+      ["周辺検索の結果",["最初の場所へ案内して","2番目へ案内して","3番目へ案内して","最初を旅程に追加して","2番目を旅程に追加して","3番目を旅程に追加して"]],
+      ["旅行プラン",["旅程を開いて","予算を開いて","荷造りリストを開いて","ウォレットを開いて","翻訳を開いて"]],
+      ["インテリジェントデイと安全",["今何をすればいい？","Guardianを開いて","Signalsを見せて","Preventを開いて","レスキューを開いて"]],
+      ["アプリ操作",["周辺を開いて","設定を開いて","ツールを開いて","ドライブを開いて","オフラインを開いて","概要を開いて"]]
+    ]},
+    es:{title:"¿Qué puedo decir?",subtitle:"Habla con naturalidad: no necesitas decir el nombre exacto del botón.",groups:[
+      ["Búsqueda de viaje",["Buscar vuelos","Buscar hotel en Agoda","Buscar hotel en Vrbo","Buscar hotel en Expedia","Buscar hotel en Hotels.com","Alquilar coche"]],
+      ["Cerca de ti",["Buscar restaurantes cerca","Buscar restaurantes a pie","Buscar restaurantes en coche","Buscar un baño público","Buscar una farmacia","Buscar un cajero","Buscar una estación"]],
+      ["Resultados de Cerca de ti",["Ir al primero","Ir al segundo","Ir al tercero","Añadir el primero a mi itinerario","Añadir el segundo a mi itinerario","Añadir el tercero a mi itinerario"]],
+      ["Mi viaje",["Abrir itinerario","Abrir presupuesto","Abrir lista de equipaje","Abrir Wallet","Abrir Traducir"]],
+      ["Día inteligente y seguridad",["¿Qué puedo hacer ahora?","Abrir Guardian","Mostrar Signals","Abrir Prevent","Abrir Rescate"]],
+      ["Navegación de la app",["Abrir Cerca de ti","Abrir Ajustes","Abrir Herramientas","Abrir Conducir","Abrir Sin conexión","Abrir Resumen"]]
+    ]},
+    de:{title:"Was kann ich sagen?",subtitle:"Sprich ganz natürlich – der genaue Button-Name ist nicht nötig.",groups:[
+      ["Reisesuche",["Flüge suchen","Hotel auf Agoda suchen","Hotel auf Vrbo suchen","Hotel auf Expedia suchen","Hotel auf Hotels.com suchen","Mietwagen"]],
+      ["In der Nähe",["Restaurants in der Nähe finden","Restaurants zu Fuß finden","Restaurants mit dem Auto finden","Öffentliche Toilette finden","Apotheke finden","Geldautomat finden","Bahnhof finden"]],
+      ["Ergebnisse in der Nähe",["Zum ersten navigieren","Zum zweiten navigieren","Zum dritten navigieren","Den ersten zum Reiseplan hinzufügen","Den zweiten zum Reiseplan hinzufügen","Den dritten zum Reiseplan hinzufügen"]],
+      ["Meine Reise",["Reiseplan öffnen","Budget öffnen","Packliste öffnen","Wallet öffnen","Übersetzen öffnen"]],
+      ["Intelligenter Tag & Sicherheit",["Was kann ich jetzt machen?","Guardian öffnen","Signals anzeigen","Prevent öffnen","Hilfe öffnen"]],
+      ["App-Navigation",["In der Nähe öffnen","Einstellungen öffnen","Werkzeuge öffnen","Fahren öffnen","Offline öffnen","Übersicht öffnen"]]
+    ]},
+    fr:{title:"Que puis-je dire ?",subtitle:"Parlez naturellement : inutile de prononcer le nom exact du bouton.",groups:[
+      ["Recherche voyage",["Rechercher des vols","Chercher un hôtel sur Agoda","Chercher un hôtel sur Vrbo","Chercher un hôtel sur Expedia","Chercher un hôtel sur Hotels.com","Louer une voiture"]],
+      ["À proximité",["Trouver des restaurants près de moi","Trouver des restaurants à pied","Trouver des restaurants en voiture","Trouver des toilettes publiques","Trouver une pharmacie","Trouver un distributeur","Trouver une gare"]],
+      ["Résultats à proximité",["Aller au premier","Aller au deuxième","Aller au troisième","Ajouter le premier à mon itinéraire","Ajouter le deuxième à mon itinéraire","Ajouter le troisième à mon itinéraire"]],
+      ["Mon voyage",["Ouvrir l’itinéraire","Ouvrir le budget","Ouvrir la liste de bagages","Ouvrir Wallet","Ouvrir Traduire"]],
+      ["Journée intelligente et sécurité",["Que puis-je faire maintenant ?","Ouvrir Guardian","Afficher Signals","Ouvrir Prevent","Ouvrir Secours"]],
+      ["Navigation dans l’app",["Ouvrir À proximité","Ouvrir Paramètres","Ouvrir Outils","Ouvrir Conduite","Ouvrir Hors ligne","Ouvrir Aperçu"]]
+    ]},
+    zh:{title:"我可以说什么？",subtitle:"自然说话即可，不需要说出按钮的准确名称。",groups:[
+      ["旅行搜索",["搜索航班","在 Agoda 搜索酒店","在 Vrbo 搜索酒店","在 Expedia 搜索酒店","在 Hotels.com 搜索酒店","租车"]],
+      ["附近搜索",["找附近的餐厅","步行找餐厅","开车找餐厅","找公共厕所","找药店","找 ATM","找车站"]],
+      ["附近搜索结果",["导航到第一个","导航到第二个","导航到第三个","把第一个加入行程","把第二个加入行程","把第三个加入行程"]],
+      ["我的行程",["打开行程","打开预算","打开行李清单","打开旅行钱包","打开翻译"]],
+      ["智能行程与安全",["我现在可以做什么？","打开 Guardian","显示 Signals","打开 Prevent","打开救援"]],
+      ["应用导航",["打开附近","打开设置","打开工具","打开驾车","打开离线","打开概览"]]
+    ]},
+    ko:{title:"무엇이라고 말할 수 있나요?",subtitle:"버튼 이름을 정확히 말할 필요 없이 자연스럽게 말하세요.",groups:[
+      ["여행 검색",["항공편 찾아줘","Agoda에서 호텔 찾아줘","Vrbo에서 호텔 찾아줘","Expedia에서 호텔 찾아줘","Hotels.com에서 호텔 찾아줘","렌터카가 필요해"]],
+      ["주변 검색",["근처 식당 찾아줘","걸어서 식당 찾아줘","차로 식당 찾아줘","공중화장실 찾아줘","약국 찾아줘","ATM 찾아줘","역 찾아줘"]],
+      ["주변 검색 결과",["첫 번째로 안내해 줘","두 번째로 안내해 줘","세 번째로 안내해 줘","첫 번째를 일정에 추가해 줘","두 번째를 일정에 추가해 줘","세 번째를 일정에 추가해 줘"]],
+      ["내 여행",["일정 열어줘","예산 열어줘","짐 꾸리기 목록 열어줘","지갑 열어줘","번역 열어줘"]],
+      ["스마트 데이와 안전",["지금 뭐 하면 돼?","Guardian 열어줘","Signals 보여줘","Prevent 열어줘","구조 열어줘"]],
+      ["앱 이동",["주변 열어줘","설정 열어줘","도구 열어줘","운전 열어줘","오프라인 열어줘","개요 열어줘"]]
+    ]}
+  };
+  const helpCopy = VOICE_HELP[voiceLanguage] || VOICE_HELP.en;
+  const HOTEL_PROVIDER_COPY = {
+    en:{spoken:"Which service? Agoda, Vrbo, Expedia or Hotels.com?"},
+    it:{spoken:"Quale servizio? Agoda, Vrbo, Expedia oppure Hotels.com?"},
+    ja:{spoken:"どのサービスですか？ Agoda、Vrbo、Expedia、Hotels.com から選んでください。"},
+    es:{spoken:"¿Qué servicio? Agoda, Vrbo, Expedia o Hotels.com?"},
+    de:{spoken:"Welcher Dienst? Agoda, Vrbo, Expedia oder Hotels.com?"},
+    fr:{spoken:"Quel service ? Agoda, Vrbo, Expedia ou Hotels.com ?"},
+    zh:{spoken:"请选择服务：Agoda、Vrbo、Expedia 或 Hotels.com。"},
+    ko:{spoken:"어떤 서비스를 사용할까요? Agoda, Vrbo, Expedia 또는 Hotels.com?"}
+  };
+  const hotelProviderCopy = HOTEL_PROVIDER_COPY[voiceLanguage] || HOTEL_PROVIDER_COPY.en;
+
+  React.useEffect(()=>{
+    const h=e=>setVoiceLanguageState(e?.detail || getVoiceAssistantLanguage());
+    window.addEventListener("tripitaly-voice-language-changed",h);
+    return ()=>window.removeEventListener("tripitaly-voice-language-changed",h);
+  },[]);
+
+  const normalize = value => String(value||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’']/g," ");
+  const containsAny = (text, arr) => arr.some(x => text.includes(normalize(x)));
+  const speakReply = text => speak687Text(text);
+  const replyAndGo = (spoken, section) => {
+    setMessage(spoken);
+    setPanelOpen(true);
+    speakReply(spoken);
+    onGoTo(section);
+    // Voice navigation should land on the useful top of the destination screen.
+    window.setTimeout(() => { try { window.scrollTo({top:0,left:0,behavior:"smooth"}); } catch(_) { try { window.scrollTo(0,0); } catch(__) {} } }, 80);
+    closePanelSoon();
+  };
+  const openNearby = (filter, spoken, requestedMode = "") => {
+    // V1.89.5: distinguish SAME-SCREEN commands from cross-screen navigation.
+    // When Nearby is already open, do not navigate to Nearby again: address the
+    // mounted Nearby component directly so category + GPS search cannot race a rerender.
+    try {
+      if (filter) sessionStorage.setItem("tripitaly_voice_nearby_filter",filter);
+      else sessionStorage.removeItem("tripitaly_voice_nearby_filter");
+      if (requestedMode === "walk" || requestedMode === "car") sessionStorage.setItem("tripitaly_voice_nearby_mode",requestedMode);
+      else sessionStorage.removeItem("tripitaly_voice_nearby_mode");
+      sessionStorage.setItem("tripitaly_voice_nearby_autolocate","1");
+    } catch(_) {}
+    setMessage(spoken);
+    setPanelOpen(true);
+    speakReply(spoken);
+    if (currentSection === "nearby") {
+      window.setTimeout(() => {
+        try { window.dispatchEvent(new CustomEvent("tripitaly-voice-nearby-search", {detail:{filter:filter || "", mode:requestedMode || "", source:"same-screen"}})); } catch (_) {}
+      }, 20);
+      closePanelSoon();
+      return;
+    }
     onGoTo("nearby");
-    setTimeout(()=>window.dispatchEvent(new CustomEvent("tripitaly-nearby-voice",{detail:{filter,mode}})),180);
-    say(c.ready);
+    window.setTimeout(() => { try { window.scrollTo({top:0,left:0,behavior:"smooth"}); } catch(_) {} }, 80);
+    // The sessionStorage request is consumed by Nearby on mount. This delayed
+    // event is only an extra handoff after the destination has had time to mount.
+    window.setTimeout(() => {
+      try { window.dispatchEvent(new CustomEvent("tripitaly-voice-nearby-search", {detail:{filter:filter || "", mode:requestedMode || "", source:"cross-screen"}})); } catch (_) {}
+    }, 320);
+    closePanelSoon();
   };
-
-  const openItineraryMap=(spoken)=>{
+  const openItineraryMap = (spoken) => {
+    // Same rule for Itinerary: if already there, never navigate to the same
+    // section again. Talk directly to the mounted map component.
     try { sessionStorage.setItem("tripitaly_voice_itinerary_autolocate","1"); } catch (_) {}
     setMessage(spoken);
-    speak687Text(spoken);
-
-    if(currentSection==="itinerary"){
-      setTimeout(()=>{
-        try { window.dispatchEvent(new CustomEvent("tripitaly-voice-itinerary-show-map",{detail:{source:"same-screen"}})); } catch (_) {}
-      },20);
-      setTimeout(()=>setMessage(""),1200);
+    setPanelOpen(true);
+    speakReply(spoken);
+    if (currentSection === "itinerary") {
+      window.setTimeout(() => {
+        try { window.dispatchEvent(new CustomEvent("tripitaly-voice-itinerary-show-map", {detail:{source:"same-screen"}})); } catch (_) {}
+      }, 20);
+      closePanelSoon();
       return;
     }
-
     onGoTo("itinerary");
-    setTimeout(()=>{ try { window.scrollTo({top:0,left:0,behavior:"smooth"}); } catch(_) {} },80);
-    setTimeout(()=>{
-      try { window.dispatchEvent(new CustomEvent("tripitaly-voice-itinerary-show-map",{detail:{source:"cross-screen"}})); } catch (_) {}
-    },320);
-    setTimeout(()=>setMessage(""),1200);
+    window.setTimeout(() => { try { window.scrollTo({top:0,left:0,behavior:"smooth"}); } catch(_) {} }, 80);
+    window.setTimeout(() => {
+      try { window.dispatchEvent(new CustomEvent("tripitaly-voice-itinerary-show-map", {detail:{source:"cross-screen"}})); } catch (_) {}
+    }, 320);
+    closePanelSoon();
   };
-
-  const handleCommand=(raw)=>{
-    const s=norm(raw);
-    if(!s) return;
-
-    // Direct travel search.
-    if(has(s,["search flights","find flights","cerca voli","buscar vuelos","fluge suchen","chercher des vols","航空券","航班","항공편"])) { openExternal(buildAviasalesLink(data)); return; }
-    if(has(s,["rent a car","car rental","noleggio auto","alquila un coche","mietwagen","louer une voiture","レンタカー","租车","렌터카"])) { openExternal(buildCarRentalLink(data)); return; }
-    if(has(s,["agoda"])) { openExternal(buildAgodaSearchLink(data,city)); return; }
-    if(has(s,["vrbo"])) { openExternal(buildVrboSearchLink(data,city)); return; }
-    if(has(s,["expedia"])) { openExternal(buildExpediaSearchLink(data,city)); return; }
-    if(has(s,["hotels com","hotels.com"])) { openExternal(buildHotelsComSearchLink(data,city)); return; }
-    if(has(s,["search hotel","find hotel","cerca hotel","buscar hotel","hotel suchen","chercher un hotel","ホテル","酒店","호텔"])) { openExternal(buildAgodaSearchLink(data,city)); return; }
-
-    // Nearby search.
-    const car=has(s,["by car","driving","in macchina","auto","en coche","mit dem auto","en voiture","車で","驾车","차로"]);
-    const walk=has(s,["on foot","walking","a piedi","andando","zu fuss","a pied","徒歩","步行","도보"]);
-    const mode=car?"car":walk?"walk":undefined;
-    if(has(s,["public toilet","toilet","bathroom","bagno pubblico","bagno","baño","toilette","wc","トイレ","公厕","화장실"])) { openNearby("toilets",mode); return; }
-    if(has(s,["restaurant","ristorant","restaurante","レストラン","餐厅","식당"])) { openNearby("food",mode); return; }
-    if(has(s,["pharmacy","farmacia","apotheke","pharmacie","薬局","药店","약국"])) { openNearby("shopping",mode); return; }
-    if(has(s,["atm","bancomat","geldautomat","distributeur","現金","自动取款","atm"])) { openNearby("services",mode); return; }
-    if(has(s,["station","stazione","estacion","bahnhof","gare","駅","车站","역"])) { openNearby("services",mode); return; }
-
-    // Nearby result actions.
-    const ord = has(s,["third","terzo","tercero","dritte","troisieme","3番","第三","세 번째"])?2:
-                has(s,["second","secondo","segundo","zweite","deuxieme","2番","第二","두 번째"])?1:
-                has(s,["first","primo","primero","erste","premier","1番","第一","첫 번째"])?0:null;
-    if(ord!==null && has(s,["add","aggiungi","agregar","hinzufugen","ajouter","追加","添加","추가"])) {
-      window.dispatchEvent(new CustomEvent("tripitaly-nearby-result-action",{detail:{action:"add",index:ord}})); say(c.ready); return;
+  const openWalletTab = (tab, spoken) => {
+    saveUIState({step:9, section:"wallet", walletTab:tab});
+    replyAndGo(spoken,"wallet");
+  };
+  const openPlanningStep = (step, anchor, spoken) => {
+    setMessage(spoken);
+    setPanelOpen(true);
+    speakReply(spoken);
+    try { saveUIState({step, anchor: anchor || ""}); } catch (_) {}
+    window.dispatchEvent(new CustomEvent("tripitaly-global-voice-open-planning", {detail:{step, anchor:anchor || ""}}));
+    closePanelSoon();
+  };
+  const openVoiceExternalSearch = (kind, spoken) => {
+    const tripData = data || loadSavedTrip() || {};
+    let url = "";
+    let resumeState = {};
+    if (kind === "flights") {
+      url = buildAviasalesLink(tripData);
+      resumeState = {step:3, anchor:""};
+    } else if (["hotel","agoda","vrbo","expedia","hotelscom"].includes(kind)) {
+      const city = tripData.stayCity !== undefined ? tripData.stayCity : guessedStayCity(tripData);
+      if (kind === "vrbo") url = buildVrboSearchLink(tripData, city);
+      else if (kind === "expedia") url = buildExpediaSearchLink(tripData, city);
+      else if (kind === "hotelscom") url = buildHotelsComSearchLink(tripData, city);
+      else url = buildAgodaSearchLink(tripData, city);
+      resumeState = {step:4, anchor:"booking-stay"};
+    } else if (kind === "car") {
+      url = buildCarRentalLink(tripData);
+      resumeState = {step:4, anchor:"booking-car"};
     }
-    if(ord!==null && has(s,["go","vai","naviga","ir","navigieren","aller","行く","去","가기"])) {
-      window.dispatchEvent(new CustomEvent("tripitaly-nearby-result-action",{detail:{action:"go",index:ord}})); say(c.ready); return;
-    }
-
-    // App navigation.
-    if(has(s,["open itinerary","show itinerary","my itinerary","itinerary","itinerario","apri itinerario","mostra itinerario","reiseplan","itineraire","itinéraire","旅程","行程","일정"])){
-      openItineraryMap(c.opening?.itinerary || "Opening your itinerary.");
-      return;
-    }
-
-    const nav=[
-      ["nearby",["nearby","vicino","nelle vicinanze","cerca de ti","in der nahe","a proximite","周辺","附近","주변"]],
-      ["wallet",["wallet","portafoglio","cartera","brieftasche","portefeuille","ウォレット","钱包","지갑"]],
-      ["packing",["packing","bagaglio","equipaje","gepack","bagages","荷造り","行李","짐"]],
-      ["settings",["settings","impostazioni","ajustes","einstellungen","parametres","設定","设置","설정"]],
-      ["translate",["translate","traduci","traducir","ubersetzen","traduire","翻訳","翻译","번역"]],
-      ["tools",["tools","strumenti","herramientas","werkzeuge","outils","ツール","工具","도구"]],
-      ["drive",["drive","guida","conducir","fahren","conduite","ドライブ","驾车","운전"]],
-      ["offline",["offline","fuori linea","sin conexion","hors ligne","オフライン","离线","오프라인"]],
-      ["overview",["overview","panoramica","resumen","ubersicht","apercu","概要","概览","개요"]],
-      ["live",["what should i do now","intelligent day","oggi","adesso","now","guardian","signals","prevent","rescue","smart day","智能","스마트"]]
+    if (!url) return;
+    setMessage(spoken);
+    setPanelOpen(true);
+    speakReply(spoken);
+    window.setTimeout(() => openExternalWebsite(url, resumeState), 180);
+  };
+  const openIntelligentPanel = (panel, spoken) => {
+    setMessage(spoken); setPanelOpen(true); speakReply(spoken); onGoTo("live"); closePanelSoon();
+    window.setTimeout(()=>window.dispatchEvent(new CustomEvent("tripitaly-open-intelligent",{detail:panel})),120);
+  };
+  const ordinalIndex = text => {
+    const t=normalize(text);
+    const groups=[
+      [0,["first","nearest","closest","primo","prima","piu vicino","más cercano","mas cercano","primero","erste","nachste","nächste","premier","premiere","最初","一番近い","第一个","第一","最近","첫 번째","첫번째","가장 가까운"]],
+      [1,["second","secondo","seconda","segundo","zweite","deuxieme","deuxième","2番","二番","第二个","第二","두 번째","두번째"]],
+      [2,["third","terzo","terza","tercero","dritte","troisieme","troisième","3番","三番","第三个","第三","세 번째","세번째"]]
     ];
-    for(const [id,words] of nav){
-      if(has(s,words)){ onGoTo(id); say(c.ready); return; }
-    }
-    say("687");
+    for (const [idx,words] of groups) if (containsAny(t,words)) return idx;
+    return 0;
+  };
+  const contextualNearbyAction = (action, text, spoken) => {
+    const index = ordinalIndex(text);
+    window.dispatchEvent(new CustomEvent("tripitaly-nearby-context-action",{detail:{action,index}}));
+    setMessage(spoken); setPanelOpen(true); speakReply(spoken); closePanelSoon();
   };
 
-  const startListening=()=>{
-    const cfg=voiceLanguageConfig(voiceLanguage);
-    if(isIOSDevice() && hasNativeSpeechBridge()){
-      setListening(true); setMessage("");
-      __nativeSpeechHandlers={
-        onResult:(txt,final)=>{ if(final&&txt){setListening(false);handleCommand(txt);} },
-        onError:()=>{setListening(false);setMessage(c.unsupported);},
-        onEnd:()=>setListening(false)
-      };
-      if(typeof window.nativeSpeechStart==="function") window.nativeSpeechStart(cfg.recognition);
-      else window.webkit.messageHandlers["speechStart"].postMessage({lang:cfg.recognition});
+  const [message,setMessage] = React.useState(copy.ready);
+  const [helpOpen,setHelpOpen] = React.useState(false);
+  const [awaitingHotelProvider,setAwaitingHotelProvider] = React.useState(false);
+  React.useEffect(()=>{ setMessage((COPY[voiceLanguage]||COPY.en).ready); setHelpOpen(false); setAwaitingHotelProvider(false); },[voiceLanguage]);
+
+  const INTENTS = {
+    flights:["flight","flights","air ticket","air tickets","plane ticket","search flight","find flight","book flight","volo","voli","biglietto aereo","cerca voli","trova voli","prenota volo","vuelo","vuelos","buscar vuelos","flug","fluge","flüge","flüge suchen","vol","vols","rechercher des vols","航班","机票","飞机","搜索航班","找航班","항공편","비행기","항공권","항공편 찾아","フライト","航空券","飛行機","フライトを探"],
+    agoda:["agoda","open agoda","search on agoda","hotel on agoda","apri agoda","cerca su agoda","abre agoda","offne agoda","öffne agoda","ouvre agoda","打开 agoda","agoda 열어","agodaを開いて"],
+    vrbo:["vrbo","open vrbo","search on vrbo","hotel on vrbo","apri vrbo","cerca su vrbo","abre vrbo","offne vrbo","öffne vrbo","ouvre vrbo","打开 vrbo","vrbo 열어","vrboを開いて"],
+    expedia:["expedia","open expedia","search on expedia","hotel on expedia","apri expedia","cerca su expedia","abre expedia","offne expedia","öffne expedia","ouvre expedia","打开 expedia","expedia 열어","expediaを開いて"],
+    hotelscom:["hotels.com","hotels com","open hotels.com","open hotels com","search on hotels.com","apri hotels.com","apri hotels com","cerca su hotels.com","abre hotels.com","offne hotels.com","öffne hotels.com","ouvre hotels.com","打开 hotels.com","hotels.com 열어","hotels.comを開いて"],
+    hotel:["hotel","hotels","accommodation","lodging","find hotel","search hotel","place to stay","somewhere to sleep","alloggio","alloggi","albergo","alberghi","trova hotel","cerca hotel","dormire","alojamiento","buscar hotel","unterkunft","hotel finden","hebergement","hébergement","trouver un hotel","trouver un hôtel","酒店","住宿","宾馆","找酒店","호텔","숙소","호텔 찾아","ホテル","宿泊","宿泊施設","ホテルを探"],
+    car:["rental car","car rental","rent a car","hire a car","need a car","noleggio auto","noleggia auto","auto a noleggio","mi serve un auto","mi serve un'auto","alquiler de coche","alquilar coche","alquilar un coche","mietwagen","auto mieten","location de voiture","louer une voiture","租车","租汽车","我要租车","렌터카","차 빌리기","렌터카 필요","レンタカー","車を借りる"],
+    toilets:["toilet","toilets","restroom","restrooms","public bathroom","public bathrooms","bathroom nearby","bagno","bagni","bagno pubblico","bagni pubblici","dov e un bagno","dove un bagno","bano","banos","baño","baños","aseo","toilette publique","toilettes","toiletten","厕所","洗手间","卫生间","公厕","화장실","공중화장실","トイレ","公衆トイレ","お手洗い"],
+    food:["restaurant","restaurants","food nearby","where can i eat","something to eat","find food","cafe","cafes","sushi","ristorante","ristoranti","mangiare","dove mangiare","trova ristorante","restaurante","restaurantes","comer","essen","restaurant finden","manger","餐厅","饭店","吃饭","咖啡店","餐馆","식당","레스토랑","카페","음식","レストラン","飲食店","食事","カフェ","寿司"],
+    services:["pharmacy","pharmacies","atm","cash machine","station","train station","hospital","parking","gas station","farmacia","farmacie","bancomat","cajero","cajero automatico","stazione","ospedale","parcheggio","benzinaio","apotheke","bahnhof","krankenhaus","parkplatz","pharmacie","gare","hopital","hôpital","parking","药店","药房","车站","医院","停车场","提款机","약국","역","병원","주차장","薬局","駅","病院","駐車場","エーティーエム"],
+    shopping:["convenience store","shopping","shop","shops","supermarket","konbini","combini","negozi","negozio","supermercato","tiendas","compras","supermercado","einkaufen","geschaft","geschäft","supermarkt","magasin","magasins","supermarche","supermarché","便利店","购物","商店","超市","편의점","쇼핑","가게","슈퍼마켓","コンビニ","買い物","ショッピング","スーパー"],
+    culture:["shrine","shrines","temple","temples","museum","museums","culture","castle","castles","santuario","santuari","tempio","templi","museo","musei","castello","castelli","templo","castillo","schrein","tempel","kultur","schloss","sanctuaire","musee","musée","chateau","château","神社","寺庙","博物馆","文化","城堡","신사","절","박물관","문화","성","神社","寺","お寺","博物館","文化","城"],
+    nature:["park","parks","nature","garden","gardens","viewpoint","beach","beaches","parco","parchi","natura","giardino","giardini","spiaggia","spiagge","parque","naturaleza","jardin","jardín","playa","natur","garten","strand","parc","plage","公园","自然","花园","海滩","공원","자연","정원","해변","公園","自然","庭園","ビーチ","海岸"],
+    onsen:["onsen","spa","hot spring","hot springs","terme","aguas termales","thermalbad","heisse quelle","heiße quelle","source chaude","温泉","온천","銭湯"],
+    anime:["anime","manga","arcade","arcades","electronics","elettronica","electronica","elektronik","动漫","漫画","游戏厅","动画","애니메이션","만화","오락실","アニメ","漫画","マンガ","ゲームセンター","電気店"],
+    itinerary:["itinerary","my plan","trip plan","schedule","show my trip","itinerario","programma","piano viaggio","mostra itinerario","plan de viaje","itinerario","reiseplan","zeitplan","itineraire","itinéraire","programme","行程","旅行计划","日程","일정","여행 계획","旅程","予定","旅行プラン"],
+    translate:["translate","translator","translation","traduci","traduttore","traduzione","traducir","traductor","traduccion","traducción","ubersetzen","übersetzen","ubersetzung","traduire","traduction","翻译","翻譯","번역","翻訳","通訳"],
+    packing:["packing","packing list","luggage","bagaglio","valigia","lista bagaglio","equipaje","maleta","packen","gepack","gepäck","koffer","bagages","valise","行李","行李清单","打包","짐","짐 꾸리기","荷造り","持ち物","荷物"],
+    wallet:["wallet","travel wallet","documents","bookings","portafoglio","documenti","prenotazioni","cartera","documentos","reservas","brieftasche","dokumente","buchungen","portefeuille","documents","reservations","réservations","钱包","文件","预订","지갑","문서","예약","ウォレット","書類","予約"],
+    settings:["settings","setting","preferences","impostazioni","preferenze","ajustes","preferencias","einstellungen","parametres","paramètres","设置","设定","설정","設定"],
+    overview:["home","overview","dashboard","panoramica","home page","inicio","resumen","ubersicht","übersicht","accueil","apercu","aperçu","主页","概览","首页","홈","개요","ホーム","概要"],
+    nearby:["nearby","near me","around me","vicino","vicinanze","nelle vicinanze","cerca de mi","cerca de mí","in der nahe","in der nähe","a proximite","à proximité","pres de moi","près de moi","附近","周边","주변","근처","近く","周辺"],
+    budget:["budget","spending","money left","how much can i spend","safe to spend","quanto posso spendere","spese","soldi rimasti","presupuesto","cuanto puedo gastar","wie viel kann ich ausgeben","ausgaben","combien puis je depenser","combien puis-je dépenser","预算","花费","剩余金额","예산","지출","남은 돈","予算","使えるお金"],
+    today:["today plan","today","my day","oggi","la mia giornata","hoy","mi dia","mi día","heute","mein tag","aujourd hui","aujourd'hui","ma journee","ma journée","今天","今日行程","오늘","오늘 일정","今日","今日の予定"],
+    now:["what should i do now","what can i do now","what now","now","cosa posso fare adesso","cosa faccio adesso","adesso","que puedo hacer ahora","qué puedo hacer ahora","ahora","was kann ich jetzt machen","jetzt","que puis je faire maintenant","que puis-je faire maintenant","maintenant","我现在可以做什么","现在做什么","지금 뭐 하면 돼","지금","今何をすればいい","今どうする","今"],
+    prevent:["prevent","prevention","problems before","previeni","prevenzione","evita problemi","prevenir","prevencion","prävention","probleme vermeiden","prevenir les problemes","prévenir les problèmes","预防","提前避免","예방","문제 예방","予防","トラブル予防"],
+    guardian:["guardian","trip guardian","travel guardian","custode","guardian viaggio","guardiano","旅行守护","守护","가디언","여행 가디언","ガーディアン","トリップガーディアン"],
+    signals:["signals","live signals","signal","segnali","segnali live","senales","señales","signale","signaux","实时信号","信号","실시간 신호","신호","シグナル","ライブシグナル"],
+    rescue:["rescue","emergency help","help me","i need help","soccorso","emergenza","aiutami","rescate","emergencia","notfall","hilfe","secours","urgence","救援","紧急","帮助我","구조","긴급","도와줘","レスキュー","緊急","助けて"],
+    tools:["tools","travel tools","strumenti","strumenti viaggio","herramientas","werkzeuge","outils","工具","도구","ツール"],
+    drive:["drive","driving","car mode","guida","guidare","conduccion","conducción","fahren","conduite","驾车","운전","ドライブ"],
+    offline:["offline","without internet","senza internet","sin conexion","sin conexión","ohne internet","hors ligne","离线","오프라인","オフライン"],
+    help:["what can i say","what can i ask","voice help","voice commands","help with voice","cosa posso dire","cosa posso chiedere","comandi vocali","aiuto voce","que puedo decir","qué puedo decir","comandos de voz","was kann ich sagen","sprachbefehle","que puis je dire","que puis-je dire","commandes vocales","我可以说什么","语音指令","음성 명령","뭐라고 말해","何と言えばいい","音声コマンド"]
+  };
+
+  const resolveIntent = raw => {
+    const t = normalize(raw).replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]+/g," ").replace(/\s+/g," ").trim();
+    const original = String(raw||"");
+    const goWords=["go to","navigate","navigation","take me","directions","portami","portami al","portami alla","porta al","porta alla","vai","vai al","vai alla","vai a","vai su","vai sul","vai sulla","vai verso","naviga","ir al","ve al","vaya al","navegar","bring mich","navigiere","aller au","va au","allez au","naviguer","案内","ナビ","导航","带我去","前往","길 안내","안내","이동","가 줘","가줘"];
+    const addWords=["add","add to itinerary","save to itinerary","aggiungi","aggiungilo","aggiungila","anadir","añadir","agregar","hinzufugen","hinzufügen","ajouter","追加","添加","加入行程","加到行程","일정에 추가","추가"];
+    const ordinalWords=["first","second","third","nearest","closest","primo","prima","secondo","seconda","terzo","terza","piu vicino","primero","segundo","tercero","erste","zweite","dritte","premier","deuxieme","deuxième","第一个","第二个","第三个","最近","第一","第二","第三","첫 번째","첫번째","두 번째","두번째","세 번째","세번째","가장 가까운","最初","一番近い","2番","二番","3番","三番"];
+    if (containsAny(t,goWords) && (containsAny(t,ordinalWords) || /[123一二三]/.test(original))) return {intent:"context_go",confidence:1};
+    if (containsAny(t,addWords) && (containsAny(t,ordinalWords) || /[123一二三]/.test(original))) return {intent:"context_add",confidence:1};
+
+    // V1.89.8: robust ordinal navigation phrases (vai al/sul/su/verso + first/second/third).
+    // V1.89.6: hotel provider names have absolute priority over the generic hotel intent.
+    // This makes one-shot commands such as “Cerca hotel su Expedia” deterministic.
+    if (t.includes("hotels com") || t.includes("hotels.com")) return {intent:"hotelscom",confidence:1000};
+    if (t.includes("expedia")) return {intent:"expedia",confidence:1000};
+    if (t.includes("vrbo")) return {intent:"vrbo",confidence:1000};
+    if (t.includes("agoda")) return {intent:"agoda",confidence:1000};
+
+    let best=null;
+    for (const [intent,phrases] of Object.entries(INTENTS)) {
+      let score=0;
+      for (const phrase of phrases) {
+        const n=normalize(phrase);
+        if (!n) continue;
+        if (t===n) score=Math.max(score,100+n.length);
+        else if (t.includes(n)) score=Math.max(score,40+n.length);
+      }
+      if (score && (!best || score>best.score)) best={intent,score};
+    }
+    return best ? {intent:best.intent,confidence:best.score} : null;
+  };
+
+  const handleHotelProviderResponse = raw => {
+    const text=String(raw||"").trim();
+    if (!text) return false;
+    setHeard(text);
+    const resolved=resolveIntent(text);
+    const intent=resolved?.intent;
+    const providers={agoda:"agoda",vrbo:"vrbo",expedia:"expedia",hotelscom:"hotelscom"};
+    if (providers[intent]) {
+      setAwaitingHotelProvider(false);
+      const label=intent==="hotelscom"?"Hotels.com":intent.charAt(0).toUpperCase()+intent.slice(1);
+      openVoiceExternalSearch(providers[intent],label);
+      return true;
+    }
+    setMessage(hotelProviderCopy.spoken);
+    setPanelOpen(true);
+    speakReply(hotelProviderCopy.spoken);
+    closePanelSoon(2200);
+    return false;
+  };
+
+  const detectNearbyTravelMode = raw => {
+    const t = normalize(raw);
+    const carWords = [
+      "by car","driving","drive mode","in car","with car",
+      "in macchina","in auto","con la macchina","con l auto","guidando",
+      "en coche","en auto","con coche",
+      "mit dem auto","mit auto","fahrend",
+      "en voiture","avec la voiture",
+      "开车","驾车","汽车",
+      "차로","자동차로","운전해서",
+      "車で","自動車で","ドライブで"
+    ];
+    const walkWords = [
+      "on foot","walking","walk mode","by foot",
+      "a piedi","camminando","a piede",
+      "a pie","caminando",
+      "zu fuss","zu fuß","laufen",
+      "a pied","à pied","en marchant",
+      "步行","走路",
+      "도보","걸어서",
+      "徒歩","歩いて"
+    ];
+    if (containsAny(t, carWords)) return "car";
+    if (containsAny(t, walkWords)) return "walk";
+    return "";
+  };
+
+  const nearbyModeReply = (requestedMode) => {
+    const lang = voiceLanguage;
+    const table = {
+      en:{walk:"Switching Nearby to walking mode.",car:"Switching Nearby to driving mode."},
+      it:{walk:"Passo Nearby alla modalità a piedi.",car:"Passo Nearby alla modalità in macchina."},
+      ja:{walk:"周辺検索を徒歩モードに切り替えます。",car:"周辺検索を車モードに切り替えます。"},
+      es:{walk:"Cambio Nearby al modo a pie.",car:"Cambio Nearby al modo coche."},
+      de:{walk:"Nearby wird auf Fußweg umgestellt.",car:"Nearby wird auf Fahrmodus umgestellt."},
+      fr:{walk:"Je passe Nearby en mode à pied.",car:"Je passe Nearby en mode voiture."},
+      zh:{walk:"将 Nearby 切换为步行模式。",car:"将 Nearby 切换为驾车模式。"},
+      ko:{walk:"Nearby를 도보 모드로 전환합니다.",car:"Nearby를 운전 모드로 전환합니다."}
+    };
+    return (table[lang] || table.en)[requestedMode] || copy.opening.nearby;
+  };
+
+  const handleCommand = raw => {
+    const text=String(raw||"").trim();
+    if (!text) return;
+    setHelpOpen(false);
+    setHeard(text);
+    const requestedNearbyMode = detectNearbyTravelMode(text);
+    const resolved=resolveIntent(text);
+    if (!resolved) {
+      if (requestedNearbyMode && currentSection === "nearby") {
+        openNearby("", nearbyModeReply(requestedNearbyMode), requestedNearbyMode);
+        return;
+      }
+      setMessage(copy.nomatch + " " + copy.suggest);
+      speakReply(copy.nomatch);
+      setPanelOpen(true);
+      closePanelSoon(1800);
       return;
     }
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){setMessage(c.unsupported);return;}
-    const r=new SR(); r.lang=cfg.recognition; r.continuous=false; r.interimResults=false;
-    r.onstart=()=>{setListening(true);setMessage("");};
-    r.onend=()=>setListening(false);
-    r.onerror=()=>{setListening(false);setMessage(c.unsupported);};
-    r.onresult=e=>{const txt=e.results?.[0]?.[0]?.transcript||"";setMessage(`${c.heard}: ${txt}`);handleCommand(txt);};
-    try{r.start();}catch(_){setListening(false);}
+    const intent=resolved.intent;
+    if (intent==="help") {
+      if (panelCloseTimerRef.current) window.clearTimeout(panelCloseTimerRef.current);
+      setHelpOpen(true); setPanelOpen(true); setMessage(helpCopy.title);
+      return;
+    }
+    if (intent==="context_go") { contextualNearbyAction("go",text,copy.opening.go); return; }
+    if (intent==="context_add") { contextualNearbyAction("add",text,copy.opening.add); return; }
+    if (intent==="toilets") { openNearby("toilets",copy.opening.toilets,requestedNearbyMode); return; }
+    if (intent==="food") { openNearby("food",copy.opening.food,requestedNearbyMode); return; }
+    if (intent==="services") { openNearby("services",copy.opening.services,requestedNearbyMode); return; }
+    if (intent==="shopping") { openNearby("shopping",copy.opening.shopping,requestedNearbyMode); return; }
+    if (intent==="culture") { openNearby("culture",copy.opening.culture,requestedNearbyMode); return; }
+    if (intent==="nature") { openNearby("nature",copy.opening.nature,requestedNearbyMode); return; }
+    if (intent==="onsen") { openNearby("onsen",copy.opening.onsen,requestedNearbyMode); return; }
+    if (intent==="anime") { openNearby("anime",copy.opening.anime,requestedNearbyMode); return; }
+    if (intent==="flights") { openVoiceExternalSearch("flights",copy.opening.flights); return; }
+    if (intent==="agoda") { openVoiceExternalSearch("agoda","Agoda"); return; }
+    if (intent==="vrbo") { openVoiceExternalSearch("vrbo","Vrbo"); return; }
+    if (intent==="expedia") { openVoiceExternalSearch("expedia","Expedia"); return; }
+    if (intent==="hotelscom") { openVoiceExternalSearch("hotelscom","Hotels.com"); return; }
+    if (intent==="hotel") { openVoiceExternalSearch("agoda",copy.opening.hotel); return; }
+    if (intent==="car") { openVoiceExternalSearch("car",copy.opening.car); return; }
+    if (intent==="budget") { openIntelligentPanel("budget",copy.opening.budget); return; }
+    if (intent==="today") { openIntelligentPanel("today",copy.opening.live); return; }
+    if (intent==="now") { openIntelligentPanel("now",copy.opening.live); return; }
+    if (intent==="prevent") { openIntelligentPanel("prevent",copy.opening.live); return; }
+    if (intent==="guardian") { openIntelligentPanel("guardian",copy.opening.live); return; }
+    if (intent==="signals") { openIntelligentPanel("signals",copy.opening.live); return; }
+    if (intent==="rescue") { openIntelligentPanel("rescue",copy.opening.rescue); return; }
+    if (intent==="itinerary") { openItineraryMap(copy.opening.itinerary); return; }
+    if (intent==="translate") { replyAndGo(copy.opening.translate,"translate"); return; }
+    if (intent==="packing") { replyAndGo(copy.opening.packing,"packing"); return; }
+    if (intent==="wallet") { replyAndGo(copy.opening.wallet,"wallet"); return; }
+    if (intent==="settings") { replyAndGo(copy.opening.settings,"settings"); return; }
+    if (intent==="tools") { replyAndGo(copy.opening.tools || copy.opening.settings,"tools"); return; }
+    if (requestedNearbyMode && currentSection === "nearby" && intent === "drive") { openNearby("",nearbyModeReply(requestedNearbyMode),requestedNearbyMode); return; }
+    if (intent==="drive") { replyAndGo(copy.opening.drive || copy.opening.overview,"drive"); return; }
+    if (intent==="offline") { replyAndGo(copy.opening.offline || copy.opening.overview,"offline"); return; }
+    if (intent==="overview") { replyAndGo(copy.opening.overview,"overview"); return; }
+    if (intent==="nearby") { openNearby("",copy.opening.nearby,requestedNearbyMode); return; }
+
+    setMessage(copy.nomatch + " " + copy.suggest);
+    speakReply(copy.nomatch);
+    setPanelOpen(true);
+    closePanelSoon(1800);
   };
 
-  const helpGroups=[
-    ["Travel search",["Search flights","Search hotel on Agoda","Search hotel on Vrbo","Search hotel on Expedia","Search hotel on Hotels.com","Rent a car"]],
-    ["Nearby search",["Find restaurants nearby","Find restaurants on foot","Find restaurants by car","Find a public toilet","Find a pharmacy","Find an ATM","Find a station"]],
-    ["Nearby results",["Go to the first one","Go to the second one","Go to the third one","Add the first one to my itinerary","Add the second one to my itinerary","Add the third one to my itinerary"]],
-    ["My trip",["Open itinerary","Open budget / Wallet","Open packing list","Open Translate"]],
-    ["Intelligent Day & safety",["What should I do now?","Open Guardian","Show Signals","Open Prevent","Open Rescue"]],
-    ["App navigation",["Open Nearby","Open Settings","Open Tools","Open Drive","Open Offline","Open Overview"]],
-  ];
+  const startListening = (mode = "normal") => {
+    const lang = langCfg.recognition;
+    setHelpOpen(false);
+    if (mode !== "hotelProvider") setAwaitingHotelProvider(false);
+    setPanelOpen(true);
+    if (isIOSDevice()) {
+      __nativeSpeechHandlers = {
+        onResult: (text, isFinal) => { if (text) setHeard(text); if (isFinal && text) { if (mode === "hotelProvider") handleHotelProviderResponse(text); else handleCommand(text); } if (isFinal) setListening(false); },
+        onError: () => { setListening(false); setMessage(copy.problem); closePanelSoon(); }, onEnd: () => setListening(false),
+      };
+      setListening(true); setMessage(copy.listening);
+      try {
+        if (typeof window.nativeSpeechStart === "function") { const started = window.nativeSpeechStart(lang); if (started !== false) return; }
+        const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers["speechStart"];
+        if (bridge) { bridge.postMessage({ lang }); return; }
+      } catch (_) {}
+      setListening(false); setMessage(copy.unavailable); closePanelSoon(); return;
+    }
+    if (hasNativeSpeechBridge()) {
+      __nativeSpeechHandlers = {
+        onResult: (text, isFinal) => { if (text) setHeard(text); if (isFinal && text) { if (mode === "hotelProvider") handleHotelProviderResponse(text); else handleCommand(text); } if (isFinal) setListening(false); },
+        onError: () => { setListening(false); setMessage(copy.problem); closePanelSoon(); }, onEnd: () => setListening(false),
+      };
+      setListening(true); setMessage(copy.listening);
+      try { if (typeof window.nativeSpeechStart === "function") window.nativeSpeechStart(lang); else window.webkit.messageHandlers["speechStart"].postMessage({ lang }); }
+      catch (_) { setListening(false); setMessage(copy.unavailable); closePanelSoon(); }
+      return;
+    }
+    if (!SpeechRecognitionClass) { setMessage(copy.unavailable); setPanelOpen(true); closePanelSoon(); return; }
+    const recognition = new SpeechRecognitionClass();
+    recognition.continuous = false; recognition.interimResults = false; recognition.lang = lang;
+    recognition.onstart = () => { setListening(true); setMessage(copy.listening); };
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => { setListening(false); setMessage(copy.nohear); closePanelSoon(); };
+    recognition.onresult = (event) => { const transcript = event.results?.[0]?.[0]?.transcript || ""; if (mode === "hotelProvider") handleHotelProviderResponse(transcript); else handleCommand(transcript); };
+    try { recognition.start(); } catch (_) { setListening(false); setMessage(copy.problem); closePanelSoon(); }
+  };
 
-  const dock={position:"fixed",right:14,top:12,zIndex:9998,display:"flex",gap:7,alignItems:"center"};
-  const panel={position:"fixed",right:12,top:62,zIndex:9999,width:"min(360px,calc(100vw - 24px))",maxHeight:"72vh",overflowY:"auto",background:"#fff",border:"1px solid rgba(17,24,39,.14)",borderRadius:16,boxShadow:"0 12px 36px rgba(15,23,42,.18)",padding:12,color:"#111827"};
+  if (!micSupported) return null;
 
+  // V1.89.9: keep Voice Assistant controls fixed in the app header.
+  // The microphone remains the primary action; the secondary menu is a simple, separate button.
+  const floatingDockStyle = {
+    position:"fixed", zIndex:9999, right:10, top:"calc(10px + env(safe-area-inset-top, 0px))",
+    display:"flex", alignItems:"center", gap:5, padding:4,
+    border:"1px solid rgba(17,24,39,.10)", borderRadius:999,
+    background:"rgba(255,255,255,.90)", backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
+    boxShadow:"0 3px 12px rgba(15,23,42,.12)"
+  };
+  const floatingOverlayStyle = {
+    right:10, top:"calc(64px + env(safe-area-inset-top, 0px))"
+  };
   return <>
-    {message && <div style={{position:"fixed",top:64,right:14,zIndex:9999,background:"#111827",color:"#fff",padding:"8px 11px",borderRadius:10,fontSize:12,fontWeight:800,maxWidth:280}}>{message}</div>}
-    {quickOpen && <div style={panel}>
-      <button className="btn-secondary" style={{marginTop:0,marginBottom:8}} onClick={()=>{setHelpOpen(true);setSettingsOpen(false);setQuickOpen(false);}}>❓ {c.help}</button>
-      <button className="btn-secondary" style={{marginTop:0,marginBottom:8}} onClick={()=>{setSettingsOpen(true);setHelpOpen(false);setQuickOpen(false);}}>⚙️ {c.settings}</button>
-      <button className="btn-secondary" style={{marginTop:0}} onClick={()=>{
-        setVoiceLanguageState("en");setVoiceAssistantLanguage("en");
-        try{localStorage.setItem("tripengine_ui_language","en");}catch(_){}
-        if(typeof onUiLanguageChange==="function") onUiLanguageChange("en");
-        setQuickOpen(false);setHelpOpen(false);setSettingsOpen(false);
-      }}>🌐 {c.reset}</button>
+    {panelOpen && <div style={{position:"fixed",...floatingOverlayStyle,zIndex:9998,width:helpOpen?"min(340px, calc(100vw - 32px))":"auto",maxWidth:"min(340px, calc(100vw - 32px))",padding:helpOpen?"12px 14px":"9px 13px",border:"1px solid rgba(17,24,39,.10)",borderRadius:helpOpen?18:999,background:"rgba(255,255,255,.94)",color:"#111827",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",boxShadow:"0 10px 30px rgba(15,23,42,.14)"}}>
+      {helpOpen ? <>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+          <div><div style={{fontWeight:900,fontSize:15}}>{helpCopy.title}</div><div style={{fontSize:11.5,opacity:.62,marginTop:1}}>{langCfg.label}</div></div>
+          <button type="button" onClick={()=>{setPanelOpen(false);setHelpOpen(false);}} aria-label="Close voice help" style={{border:0,background:"transparent",color:"#111827",fontSize:20,cursor:"pointer",padding:4}}>×</button>
+        </div>
+        <div style={{marginTop:9,maxHeight:"48vh",overflowY:"auto",paddingRight:2}}>
+          <div style={{fontSize:11.5,opacity:.68,marginBottom:9}}>{helpCopy.subtitle}</div>
+          {helpCopy.groups.map(([group,examples])=><div key={group} style={{marginTop:8}}>
+            <div style={{fontSize:11,fontWeight:900,opacity:.72,textTransform:"uppercase",letterSpacing:.35}}>{group}</div>
+            {examples.map(example=><div key={example} style={{fontSize:12.5,fontWeight:700,padding:"4px 0"}}>“{example}”</div>)}
+          </div>)}
+        </div>
+      </> : <div style={{display:"flex",alignItems:"center",gap:8,minHeight:22}}>
+        <span aria-hidden="true" style={{fontSize:15}}>{listening?"🎤":"✦"}</span>
+        <div style={{fontSize:12.5,fontWeight:listening?850:700,lineHeight:1.25}}>{message}</div>
+      </div>}
     </div>}
-    {helpOpen && <div style={panel}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><b>{c.help}</b><button onClick={()=>setHelpOpen(false)} style={{border:0,background:"transparent",fontSize:20}}>×</button></div>
-      <div style={{fontSize:12,opacity:.7,marginBottom:10}}>Speak naturally — you do not need to use the exact button name.</div>
-      {helpGroups.map(([g,items])=><div key={g} style={{marginBottom:10}}><div style={{fontSize:12,fontWeight:900,marginBottom:4}}>{g}</div>{items.map(x=><div key={x} style={{fontSize:12,padding:"3px 0"}}>• {x}</div>)}</div>)}
+
+    {quickMenuOpen && <div style={{position:"fixed",...floatingOverlayStyle,zIndex:9999,width:210,padding:8,border:"1px solid rgba(17,24,39,.12)",borderRadius:16,background:"rgba(255,255,255,.97)",color:"#111827",boxShadow:"0 12px 32px rgba(15,23,42,.18)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)"}}>
+      <button type="button" onClick={()=>{
+        if (panelCloseTimerRef.current) window.clearTimeout(panelCloseTimerRef.current);
+        setQuickMenuOpen(false); setAwaitingHotelProvider(false); setHelpOpen(true); setPanelOpen(true); setHeard("");
+      }} style={{width:"100%",border:0,background:"transparent",color:"#111827",textAlign:"left",padding:"10px 10px",borderRadius:10,fontWeight:800,cursor:"pointer"}}>❓ {helpCopy.title}</button>
+      <button type="button" onClick={()=>{ setQuickMenuOpen(false); setPanelOpen(false); setHelpOpen(false); onGoTo("settings"); }} style={{width:"100%",border:0,background:"transparent",color:"#111827",textAlign:"left",padding:"10px 10px",borderRadius:10,fontWeight:800,cursor:"pointer"}}>⚙️ {translateGlobalUiString("Voice settings",voiceLanguage)}</button>
+      <div style={{height:1,background:"rgba(17,24,39,.09)",margin:"4px 6px"}} />
+      <button type="button" onClick={()=>{
+        const ok=window.confirm("Switch the app and Voice Assistant back to English?");
+        if(!ok) return;
+        try { localStorage.setItem("tripengine_ui_language","en"); } catch(_) {}
+        setVoiceReplyName("");
+        setVoiceAssistantLanguage("en");
+        setQuickMenuOpen(false); setPanelOpen(false); setHelpOpen(false); setHeard("");
+      }} style={{width:"100%",border:0,background:"transparent",color:"#111827",textAlign:"left",padding:"10px 10px",borderRadius:10,fontWeight:900,cursor:"pointer"}}>🌐 RESET TO ENGLISH</button>
     </div>}
-    {settingsOpen && <div style={panel}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><b>{c.settings}</b><button onClick={()=>setSettingsOpen(false)} style={{border:0,background:"transparent",fontSize:20}}>×</button></div>
-      <select value={voiceLanguage} onChange={e=>{const v=e.target.value;setVoiceLanguageState(v);setVoiceAssistantLanguage(v);try{localStorage.setItem("tripengine_ui_language",v);}catch(_){};if(typeof onUiLanguageChange==="function")onUiLanguageChange(v);}} style={{width:"100%",padding:10,borderRadius:10}}>
-        {VOICE_ASSISTANT_LANGUAGES.map(x=><option key={x.code} value={x.code}>{x.label}</option>)}
-      </select>
-      <button className="btn-secondary" style={{marginTop:10}} onClick={()=>speak687Text("687 Italy")}>🔊 Test 687 voice</button>
-    </div>}
-    <div style={dock}>
-      <button type="button" onClick={()=>{setQuickOpen(v=>!v);setHelpOpen(false);setSettingsOpen(false);}} style={{width:34,height:38,borderRadius:18,border:"1px solid rgba(17,24,39,.16)",background:"rgba(255,255,255,.78)",fontSize:17,fontWeight:900,cursor:"pointer"}}>···</button>
-      <button type="button" onClick={startListening} disabled={listening} style={{width:42,height:42,borderRadius:"50%",border:"1px solid rgba(17,24,39,.18)",background:listening?"#fee2e2":"#fff",fontSize:20,cursor:"pointer"}}>{listening?"•••":"🎤"}</button>
+
+    <div style={floatingDockStyle}>
+      <button type="button" aria-label="Voice Assistant menu" title="Voice Assistant menu"
+        onClick={()=>{ setQuickMenuOpen(v=>!v);setPanelOpen(false);setHelpOpen(false); }}
+        style={{width:34,height:38,borderRadius:18,border:"1px solid rgba(17,24,39,.16)",background:"rgba(255,255,255,.70)",color:"#111827",boxShadow:"none",fontSize:17,fontWeight:900,lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:0}}>···</button>
+      <button type="button" onClick={()=>{setQuickMenuOpen(false);startListening();}} disabled={listening} aria-label="687 Voice Assistant" title={`687 Voice Assistant · ${langCfg.label}`} style={{width:42,height:42,borderRadius:"50%",border:listening?"1px solid rgba(185,28,28,.22)":"1px solid rgba(17,24,39,.18)",background:listening?"rgba(254,226,226,.96)":"rgba(255,255,255,.96)",color:listening?"#b91c1c":"#111827",boxShadow:"0 2px 8px rgba(15,23,42,.10)",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",cursor:listening?"default":"pointer",padding:0}}>
+        {listening ? "•••" : "🎤"}
+      </button>
     </div>
   </>;
 }
