@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 687 Italy TEST — Full-app language localization ported from latest Japan -->
+<!-- 687 Italy TEST V1.14.1 — High-priority parity fixes: driving chooser, Voice Assistant navigation, Nearby flag -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>687 Italy</title>
@@ -3038,6 +3038,32 @@ function buildDrivingLink(fromCity, toCity) {
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
+// V1.14.1 TEST: driving chooser parity with Japan, using Italian destinations.
+function buildDrivingWazeLink(toCity) {
+  const q = encodeURIComponent(`${toCity || ""}, Italy`);
+  return `https://waze.com/ul?q=${q}&navigate=yes`;
+}
+
+function DriveRouteNavigateButton({ fromCity, toCity, label, className="leg-transport-link", style }) {
+  const [open, setOpen] = useState(false);
+  if (!toCity) return null;
+  return (
+    <div className="navigate-btn-wrap" style={style} onClick={e => e.stopPropagation()}>
+      <button type="button" className={className} style={{width:"100%", marginTop:0}} onClick={() => setOpen(v => !v)}>
+        {label || `🧭 Navigate to ${toCity}`}
+      </button>
+      {open && (
+        <>
+          <div className="navigate-menu-backdrop" onClick={() => setOpen(false)}></div>
+          <div className="navigate-menu">
+            <a href={buildDrivingLink(fromCity, toCity)} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>📍 Google Maps</a>
+            <a href={buildDrivingWazeLink(toCity)} target="_blank" rel="noopener noreferrer" className="navigate-menu-item" onClick={() => setOpen(false)}>🚗 Waze</a>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 // Internal flight between two Italian cities, reusing the same Aviasales
 // link builder as international flights — just with both airports inside Italy.
@@ -7598,7 +7624,7 @@ function DashNearby({ data, setData }) {
   if (locStatus === "outsideItaly") {
     return (
       <div className="nearby-permission-card">
-        <div className="nearby-permission-icon">🇯🇵</div>
+        <div className="nearby-permission-icon">🇮🇹</div>
         <div className="nearby-permission-title">Live Nearby is available in Italy</div>
         <p className="nearby-permission-text">
           Your GPS confirms that you are currently outside Italy, so no live Nearby search has been sent.
@@ -11325,6 +11351,16 @@ function ScreenDashboard({ data, setData, onStartNewTrip, uiLanguage, setUiLangu
     if (typeof onSectionChange === "function") onSectionChange(section);
   }, [section, onSectionChange]);
 
+  // V1.14.1 TEST: receive Voice Assistant navigation while Dashboard is mounted.
+  React.useEffect(() => {
+    const handleGlobalVoiceSection = (e) => {
+      const target = e?.detail;
+      if (target) goSection(target);
+    };
+    window.addEventListener("tripitaly-global-voice-go-section", handleGlobalVoiceSection);
+    return () => window.removeEventListener("tripitaly-global-voice-go-section", handleGlobalVoiceSection);
+  });
+
   React.useEffect(() => {
     const backHandler = () => {
       if (section === "live") {
@@ -12203,6 +12239,25 @@ function App() {
     setUiLanguageState(lang);
     try { localStorage.setItem(TRIP_ENGINE_UI_LANGUAGE_KEY, lang); } catch(e) {}
   };
+
+  // V1.14.1 TEST: Voice Assistant can reopen any valid trip-planning step.
+  React.useEffect(() => {
+    const handleVoicePlanning = (e) => {
+      const detail = e?.detail || {};
+      const nextStep = Number(detail.step);
+      if (![1, 2, 3, 4].includes(nextStep)) return;
+      const anchor = String(detail.anchor || "");
+      try { saveUIState({step: nextStep, anchor}); } catch (_) {}
+      setStep(nextStep);
+      if (anchor) {
+        window.setTimeout(() => {
+          try { document.getElementById(anchor)?.scrollIntoView({behavior:"smooth", block:"start"}); } catch (_) {}
+        }, 180);
+      }
+    };
+    window.addEventListener("tripitaly-global-voice-open-planning", handleVoicePlanning);
+    return () => window.removeEventListener("tripitaly-global-voice-open-planning", handleVoicePlanning);
+  }, []);
 
   React.useEffect(() => {
     const syncVoiceLanguageToMenu = (e) => {
