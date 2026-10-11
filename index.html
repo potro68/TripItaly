@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 687 Italy V1.14.5 — Voice Assistant: Intelligent Day opening command -->
 <html lang="en">
 <head>
 <!-- 687 Italy TEST V1.14.1 — High-priority parity fixes: driving chooser, Voice Assistant navigation, Nearby flag -->
@@ -11134,7 +11135,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
     return ()=>window.removeEventListener("tripitaly-voice-language-changed",h);
   },[]);
 
-  const normalize = value => String(value||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’']/g," ");
+  const normalize = value => String(value||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’']/g," ").normalize("NFC");
   const containsAny = (text, arr) => arr.some(x => text.includes(normalize(x)));
   const speakReply = text => speak687Text(text);
   const replyAndGo = (spoken, section) => {
@@ -11281,6 +11282,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
     settings:["settings","setting","preferences","impostazioni","preferenze","ajustes","preferencias","einstellungen","parametres","paramètres","设置","设定","설정","設定"],
     overview:["home","overview","dashboard","panoramica","home page","inicio","resumen","ubersicht","übersicht","accueil","apercu","aperçu","主页","概览","首页","홈","개요","ホーム","概要"],
     nearby:["nearby","near me","around me","vicino","vicinanze","nelle vicinanze","cerca de mi","cerca de mí","in der nahe","in der nähe","a proximite","à proximité","pres de moi","près de moi","附近","周边","주변","근처","近く","周辺"],
+    live:["intelligent day","inteligent day","intelligence day","687 intelligent day","giornata intelligente","giorno intelligente","dia inteligente","día inteligente","jornada inteligente","intelligenter tag","intelligenten tag","journee intelligente","journée intelligente","智能行程","智能日程","智能一天","인텔리전트 데이","스마트 데이","インテリジェントデイ","インテリジェントデー","スマートデイ"],
     budget:["budget","spending","money left","how much can i spend","safe to spend","quanto posso spendere","spese","soldi rimasti","presupuesto","cuanto puedo gastar","wie viel kann ich ausgeben","ausgaben","combien puis je depenser","combien puis-je dépenser","预算","花费","剩余金额","예산","지출","남은 돈","予算","使えるお金"],
     today:["today plan","today","my day","oggi","la mia giornata","hoy","mi dia","mi día","heute","mein tag","aujourd hui","aujourd'hui","ma journee","ma journée","今天","今日行程","오늘","오늘 일정","今日","今日の予定"],
     now:["what should i do now","what can i do now","what now","now","cosa posso fare adesso","cosa faccio adesso","adesso","que puedo hacer ahora","qué puedo hacer ahora","ahora","was kann ich jetzt machen","jetzt","que puis je faire maintenant","que puis-je faire maintenant","maintenant","我现在可以做什么","现在做什么","지금 뭐 하면 돼","지금","今何をすればいい","今どうする","今"],
@@ -11429,6 +11431,7 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
     if (intent==="hotel") { openVoiceExternalSearch("agoda",copy.opening.hotel); return; }
     if (intent==="car") { openVoiceExternalSearch("car",copy.opening.car); return; }
     if (intent==="budget") { openIntelligentPanel("budget",copy.opening.budget); return; }
+    if (intent==="live") { openIntelligentPanel("today",copy.opening.live); return; }
     if (intent==="today") { openIntelligentPanel("today",copy.opening.live); return; }
     if (intent==="now") { openIntelligentPanel("now",copy.opening.live); return; }
     if (intent==="prevent") { openIntelligentPanel("prevent",copy.opening.live); return; }
