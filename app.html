@@ -2817,6 +2817,42 @@
     font-weight:700;
   }
 </style>
+<script>
+/* 687 Italy: app-native dialogs, replacing browser-origin alert/confirm chrome. */
+(function(){
+  let pending = Promise.resolve();
+  function dialog(message, confirmation){
+    const execute = () => new Promise(resolve => {
+      const backdrop = document.createElement('div');
+      backdrop.setAttribute('role','presentation');
+      backdrop.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(15,23,42,.54);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+      const panel = document.createElement('div');
+      panel.setAttribute('role','alertdialog');
+      panel.setAttribute('aria-modal','true');
+      panel.style.cssText='background:#fff;color:#172033;border-radius:18px;padding:24px;width:min(100%,400px);box-shadow:0 18px 55px rgba(0,0,0,.23);font:inherit;box-sizing:border-box';
+      const title = document.createElement('div');
+      title.style.cssText='font-size:20px;font-weight:800;margin-bottom:12px';
+      title.textContent='687 Italy';
+      const body = document.createElement('div');
+      body.style.cssText='font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:24px';
+      body.textContent=String(message ?? '');
+      const buttons = document.createElement('div');
+      buttons.style.cssText='display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap';
+      let finished=false;
+      const previousFocus=document.activeElement;
+      function finish(value){if(finished)return;finished=true;document.removeEventListener('keydown',onKey,true);backdrop.remove();if(previousFocus && previousFocus.isConnected && previousFocus.focus)previousFocus.focus();resolve(value);}
+      function makeButton(label,value,primary){const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText='border-radius:10px;padding:11px 19px;cursor:pointer;font:inherit;font-weight:700;border:1px solid #d4d9e2;background:'+(primary?'#172b53':'#fff')+';color:'+(primary?'#fff':'#172033');b.addEventListener('click',()=>finish(value));buttons.appendChild(b);return b;}
+      if(confirmation)makeButton('Cancel',false,false);
+      const ok=makeButton('OK',true,true);
+      function onKey(e){if(e.key==='Escape'){e.preventDefault();finish(false);}else if(e.key==='Tab'){const bs=Array.from(buttons.querySelectorAll('button'));const idx=bs.indexOf(document.activeElement);if(e.shiftKey&&idx<=0){e.preventDefault();bs[bs.length-1].focus();}else if(!e.shiftKey&&idx===bs.length-1){e.preventDefault();bs[0].focus();}}}
+      panel.append(title,body,buttons);backdrop.appendChild(panel);document.body.appendChild(backdrop);document.addEventListener('keydown',onKey,true);ok.focus();
+    });
+    const result=pending.then(execute,execute);pending=result.then(()=>{},()=>{});return result;
+  }
+  window.tripitalyAppConfirm = message => dialog(message,true);
+  window.tripitalyAppAlert = message => dialog(message,false);
+})();
+</script>
 </head>
 <body>
 <div id="root"></div>
@@ -5385,11 +5421,11 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, theme, setThem
     const to = String(nextCurrency || from).toUpperCase();
     if (from === to || currencyBusy) return;
     const hasMoney = Number(data?.budget || 0) > 0 || Number(data?.prepaidTotal || 0) > 0 || Number(data?.flightPrice || 0) > 0 || Number(data?.hotelPrice || 0) > 0 || Number(data?.carPrice || 0) > 0 || (data?.expenses || []).some(e => Number(e.amount || 0) > 0);
-    if (hasMoney && !window.confirm(`${sc.changeCurrency}: ${from} → ${to}?`)) return;
+    if (hasMoney && !(await window.tripitalyAppConfirm(`${sc.changeCurrency}: ${from} → ${to}?`))) return;
     setCurrencyBusy(true);
     const rate = await fetchCurrencyConversionRate(from,to);
     setCurrencyBusy(false);
-    if (!rate) { window.alert(sc.rateUnavailable); return; }
+    if (!rate) { await window.tripitalyAppAlert(sc.rateUnavailable); return; }
     setData(convertTripHomeCurrencyAmounts(data,to,rate));
   };
   return (
@@ -6823,7 +6859,7 @@ function printTripItinerary(data) {
 
   const popup = window.open("", "_blank");
   if (!popup) {
-    alert("Please allow pop-ups for 687 Italy to print or save your itinerary as PDF.");
+    window.tripitalyAppAlert("Please allow pop-ups for 687 Italy to print or save your itinerary as PDF.");
     return;
   }
 
@@ -11555,8 +11591,8 @@ function DashboardVoiceAssistant({ onGoTo, data, currentSection }) {
       }} style={{width:"100%",border:0,background:"transparent",color:"#111827",textAlign:"left",padding:"10px 10px",borderRadius:10,fontWeight:800,cursor:"pointer"}}>❓ {helpCopy.title}</button>
       <button type="button" onClick={()=>{ setQuickMenuOpen(false); setPanelOpen(false); setHelpOpen(false); onGoTo("settings"); }} style={{width:"100%",border:0,background:"transparent",color:"#111827",textAlign:"left",padding:"10px 10px",borderRadius:10,fontWeight:800,cursor:"pointer"}}>⚙️ {translateGlobalUiString("Voice settings",voiceLanguage)}</button>
       <div style={{height:1,background:"rgba(17,24,39,.09)",margin:"4px 6px"}} />
-      <button type="button" onClick={()=>{
-        const ok=window.confirm("Switch the app and Voice Assistant back to English?");
+      <button type="button" onClick={async ()=>{
+        const ok=await window.tripitalyAppConfirm("Switch the app and Voice Assistant back to English?");
         if(!ok) return;
         try { localStorage.setItem("tripengine_ui_language","en"); } catch(_) {}
         setVoiceReplyName("");
@@ -12634,7 +12670,7 @@ function App() {
   }, [step]);
 
   const startNewTrip = async () => {
-    const ok = window.confirm(
+    const ok = await window.tripitalyAppConfirm(
       translateGlobalUiString("Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later.", getVoiceAssistantLanguage())
     );
     if (!ok) return;
@@ -12666,7 +12702,7 @@ function App() {
     const list = loadTripArchive();
     const item = list.find(x => x.archiveId === archiveId);
     if (!item) return;
-    const ok = window.confirm(translateGlobalUiString("Restore this trip? Your current trip will be archived first if it contains data.", getVoiceAssistantLanguage()));
+    const ok = await window.tripitalyAppConfirm(translateGlobalUiString("Restore this trip? Your current trip will be archived first if it contains data.", getVoiceAssistantLanguage()));
     if (!ok) return;
 
     if (data?.budget) {
@@ -12691,7 +12727,7 @@ function App() {
   };
 
   const deleteArchivedTrip = async (archiveId) => {
-    const ok = window.confirm(translateGlobalUiString("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.", getVoiceAssistantLanguage()));
+    const ok = await window.tripitalyAppConfirm(translateGlobalUiString("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.", getVoiceAssistantLanguage()));
     if (!ok) return;
     await deleteArchivedTravelDocuments(archiveId);
     const next = loadTripArchive().filter(x => x.archiveId !== archiveId);
