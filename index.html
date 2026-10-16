@@ -2726,6 +2726,73 @@
     opacity:1 !important;
     font-weight:700;
   }
+
+/* 687 internal dialogs — replaces browser confirm/alert so the app never shows "tripitaly.app says". */
+.dialog687-backdrop{
+  position:fixed; inset:0; z-index:2147483000;
+  background:rgba(7,27,39,.58);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+}
+.dialog687-card{
+  width:min(92vw,430px);
+  background:#fff;
+  color:#132A3A;
+  border:1px solid rgba(19,42,58,.14);
+  border-radius:22px;
+  box-shadow:0 24px 70px rgba(0,0,0,.28);
+  overflow:hidden;
+  font-family:Sora,Arial,sans-serif;
+}
+.dialog687-head{
+  padding:18px 20px 10px;
+  display:flex; align-items:center; gap:10px;
+  font-weight:900; font-size:18px;
+  color:#0E3B52;
+}
+.dialog687-mark{
+  width:34px; height:34px; flex:0 0 34px;
+  border-radius:11px;
+  display:grid; place-items:center;
+  background:#0E3B52; color:#F4B93E;
+  font-weight:900; font-size:15px;
+}
+.dialog687-message{
+  padding:4px 20px 18px;
+  font-size:14px; line-height:1.55;
+  color:#334B5A;
+  white-space:pre-wrap;
+}
+.dialog687-actions{
+  display:flex; gap:10px; justify-content:flex-end;
+  padding:14px 16px 16px;
+  border-top:1px solid rgba(19,42,58,.10);
+  background:#F8FAFB;
+}
+.dialog687-btn{
+  appearance:none; border:0; border-radius:12px;
+  padding:11px 16px;
+  font:800 13px/1 Sora,Arial,sans-serif;
+  cursor:pointer;
+}
+.dialog687-btn.cancel{
+  background:#EAF0F3; color:#173647;
+}
+.dialog687-btn.confirm{
+  background:#0E3B52; color:#fff;
+}
+.dialog687-btn.danger{
+  background:#A12828; color:#fff;
+}
+@media(max-width:520px){
+  .dialog687-backdrop{align-items:flex-end;padding:12px}
+  .dialog687-card{width:100%;border-radius:22px 22px 18px 18px}
+  .dialog687-actions{display:grid;grid-template-columns:1fr 1fr}
+  .dialog687-actions.single{grid-template-columns:1fr}
+  .dialog687-btn{min-height:46px}
+}
+
 </style>
 </head>
 <body>
@@ -2736,6 +2803,97 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel">
+
+function show687Dialog(message, options = {}) {
+  const {
+    title = "687 Italy",
+    confirmText = "OK",
+    cancelText = "Cancel",
+    showCancel = false,
+    danger = false
+  } = options;
+
+  return new Promise(resolve => {
+    const previous = document.querySelector(".dialog687-backdrop");
+    if (previous) previous.remove();
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "dialog687-backdrop";
+    backdrop.setAttribute("role", "presentation");
+
+    const card = document.createElement("div");
+    card.className = "dialog687-card";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-label", title);
+
+    const head = document.createElement("div");
+    head.className = "dialog687-head";
+
+    const mark = document.createElement("div");
+    mark.className = "dialog687-mark";
+    mark.textContent = "687";
+
+    const heading = document.createElement("div");
+    heading.textContent = title;
+    head.append(mark, heading);
+
+    const body = document.createElement("div");
+    body.className = "dialog687-message";
+    body.textContent = String(message ?? "");
+
+    const actions = document.createElement("div");
+    actions.className = "dialog687-actions" + (showCancel ? "" : " single");
+
+    let settled = false;
+    const finish = value => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener("keydown", onKey);
+      backdrop.remove();
+      resolve(value);
+    };
+    const onKey = e => {
+      if (e.key === "Escape") finish(false);
+    };
+    document.addEventListener("keydown", onKey);
+
+    if (showCancel) {
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "dialog687-btn cancel";
+      cancel.textContent = cancelText;
+      cancel.onclick = () => finish(false);
+      actions.appendChild(cancel);
+    }
+
+    const confirm = document.createElement("button");
+    confirm.type = "button";
+    confirm.className = "dialog687-btn " + (danger ? "danger" : "confirm");
+    confirm.textContent = confirmText;
+    confirm.onclick = () => finish(true);
+    actions.appendChild(confirm);
+
+    backdrop.onclick = e => {
+      if (e.target === backdrop && showCancel) finish(false);
+    };
+
+    card.append(head, body, actions);
+    backdrop.appendChild(card);
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => confirm.focus());
+  });
+}
+
+function appConfirm(message, options = {}) {
+  return show687Dialog(message, {...options, showCancel:true});
+}
+function appAlert(message, options = {}) {
+  return show687Dialog(message, {...options, showCancel:false, confirmText:options.confirmText || "OK"});
+}
+
+
+
 const { useState } = React;
 
 // ---- Core trip data: origin -> suggested airport logic ----
@@ -5093,11 +5251,11 @@ function DashSettings({ data, setData, uiLanguage, setUiLanguage, archives, onRe
     const to = String(nextCurrency || from).toUpperCase();
     if (from === to || currencyBusy) return;
     const hasMoney = Number(data?.budget || 0) > 0 || Number(data?.prepaidTotal || 0) > 0 || Number(data?.flightPrice || 0) > 0 || Number(data?.hotelPrice || 0) > 0 || Number(data?.carPrice || 0) > 0 || (data?.expenses || []).some(e => Number(e.amount || 0) > 0);
-    if (hasMoney && !window.confirm(`Change home currency from ${from} to ${to}? Existing budget, booking totals and logged expenses will be converted using the current reference exchange rate.`)) return;
+    if (hasMoney && !(await appConfirm(`Change home currency from ${from} to ${to}? Existing budget, booking totals and logged expenses will be converted using the current reference exchange rate.`, {title:"Change home currency", confirmText:"Change currency"}))) return;
     setCurrencyBusy(true);
     const rate = await fetchCurrencyConversionRate(from,to);
     setCurrencyBusy(false);
-    if (!rate) { window.alert("The reference exchange rate is unavailable right now. Your trip currency was not changed."); return; }
+    if (!rate) { await appAlert("The reference exchange rate is unavailable right now. Your trip currency was not changed.", {title:"Currency unavailable"}); return; }
     setData(convertTripHomeCurrencyAmounts(data,to,rate));
   };
   return (
@@ -6426,7 +6584,7 @@ function printTripItinerary(data) {
 
   const popup = window.open("", "_blank");
   if (!popup) {
-    alert("Please allow pop-ups for 687 Italy to print or save your itinerary as PDF.");
+    appAlert("Please allow pop-ups for 687 Italy to print or save your itinerary as PDF.", {title:"Pop-ups blocked"});
     return;
   }
 
@@ -10563,8 +10721,9 @@ function App() {
   }, [step]);
 
   const startNewTrip = async () => {
-    const ok = window.confirm(
-      "Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later."
+    const ok = await appConfirm(
+      "Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later.",
+      {title:"Start a new trip?", confirmText:"Start new trip"}
     );
     if (!ok) return;
 
@@ -10593,7 +10752,7 @@ function App() {
     const list = loadTripArchive();
     const item = list.find(x => x.archiveId === archiveId);
     if (!item) return;
-    const ok = window.confirm("Restore this trip? Your current trip will be archived first if it contains data.");
+    const ok = await appConfirm("Restore this trip? Your current trip will be archived first if it contains data.", {title:"Restore trip?", confirmText:"Restore trip"});
     if (!ok) return;
 
     if (data?.budget) {
@@ -10618,7 +10777,7 @@ function App() {
   };
 
   const deleteArchivedTrip = async (archiveId) => {
-    const ok = window.confirm("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.");
+    const ok = await appConfirm("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.", {title:"Delete archived trip?", confirmText:"Delete permanently", danger:true});
     if (!ok) return;
     await deleteArchivedTravelDocuments(archiveId);
     const next = loadTripArchive().filter(x => x.archiveId !== archiveId);
