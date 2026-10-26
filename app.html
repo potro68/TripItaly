@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.9 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.9_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.10 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.10_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2913,6 +2913,38 @@ function appDialog(message, withCancel) {
     } catch (_) {}
   });
 }
+(function geoRetryFallback() {
+  try {
+    var g = navigator.geolocation;
+    if (!g || typeof g.getCurrentPosition !== "function" || g.__687Retry) return;
+    var orig = g.getCurrentPosition.bind(g);
+    var wrapped = function wrapped(success, error, options) {
+      orig(success, function (e) {
+        if (e && (e.code === 2 || e.code === 3)) {
+          orig(success, function (e2) {
+            if (typeof error === "function") error(e2);
+          }, {
+            enableHighAccuracy: false,
+            timeout: 25000,
+            maximumAge: 600000
+          });
+        } else if (typeof error === "function") error(e);
+      }, options);
+    };
+    try {
+      g.getCurrentPosition = wrapped;
+    } catch (_) {}
+    if (g.getCurrentPosition !== wrapped) {
+      try {
+        Object.defineProperty(g, "getCurrentPosition", {
+          value: wrapped,
+          configurable: true
+        });
+      } catch (_) {}
+    }
+    g.__687Retry = true;
+  } catch (_) {}
+})();
 function appConfirm(message) {
   return appDialog(message, true);
 }
