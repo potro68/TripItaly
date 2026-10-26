@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.8 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.8_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.9 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.9_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2852,6 +2852,73 @@ function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" !=
 function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function appDialog(message, withCancel) {
+  return new Promise(function (resolve) {
+    var L = (document.documentElement.lang || "en").slice(0, 2);
+    var T = {
+      en: ["OK", "Cancel"],
+      it: ["OK", "Annulla"],
+      es: ["Aceptar", "Cancelar"],
+      de: ["OK", "Abbrechen"],
+      fr: ["OK", "Annuler"],
+      ja: ["OK", "キャンセル"],
+      zh: ["确定", "取消"],
+      ko: ["확인", "취소"]
+    }[L] || ["OK", "Cancel"];
+    var wrap = document.createElement("div");
+    wrap.setAttribute("role", "dialog");
+    wrap.setAttribute("aria-modal", "true");
+    wrap.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:rgba(14,59,82,.45);display:flex;align-items:center;justify-content:center;padding:20px;";
+    var box = document.createElement("div");
+    box.style.cssText = "width:min(380px,100%);background:#F7FBFD;color:#132A3A;border-radius:18px;padding:22px 20px 16px;box-shadow:0 18px 60px rgba(0,0,0,.25);font-family:Sora,sans-serif;";
+    var msg = document.createElement("div");
+    msg.style.cssText = "font-size:15px;line-height:1.5;font-weight:600;margin-bottom:18px;white-space:pre-line;";
+    msg.textContent = String(message || "");
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:10px;justify-content:flex-end;";
+    var mk = function mk(label, primary) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.style.cssText = "min-width:96px;padding:11px 16px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;" + (primary ? "background:#0E3B52;color:#fff;border:0;" : "background:transparent;color:#0E3B52;border:1px solid rgba(19,42,58,.25);");
+      return b;
+    };
+    var done = function done(v) {
+      try {
+        wrap.remove();
+      } catch (_) {}
+      resolve(v);
+    };
+    if (withCancel) {
+      var c = mk(T[1], false);
+      c.onclick = function () {
+        return done(false);
+      };
+      row.appendChild(c);
+    }
+    var ok = mk(T[0], true);
+    ok.onclick = function () {
+      return done(true);
+    };
+    row.appendChild(ok);
+    wrap.onclick = function (e) {
+      if (e.target === wrap) done(withCancel ? false : true);
+    };
+    box.appendChild(msg);
+    box.appendChild(row);
+    wrap.appendChild(box);
+    document.body.appendChild(wrap);
+    try {
+      ok.focus();
+    } catch (_) {}
+  });
+}
+function appConfirm(message) {
+  return appDialog(message, true);
+}
+function appAlert(message) {
+  return appDialog(message, false);
+}
 var _React = React,
   useState = _React.useState;
 var TRAVELER_TYPES = [{
@@ -3177,55 +3244,55 @@ function fetchLitAirports(_x) {
   return _fetchLitAirports.apply(this, arguments);
 }
 function _fetchLitAirports() {
-  _fetchLitAirports = _asyncToGenerator(_regenerator().m(function _callee32(originIATA) {
+  _fetchLitAirports = _asyncToGenerator(_regenerator().m(function _callee33(originIATA) {
     var mode,
       results,
       litCodes,
       lit,
-      _args32 = arguments,
-      _t24;
-    return _regenerator().w(function (_context32) {
-      while (1) switch (_context32.p = _context32.n) {
+      _args33 = arguments,
+      _t25;
+    return _regenerator().w(function (_context33) {
+      while (1) switch (_context33.p = _context33.n) {
         case 0:
-          mode = _args32.length > 1 && _args32[1] !== undefined ? _args32[1] : "direct";
+          mode = _args33.length > 1 && _args33[1] !== undefined ? _args33[1] : "direct";
           if (!(!originIATA || !PROXY_URL)) {
-            _context32.n = 1;
+            _context33.n = 1;
             break;
           }
-          return _context32.a(2, null);
+          return _context33.a(2, null);
         case 1:
-          _context32.p = 1;
-          _context32.n = 2;
+          _context33.p = 1;
+          _context33.n = 2;
           return Promise.all(AIRPORTS.map(function () {
-            var _ref108 = _asyncToGenerator(_regenerator().m(function _callee31(airport) {
+            var _ref109 = _asyncToGenerator(_regenerator().m(function _callee32(airport) {
               var url, res, json, hasData;
-              return _regenerator().w(function (_context31) {
-                while (1) switch (_context31.n) {
+              return _regenerator().w(function (_context32) {
+                while (1) switch (_context32.n) {
                   case 0:
                     url = "".concat(PROXY_URL, "?origin=").concat(originIATA, "&destination=").concat(airport.code, "&mode=").concat(mode);
-                    _context31.n = 1;
+                    _context32.n = 1;
                     return fetch(url);
                   case 1:
-                    res = _context31.v;
-                    _context31.n = 2;
+                    res = _context32.v;
+                    _context32.n = 2;
                     return res.json();
                   case 2:
-                    json = _context31.v;
+                    json = _context32.v;
                     hasData = json.success === true && Array.isArray(json.data) && json.data.length > 0;
-                    return _context31.a(2, {
+                    return _context32.a(2, {
                       airportCode: airport.code,
                       hasData: hasData,
                       raw: json
                     });
                 }
-              }, _callee31);
+              }, _callee32);
             }));
             return function (_x37) {
-              return _ref108.apply(this, arguments);
+              return _ref109.apply(this, arguments);
             };
           }()));
         case 2:
-          results = _context32.v;
+          results = _context33.v;
           litCodes = results.filter(function (r) {
             return r.hasData;
           }).map(function (r) {
@@ -3234,13 +3301,13 @@ function _fetchLitAirports() {
           lit = AIRPORTS.filter(function (a) {
             return litCodes.includes(a.code);
           });
-          return _context32.a(2, lit);
+          return _context33.a(2, lit);
         case 3:
-          _context32.p = 3;
-          _t24 = _context32.v;
-          return _context32.a(2, null);
+          _context33.p = 3;
+          _t25 = _context33.v;
+          return _context33.a(2, null);
       }
-    }, _callee32, null, [[1, 3]]);
+    }, _callee33, null, [[1, 3]]);
   }));
   return _fetchLitAirports.apply(this, arguments);
 }
@@ -6371,42 +6438,42 @@ function fetchCurrencyConversionRate(_x3, _x4) {
   return _fetchCurrencyConversionRate.apply(this, arguments);
 }
 function _fetchCurrencyConversionRate() {
-  _fetchCurrencyConversionRate = _asyncToGenerator(_regenerator().m(function _callee33(fromCurrency, toCurrency) {
-    var from, to, _j$rates2, r, j, v, _t25;
-    return _regenerator().w(function (_context33) {
-      while (1) switch (_context33.p = _context33.n) {
+  _fetchCurrencyConversionRate = _asyncToGenerator(_regenerator().m(function _callee34(fromCurrency, toCurrency) {
+    var from, to, _j$rates2, r, j, v, _t26;
+    return _regenerator().w(function (_context34) {
+      while (1) switch (_context34.p = _context34.n) {
         case 0:
           from = String(fromCurrency || "").toUpperCase();
           to = String(toCurrency || "").toUpperCase();
           if (!(!from || !to)) {
-            _context33.n = 1;
+            _context34.n = 1;
             break;
           }
-          return _context33.a(2, null);
+          return _context34.a(2, null);
         case 1:
           if (!(from === to)) {
-            _context33.n = 2;
+            _context34.n = 2;
             break;
           }
-          return _context33.a(2, 1);
+          return _context34.a(2, 1);
         case 2:
-          _context33.p = 2;
-          _context33.n = 3;
+          _context34.p = 2;
+          _context34.n = 3;
           return fetch("https://api.frankfurter.dev/v1/latest?base=".concat(from, "&symbols=").concat(to));
         case 3:
-          r = _context33.v;
-          _context33.n = 4;
+          r = _context34.v;
+          _context34.n = 4;
           return r.json();
         case 4:
-          j = _context33.v;
+          j = _context34.v;
           v = Number(j === null || j === void 0 || (_j$rates2 = j.rates) === null || _j$rates2 === void 0 ? void 0 : _j$rates2[to]);
-          return _context33.a(2, Number.isFinite(v) && v > 0 ? v : null);
+          return _context34.a(2, Number.isFinite(v) && v > 0 ? v : null);
         case 5:
-          _context33.p = 5;
-          _t25 = _context33.v;
-          return _context33.a(2, null);
+          _context34.p = 5;
+          _t26 = _context34.v;
+          return _context34.a(2, null);
       }
-    }, _callee33, null, [[2, 5]]);
+    }, _callee34, null, [[2, 5]]);
   }));
   return _fetchCurrencyConversionRate.apply(this, arguments);
 }
@@ -7714,7 +7781,7 @@ function DashSettings(_ref15) {
   });
   var changeTripCurrency = function () {
     var _ref16 = _asyncToGenerator(_regenerator().m(function _callee4(nextCurrency) {
-      var from, to, hasMoney, rate;
+      var from, to, hasMoney, rate, _t3;
       return _regenerator().w(function (_context4) {
         while (1) switch (_context4.n) {
           case 0:
@@ -7729,27 +7796,37 @@ function DashSettings(_ref15) {
             hasMoney = Number((data === null || data === void 0 ? void 0 : data.budget) || 0) > 0 || Number((data === null || data === void 0 ? void 0 : data.prepaidTotal) || 0) > 0 || Number((data === null || data === void 0 ? void 0 : data.flightPrice) || 0) > 0 || Number((data === null || data === void 0 ? void 0 : data.hotelPrice) || 0) > 0 || Number((data === null || data === void 0 ? void 0 : data.carPrice) || 0) > 0 || ((data === null || data === void 0 ? void 0 : data.expenses) || []).some(function (e) {
               return Number(e.amount || 0) > 0;
             });
-            if (!(hasMoney && !window.confirm("".concat(sc.changeCurrency, ": ").concat(from, " \u2192 ").concat(to, "?")))) {
-              _context4.n = 2;
+            _t3 = hasMoney;
+            if (!_t3) {
+              _context4.n = 3;
               break;
             }
-            return _context4.a(2);
+            _context4.n = 2;
+            return appConfirm("".concat(sc.changeCurrency, ": ").concat(from, " \u2192 ").concat(to, "?"));
           case 2:
-            setCurrencyBusy(true);
-            _context4.n = 3;
-            return fetchCurrencyConversionRate(from, to);
+            _t3 = !_context4.v;
           case 3:
-            rate = _context4.v;
-            setCurrencyBusy(false);
-            if (rate) {
+            if (!_t3) {
               _context4.n = 4;
               break;
             }
-            window.alert(sc.rateUnavailable);
             return _context4.a(2);
           case 4:
-            setData(convertTripHomeCurrencyAmounts(data, to, rate));
+            setCurrencyBusy(true);
+            _context4.n = 5;
+            return fetchCurrencyConversionRate(from, to);
           case 5:
+            rate = _context4.v;
+            setCurrencyBusy(false);
+            if (rate) {
+              _context4.n = 6;
+              break;
+            }
+            appAlert(sc.rateUnavailable);
+            return _context4.a(2);
+          case 6:
+            setData(convertTripHomeCurrencyAmounts(data, to, rate));
+          case 7:
             return _context4.a(2);
         }
       }, _callee4);
@@ -8385,18 +8462,18 @@ function detectCurrentCountry() {
   return _detectCurrentCountry.apply(this, arguments);
 }
 function _detectCurrentCountry() {
-  _detectCurrentCountry = _asyncToGenerator(_regenerator().m(function _callee34() {
+  _detectCurrentCountry = _asyncToGenerator(_regenerator().m(function _callee35() {
     var pos, lat, lng, url, res, json, a, countryCode, locality;
-    return _regenerator().w(function (_context34) {
-      while (1) switch (_context34.n) {
+    return _regenerator().w(function (_context35) {
+      while (1) switch (_context35.n) {
         case 0:
           if ("geolocation" in navigator) {
-            _context34.n = 1;
+            _context35.n = 1;
             break;
           }
           throw new Error("Location is not supported on this device.");
         case 1:
-          _context34.n = 2;
+          _context35.n = 2;
           return new Promise(function (resolve, reject) {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,
@@ -8405,32 +8482,32 @@ function _detectCurrentCountry() {
             });
           });
         case 2:
-          pos = _context34.v;
+          pos = _context35.v;
           lat = pos.coords.latitude;
           lng = pos.coords.longitude;
           url = "https://nominatim.openstreetmap.org/reverse?lat=".concat(encodeURIComponent(lat), "&lon=").concat(encodeURIComponent(lng), "&format=json&zoom=10&addressdetails=1");
-          _context34.n = 3;
+          _context35.n = 3;
           return fetch(url, {
             headers: {
               "Accept-Language": "en"
             }
           });
         case 3:
-          res = _context34.v;
+          res = _context35.v;
           if (res.ok) {
-            _context34.n = 4;
+            _context35.n = 4;
             break;
           }
           throw new Error("Location verification is temporarily unavailable.");
         case 4:
-          _context34.n = 5;
+          _context35.n = 5;
           return res.json();
         case 5:
-          json = _context34.v;
+          json = _context35.v;
           a = (json === null || json === void 0 ? void 0 : json.address) || {};
           countryCode = String(a.country_code || "").toUpperCase();
           locality = a.city || a.town || a.village || a.municipality || a.county || "";
-          return _context34.a(2, {
+          return _context35.a(2, {
             lat: lat,
             lng: lng,
             countryCode: countryCode,
@@ -8438,7 +8515,7 @@ function _detectCurrentCountry() {
             locality: locality
           });
       }
-    }, _callee34);
+    }, _callee35);
   }));
   return _detectCurrentCountry.apply(this, arguments);
 }
@@ -8638,16 +8715,16 @@ function saveTravelDocument(_x6) {
   return _saveTravelDocument.apply(this, arguments);
 }
 function _saveTravelDocument() {
-  _saveTravelDocument = _asyncToGenerator(_regenerator().m(function _callee35(record) {
+  _saveTravelDocument = _asyncToGenerator(_regenerator().m(function _callee36(record) {
     var db;
-    return _regenerator().w(function (_context35) {
-      while (1) switch (_context35.n) {
+    return _regenerator().w(function (_context36) {
+      while (1) switch (_context36.n) {
         case 0:
-          _context35.n = 1;
+          _context36.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context35.v;
-          return _context35.a(2, new Promise(function (resolve, reject) {
+          db = _context36.v;
+          return _context36.a(2, new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             tx.objectStore(TRIPITALY_DOC_STORE).put(record);
             tx.oncomplete = function () {
@@ -8660,7 +8737,7 @@ function _saveTravelDocument() {
             };
           }));
       }
-    }, _callee35);
+    }, _callee36);
   }));
   return _saveTravelDocument.apply(this, arguments);
 }
@@ -8668,17 +8745,17 @@ function loadTravelDocuments() {
   return _loadTravelDocuments.apply(this, arguments);
 }
 function _loadTravelDocuments() {
-  _loadTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee36() {
-    var db, _t26;
-    return _regenerator().w(function (_context36) {
-      while (1) switch (_context36.p = _context36.n) {
+  _loadTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee37() {
+    var db, _t27;
+    return _regenerator().w(function (_context37) {
+      while (1) switch (_context37.p = _context37.n) {
         case 0:
-          _context36.p = 0;
-          _context36.n = 1;
+          _context37.p = 0;
+          _context37.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context36.v;
-          _context36.n = 2;
+          db = _context37.v;
+          _context37.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readonly");
             var req = tx.objectStore(TRIPITALY_DOC_STORE).getAll();
@@ -8693,13 +8770,13 @@ function _loadTravelDocuments() {
             };
           });
         case 2:
-          return _context36.a(2, _context36.v);
+          return _context37.a(2, _context37.v);
         case 3:
-          _context36.p = 3;
-          _t26 = _context36.v;
-          return _context36.a(2, []);
+          _context37.p = 3;
+          _t27 = _context37.v;
+          return _context37.a(2, []);
       }
-    }, _callee36, null, [[0, 3]]);
+    }, _callee37, null, [[0, 3]]);
   }));
   return _loadTravelDocuments.apply(this, arguments);
 }
@@ -8707,17 +8784,17 @@ function deleteTravelDocument(_x7) {
   return _deleteTravelDocument.apply(this, arguments);
 }
 function _deleteTravelDocument() {
-  _deleteTravelDocument = _asyncToGenerator(_regenerator().m(function _callee37(id) {
-    var db, _t27;
-    return _regenerator().w(function (_context37) {
-      while (1) switch (_context37.p = _context37.n) {
+  _deleteTravelDocument = _asyncToGenerator(_regenerator().m(function _callee38(id) {
+    var db, _t28;
+    return _regenerator().w(function (_context38) {
+      while (1) switch (_context38.p = _context38.n) {
         case 0:
-          _context37.p = 0;
-          _context37.n = 1;
+          _context38.p = 0;
+          _context38.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context37.v;
-          _context37.n = 2;
+          db = _context38.v;
+          _context38.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             tx.objectStore(TRIPITALY_DOC_STORE)["delete"](id);
@@ -8728,15 +8805,15 @@ function _deleteTravelDocument() {
           });
         case 2:
           db.close();
-          _context37.n = 4;
+          _context38.n = 4;
           break;
         case 3:
-          _context37.p = 3;
-          _t27 = _context37.v;
+          _context38.p = 3;
+          _t28 = _context38.v;
         case 4:
-          return _context37.a(2);
+          return _context38.a(2);
       }
-    }, _callee37, null, [[0, 3]]);
+    }, _callee38, null, [[0, 3]]);
   }));
   return _deleteTravelDocument.apply(this, arguments);
 }
@@ -8744,23 +8821,23 @@ function archiveActiveTravelDocuments(_x8) {
   return _archiveActiveTravelDocuments.apply(this, arguments);
 }
 function _archiveActiveTravelDocuments() {
-  _archiveActiveTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee38(archiveId) {
-    var db, _t28;
-    return _regenerator().w(function (_context38) {
-      while (1) switch (_context38.p = _context38.n) {
+  _archiveActiveTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee39(archiveId) {
+    var db, _t29;
+    return _regenerator().w(function (_context39) {
+      while (1) switch (_context39.p = _context39.n) {
         case 0:
           if (archiveId) {
-            _context38.n = 1;
+            _context39.n = 1;
             break;
           }
-          return _context38.a(2);
+          return _context39.a(2);
         case 1:
-          _context38.p = 1;
-          _context38.n = 2;
+          _context39.p = 1;
+          _context39.n = 2;
           return openTravelDocDB();
         case 2:
-          db = _context38.v;
-          _context38.n = 3;
+          db = _context39.v;
+          _context39.n = 3;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             var store = tx.objectStore(TRIPITALY_DOC_STORE);
@@ -8784,15 +8861,15 @@ function _archiveActiveTravelDocuments() {
           });
         case 3:
           db.close();
-          _context38.n = 5;
+          _context39.n = 5;
           break;
         case 4:
-          _context38.p = 4;
-          _t28 = _context38.v;
+          _context39.p = 4;
+          _t29 = _context39.v;
         case 5:
-          return _context38.a(2);
+          return _context39.a(2);
       }
-    }, _callee38, null, [[1, 4]]);
+    }, _callee39, null, [[1, 4]]);
   }));
   return _archiveActiveTravelDocuments.apply(this, arguments);
 }
@@ -8800,23 +8877,23 @@ function restoreArchivedTravelDocuments(_x9) {
   return _restoreArchivedTravelDocuments.apply(this, arguments);
 }
 function _restoreArchivedTravelDocuments() {
-  _restoreArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee39(archiveId) {
-    var db, _t29;
-    return _regenerator().w(function (_context39) {
-      while (1) switch (_context39.p = _context39.n) {
+  _restoreArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee40(archiveId) {
+    var db, _t30;
+    return _regenerator().w(function (_context40) {
+      while (1) switch (_context40.p = _context40.n) {
         case 0:
           if (archiveId) {
-            _context39.n = 1;
+            _context40.n = 1;
             break;
           }
-          return _context39.a(2);
+          return _context40.a(2);
         case 1:
-          _context39.p = 1;
-          _context39.n = 2;
+          _context40.p = 1;
+          _context40.n = 2;
           return openTravelDocDB();
         case 2:
-          db = _context39.v;
-          _context39.n = 3;
+          db = _context40.v;
+          _context40.n = 3;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             var store = tx.objectStore(TRIPITALY_DOC_STORE);
@@ -8840,15 +8917,15 @@ function _restoreArchivedTravelDocuments() {
           });
         case 3:
           db.close();
-          _context39.n = 5;
+          _context40.n = 5;
           break;
         case 4:
-          _context39.p = 4;
-          _t29 = _context39.v;
+          _context40.p = 4;
+          _t30 = _context40.v;
         case 5:
-          return _context39.a(2);
+          return _context40.a(2);
       }
-    }, _callee39, null, [[1, 4]]);
+    }, _callee40, null, [[1, 4]]);
   }));
   return _restoreArchivedTravelDocuments.apply(this, arguments);
 }
@@ -8856,23 +8933,23 @@ function deleteArchivedTravelDocuments(_x0) {
   return _deleteArchivedTravelDocuments.apply(this, arguments);
 }
 function _deleteArchivedTravelDocuments() {
-  _deleteArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee40(archiveId) {
-    var db, _t30;
-    return _regenerator().w(function (_context40) {
-      while (1) switch (_context40.p = _context40.n) {
+  _deleteArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee41(archiveId) {
+    var db, _t31;
+    return _regenerator().w(function (_context41) {
+      while (1) switch (_context41.p = _context41.n) {
         case 0:
           if (archiveId) {
-            _context40.n = 1;
+            _context41.n = 1;
             break;
           }
-          return _context40.a(2);
+          return _context41.a(2);
         case 1:
-          _context40.p = 1;
-          _context40.n = 2;
+          _context41.p = 1;
+          _context41.n = 2;
           return openTravelDocDB();
         case 2:
-          db = _context40.v;
-          _context40.n = 3;
+          db = _context41.v;
+          _context41.n = 3;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             var store = tx.objectStore(TRIPITALY_DOC_STORE);
@@ -8892,15 +8969,15 @@ function _deleteArchivedTravelDocuments() {
           });
         case 3:
           db.close();
-          _context40.n = 5;
+          _context41.n = 5;
           break;
         case 4:
-          _context40.p = 4;
-          _t30 = _context40.v;
+          _context41.p = 4;
+          _t31 = _context41.v;
         case 5:
-          return _context40.a(2);
+          return _context41.a(2);
       }
-    }, _callee40, null, [[1, 4]]);
+    }, _callee41, null, [[1, 4]]);
   }));
   return _deleteArchivedTravelDocuments.apply(this, arguments);
 }
@@ -8908,17 +8985,17 @@ function clearTravelDocuments() {
   return _clearTravelDocuments.apply(this, arguments);
 }
 function _clearTravelDocuments() {
-  _clearTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee41() {
-    var db, _t31;
-    return _regenerator().w(function (_context41) {
-      while (1) switch (_context41.p = _context41.n) {
+  _clearTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee42() {
+    var db, _t32;
+    return _regenerator().w(function (_context42) {
+      while (1) switch (_context42.p = _context42.n) {
         case 0:
-          _context41.p = 0;
-          _context41.n = 1;
+          _context42.p = 0;
+          _context42.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context41.v;
-          _context41.n = 2;
+          db = _context42.v;
+          _context42.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             tx.objectStore(TRIPITALY_DOC_STORE).clear();
@@ -8929,15 +9006,15 @@ function _clearTravelDocuments() {
           });
         case 2:
           db.close();
-          _context41.n = 4;
+          _context42.n = 4;
           break;
         case 3:
-          _context41.p = 3;
-          _t31 = _context41.v;
+          _context42.p = 3;
+          _t32 = _context42.v;
         case 4:
-          return _context41.a(2);
+          return _context42.a(2);
       }
-    }, _callee41, null, [[0, 3]]);
+    }, _callee42, null, [[0, 3]]);
   }));
   return _clearTravelDocuments.apply(this, arguments);
 }
@@ -8945,17 +9022,17 @@ function openSavedTravelDocument(_x1) {
   return _openSavedTravelDocument.apply(this, arguments);
 }
 function _openSavedTravelDocument() {
-  _openSavedTravelDocument = _asyncToGenerator(_regenerator().m(function _callee42(id) {
-    var db, record, url, a, _t32;
-    return _regenerator().w(function (_context42) {
-      while (1) switch (_context42.p = _context42.n) {
+  _openSavedTravelDocument = _asyncToGenerator(_regenerator().m(function _callee43(id) {
+    var db, record, url, a, _t33;
+    return _regenerator().w(function (_context43) {
+      while (1) switch (_context43.p = _context43.n) {
         case 0:
-          _context42.p = 0;
-          _context42.n = 1;
+          _context43.p = 0;
+          _context43.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context42.v;
-          _context42.n = 2;
+          db = _context43.v;
+          _context43.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readonly");
             var req = tx.objectStore(TRIPITALY_DOC_STORE).get(id);
@@ -8970,12 +9047,12 @@ function _openSavedTravelDocument() {
             };
           });
         case 2:
-          record = _context42.v;
+          record = _context43.v;
           if (record !== null && record !== void 0 && record.blob) {
-            _context42.n = 3;
+            _context43.n = 3;
             break;
           }
-          return _context42.a(2);
+          return _context43.a(2);
         case 3:
           url = URL.createObjectURL(record.blob);
           a = document.createElement("a");
@@ -8988,15 +9065,15 @@ function _openSavedTravelDocument() {
           setTimeout(function () {
             return URL.revokeObjectURL(url);
           }, 60000);
-          _context42.n = 5;
+          _context43.n = 5;
           break;
         case 4:
-          _context42.p = 4;
-          _t32 = _context42.v;
+          _context43.p = 4;
+          _t33 = _context43.v;
         case 5:
-          return _context42.a(2);
+          return _context43.a(2);
       }
-    }, _callee42, null, [[0, 4]]);
+    }, _callee43, null, [[0, 4]]);
   }));
   return _openSavedTravelDocument.apply(this, arguments);
 }
@@ -9379,43 +9456,43 @@ function geocodeAddress(_x11) {
   return _geocodeAddress.apply(this, arguments);
 }
 function _geocodeAddress() {
-  _geocodeAddress = _asyncToGenerator(_regenerator().m(function _callee43(query) {
-    var url, res, json, _t33;
-    return _regenerator().w(function (_context43) {
-      while (1) switch (_context43.p = _context43.n) {
+  _geocodeAddress = _asyncToGenerator(_regenerator().m(function _callee44(query) {
+    var url, res, json, _t34;
+    return _regenerator().w(function (_context44) {
+      while (1) switch (_context44.p = _context44.n) {
         case 0:
-          _context43.p = 0;
+          _context44.p = 0;
           url = "https://nominatim.openstreetmap.org/search?q=".concat(encodeURIComponent(query), "&format=json&limit=1");
-          _context43.n = 1;
+          _context44.n = 1;
           return fetch(url, {
             headers: {
               "Accept-Language": "en"
             }
           });
         case 1:
-          res = _context43.v;
-          _context43.n = 2;
+          res = _context44.v;
+          _context44.n = 2;
           return res.json();
         case 2:
-          json = _context43.v;
+          json = _context44.v;
           if (!(json && json[0])) {
-            _context43.n = 3;
+            _context44.n = 3;
             break;
           }
-          return _context43.a(2, {
+          return _context44.a(2, {
             lat: parseFloat(json[0].lat),
             lng: parseFloat(json[0].lon)
           });
         case 3:
-          _context43.n = 5;
+          _context44.n = 5;
           break;
         case 4:
-          _context43.p = 4;
-          _t33 = _context43.v;
+          _context44.p = 4;
+          _t34 = _context44.v;
         case 5:
-          return _context43.a(2, null);
+          return _context44.a(2, null);
       }
-    }, _callee43, null, [[0, 4]]);
+    }, _callee44, null, [[0, 4]]);
   }));
   return _geocodeAddress.apply(this, arguments);
 }
@@ -9448,7 +9525,7 @@ function LiveLocationMap(_ref29) {
     setLocationError = _useState90[1];
   var locate = function () {
     var _ref30 = _asyncToGenerator(_regenerator().m(function _callee6() {
-      var loc, _t3;
+      var loc, _t4;
       return _regenerator().w(function (_context6) {
         while (1) switch (_context6.p = _context6.n) {
           case 0:
@@ -9484,9 +9561,9 @@ function LiveLocationMap(_ref29) {
             break;
           case 5:
             _context6.p = 5;
-            _t3 = _context6.v;
-            if (_t3 && Number(_t3.code) === 1) setStatus("denied");else {
-              setLocationError((_t3 === null || _t3 === void 0 ? void 0 : _t3.message) || "Couldn't verify your location.");
+            _t4 = _context6.v;
+            if (_t4 && Number(_t4.code) === 1) setStatus("denied");else {
+              setLocationError((_t4 === null || _t4 === void 0 ? void 0 : _t4.message) || "Couldn't verify your location.");
               setStatus("error");
             }
           case 6:
@@ -9725,7 +9802,7 @@ function CityMap(_ref31) {
   }, [city]);
   var showMyCurrentLocation = function () {
     var _ref32 = _asyncToGenerator(_regenerator().m(function _callee7() {
-      var loc, _t4;
+      var loc, _t5;
       return _regenerator().w(function (_context7) {
         while (1) switch (_context7.p = _context7.n) {
           case 0:
@@ -9753,9 +9830,9 @@ function CityMap(_ref31) {
             break;
           case 4:
             _context7.p = 4;
-            _t4 = _context7.v;
-            if (_t4 && Number(_t4.code) === 1) setStatus("denied");else {
-              setMessage((_t4 === null || _t4 === void 0 ? void 0 : _t4.message) || "Couldn't get your current location.");
+            _t5 = _context7.v;
+            if (_t5 && Number(_t5.code) === 1) setStatus("denied");else {
+              setMessage((_t5 === null || _t5 === void 0 ? void 0 : _t5.message) || "Couldn't get your current location.");
               setStatus("error");
             }
           case 5:
@@ -9952,7 +10029,7 @@ function printTripItinerary(data) {
   }).join("");
   var popup = window.open("", "_blank");
   if (!popup) {
-    alert("Please allow pop-ups for 687 Italy to print or save your itinerary as PDF.");
+    appAlert("Please allow pop-ups for 687 Italy to print or save your itinerary as PDF.");
     return;
   }
   popup.document.open();
@@ -10912,7 +10989,7 @@ function DashNearby(_ref41) {
   };
   var locate = function () {
     var _ref42 = _asyncToGenerator(_regenerator().m(function _callee8() {
-      var loc, _t5;
+      var loc, _t6;
       return _regenerator().w(function (_context8) {
         while (1) switch (_context8.p = _context8.n) {
           case 0:
@@ -10949,10 +11026,10 @@ function DashNearby(_ref41) {
             break;
           case 5:
             _context8.p = 5;
-            _t5 = _context8.v;
-            if (_t5 && Number(_t5.code) === 1) setLocStatus("denied");else {
+            _t6 = _context8.v;
+            if (_t6 && Number(_t6.code) === 1) setLocStatus("denied");else {
               setLocStatus("error");
-              setError((_t5 === null || _t5 === void 0 ? void 0 : _t5.message) || "Couldn't verify your location.");
+              setError((_t6 === null || _t6 === void 0 ? void 0 : _t6.message) || "Couldn't verify your location.");
             }
           case 6:
             return _context8.a(2);
@@ -10969,7 +11046,7 @@ function DashNearby(_ref41) {
     var cancelled = false;
     var runVoiceNearbySearch = function () {
       var _ref43 = _asyncToGenerator(_regenerator().m(function _callee9(rawRequested, rawMode) {
-        var requested, validRequested, requestedMode, validMode, loc, _t6;
+        var requested, validRequested, requestedMode, validMode, loc, _t7;
         return _regenerator().w(function (_context9) {
           while (1) switch (_context9.p = _context9.n) {
             case 0:
@@ -11038,16 +11115,16 @@ function DashNearby(_ref41) {
               break;
             case 6:
               _context9.p = 6;
-              _t6 = _context9.v;
+              _t7 = _context9.v;
               if (!cancelled) {
                 _context9.n = 7;
                 break;
               }
               return _context9.a(2);
             case 7:
-              if (_t6 && Number(_t6.code) === 1) setLocStatus("denied");else {
+              if (_t7 && Number(_t7.code) === 1) setLocStatus("denied");else {
                 setLocStatus("error");
-                setError((_t6 === null || _t6 === void 0 ? void 0 : _t6.message) || "Couldn't verify your location.");
+                setError((_t7 === null || _t7 === void 0 ? void 0 : _t7.message) || "Couldn't verify your location.");
               }
             case 8:
               return _context9.a(2);
@@ -11648,7 +11725,7 @@ function LiveTranslator() {
   };
   var translate = function () {
     var _ref45 = _asyncToGenerator(_regenerator().m(function _callee1(textOverride) {
-      var text, params, guard, res, json, retry, mins, _t7;
+      var text, params, guard, res, json, retry, mins, _t8;
       return _regenerator().w(function (_context1) {
         while (1) switch (_context1.p = _context1.n) {
           case 0:
@@ -11702,7 +11779,7 @@ function LiveTranslator() {
             break;
           case 6:
             _context1.p = 6;
-            _t7 = _context1.v;
+            _t8 = _context1.v;
             setError("Couldn't reach the translator right now.");
           case 7:
             setLoading(false);
@@ -13482,7 +13559,7 @@ function ItalyDashNow(_ref62) {
   };
   var syncLocation = function () {
     var _ref63 = _asyncToGenerator(_regenerator().m(function _callee10() {
-      var loc, u, r, j, _t8, _t9;
+      var loc, u, r, j, _t9, _t0;
       return _regenerator().w(function (_context10) {
         while (1) switch (_context10.p = _context10.n) {
           case 0:
@@ -13513,13 +13590,13 @@ function ItalyDashNow(_ref62) {
             break;
           case 5:
             _context10.p = 5;
-            _t8 = _context10.v;
+            _t9 = _context10.v;
           case 6:
             return _context10.a(2, loc);
           case 7:
             _context10.p = 7;
-            _t9 = _context10.v;
-            setGpsState(Number(_t9 === null || _t9 === void 0 ? void 0 : _t9.code) === 1 ? "denied" : "error");
+            _t0 = _context10.v;
+            setGpsState(Number(_t0 === null || _t0 === void 0 ? void 0 : _t0.code) === 1 ? "denied" : "error");
             return _context10.a(2, null);
         }
       }, _callee10, null, [[2, 5], [0, 7]]);
@@ -13533,7 +13610,7 @@ function ItalyDashNow(_ref62) {
   }, []);
   var refreshLiveContext = function () {
     var _ref64 = _asyncToGenerator(_regenerator().m(function _callee11() {
-      var loc, currentWeather, u, r, j, wInfo, types, params, guard, pr, pj, raw, normalizedPlans, enriched, _t0, _t1;
+      var loc, currentWeather, u, r, j, wInfo, types, params, guard, pr, pj, raw, normalizedPlans, enriched, _t1, _t10;
       return _regenerator().w(function (_context11) {
         while (1) switch (_context11.p = _context11.n) {
           case 0:
@@ -13573,7 +13650,7 @@ function ItalyDashNow(_ref62) {
             break;
           case 7:
             _context11.p = 7;
-            _t0 = _context11.v;
+            _t1 = _context11.v;
           case 8:
             wInfo = currentWeather ? italyNowWeatherDescription(currentWeather.weather_code) : null;
             types = italyNowContextTypes(wInfo, clock.hour, budgetLow);
@@ -13642,7 +13719,7 @@ function ItalyDashNow(_ref62) {
             break;
           case 12:
             _context11.p = 12;
-            _t1 = _context11.v;
+            _t10 = _context11.v;
             setLiveError("Live suggestions are temporarily unavailable.");
             setLivePlaces([]);
           case 13:
@@ -14116,7 +14193,7 @@ function ItalyIntelligentDayLocationClock() {
   React.useEffect(function () {
     var alive = true;
     _asyncToGenerator(_regenerator().m(function _callee12() {
-      var loc, u, r, j, _t10, _t11;
+      var loc, u, r, j, _t11, _t12;
       return _regenerator().w(function (_context12) {
         while (1) switch (_context12.p = _context12.n) {
           case 0:
@@ -14152,14 +14229,14 @@ function ItalyIntelligentDayLocationClock() {
             break;
           case 7:
             _context12.p = 7;
-            _t10 = _context12.v;
+            _t11 = _context12.v;
           case 8:
             if (alive) setStatus("ok");
             _context12.n = 10;
             break;
           case 9:
             _context12.p = 9;
-            _t11 = _context12.v;
+            _t12 = _context12.v;
             if (alive) {
               setPlace("");
               setStatus("error");
@@ -14507,52 +14584,10 @@ function guardianEnsureServiceWorker() {
   return _guardianEnsureServiceWorker.apply(this, arguments);
 }
 function _guardianEnsureServiceWorker() {
-  _guardianEnsureServiceWorker = _asyncToGenerator(_regenerator().m(function _callee44() {
-    var registration, ready, _t34;
-    return _regenerator().w(function (_context44) {
-      while (1) switch (_context44.p = _context44.n) {
-        case 0:
-          if ("serviceWorker" in navigator) {
-            _context44.n = 1;
-            break;
-          }
-          throw new Error("Service Worker unavailable");
-        case 1:
-          _context44.n = 2;
-          return navigator.serviceWorker.register("/service-worker.js?v=1136f", {
-            scope: "/",
-            updateViaCache: "none"
-          });
-        case 2:
-          registration = _context44.v;
-          _context44.p = 3;
-          _context44.n = 4;
-          return registration.update();
-        case 4:
-          _context44.n = 6;
-          break;
-        case 5:
-          _context44.p = 5;
-          _t34 = _context44.v;
-        case 6:
-          _context44.n = 7;
-          return navigator.serviceWorker.ready;
-        case 7:
-          ready = _context44.v;
-          return _context44.a(2, ready || registration);
-      }
-    }, _callee44, null, [[3, 5]]);
-  }));
-  return _guardianEnsureServiceWorker.apply(this, arguments);
-}
-function pulseGuardianSubscribe(_x16) {
-  return _pulseGuardianSubscribe.apply(this, arguments);
-}
-function _pulseGuardianSubscribe() {
-  _pulseGuardianSubscribe = _asyncToGenerator(_regenerator().m(function _callee45(preferences) {
-    var reg, subscription, r, j;
+  _guardianEnsureServiceWorker = _asyncToGenerator(_regenerator().m(function _callee45() {
+    var registration, ready, _t35;
     return _regenerator().w(function (_context45) {
-      while (1) switch (_context45.n) {
+      while (1) switch (_context45.p = _context45.n) {
         case 0:
           if ("serviceWorker" in navigator) {
             _context45.n = 1;
@@ -14560,33 +14595,75 @@ function _pulseGuardianSubscribe() {
           }
           throw new Error("Service Worker unavailable");
         case 1:
+          _context45.n = 2;
+          return navigator.serviceWorker.register("/service-worker.js?v=1136f", {
+            scope: "/",
+            updateViaCache: "none"
+          });
+        case 2:
+          registration = _context45.v;
+          _context45.p = 3;
+          _context45.n = 4;
+          return registration.update();
+        case 4:
+          _context45.n = 6;
+          break;
+        case 5:
+          _context45.p = 5;
+          _t35 = _context45.v;
+        case 6:
+          _context45.n = 7;
+          return navigator.serviceWorker.ready;
+        case 7:
+          ready = _context45.v;
+          return _context45.a(2, ready || registration);
+      }
+    }, _callee45, null, [[3, 5]]);
+  }));
+  return _guardianEnsureServiceWorker.apply(this, arguments);
+}
+function pulseGuardianSubscribe(_x16) {
+  return _pulseGuardianSubscribe.apply(this, arguments);
+}
+function _pulseGuardianSubscribe() {
+  _pulseGuardianSubscribe = _asyncToGenerator(_regenerator().m(function _callee46(preferences) {
+    var reg, subscription, r, j;
+    return _regenerator().w(function (_context46) {
+      while (1) switch (_context46.n) {
+        case 0:
+          if ("serviceWorker" in navigator) {
+            _context46.n = 1;
+            break;
+          }
+          throw new Error("Service Worker unavailable");
+        case 1:
           if ("PushManager" in window) {
-            _context45.n = 2;
+            _context46.n = 2;
             break;
           }
           throw new Error("Push notifications are not supported on this device");
         case 2:
-          _context45.n = 3;
+          _context46.n = 3;
           return guardianEnsureServiceWorker();
         case 3:
-          reg = _context45.v;
-          _context45.n = 4;
+          reg = _context46.v;
+          _context46.n = 4;
           return reg.pushManager.getSubscription();
         case 4:
-          subscription = _context45.v;
+          subscription = _context46.v;
           if (subscription) {
-            _context45.n = 6;
+            _context46.n = 6;
             break;
           }
-          _context45.n = 5;
+          _context46.n = 5;
           return reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: guardianUrlBase64ToUint8Array(GUARDIAN_VAPID_PUBLIC_KEY)
           });
         case 5:
-          subscription = _context45.v;
+          subscription = _context46.v;
         case 6:
-          _context45.n = 7;
+          _context46.n = 7;
           return fetch("".concat(PULSE_API_BASE, "/v1/push/subscribe"), {
             method: "POST",
             headers: {
@@ -14607,25 +14684,25 @@ function _pulseGuardianSubscribe() {
             })
           });
         case 7:
-          r = _context45.v;
-          _context45.n = 8;
+          r = _context46.v;
+          _context46.n = 8;
           return r.json()["catch"](function () {
             return null;
           });
         case 8:
-          j = _context45.v;
+          j = _context46.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context45.n = 9;
+            _context46.n = 9;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 9:
-          return _context45.a(2, {
+          return _context46.a(2, {
             subscription: subscription,
             pulse: j
           });
       }
-    }, _callee45);
+    }, _callee46);
   }));
   return _pulseGuardianSubscribe.apply(this, arguments);
 }
@@ -14633,16 +14710,16 @@ function pulseGuardianSyncContext(_x17, _x18) {
   return _pulseGuardianSyncContext.apply(this, arguments);
 }
 function _pulseGuardianSyncContext() {
-  _pulseGuardianSyncContext = _asyncToGenerator(_regenerator().m(function _callee46(data, settings) {
+  _pulseGuardianSyncContext = _asyncToGenerator(_regenerator().m(function _callee47(data, settings) {
     var workingDay, plans, completed, nextStop, commitment, commitmentAt, tz, cp, mins, loc, r, j;
-    return _regenerator().w(function (_context46) {
-      while (1) switch (_context46.n) {
+    return _regenerator().w(function (_context47) {
+      while (1) switch (_context47.n) {
         case 0:
           if (settings !== null && settings !== void 0 && settings.enabled) {
-            _context46.n = 1;
+            _context47.n = 1;
             break;
           }
-          return _context46.a(2, {
+          return _context47.a(2, {
             ok: false,
             skipped: "paused"
           });
@@ -14668,11 +14745,11 @@ function _pulseGuardianSyncContext() {
               }
             }
           } catch (_) {}
-          _context46.n = 2;
+          _context47.n = 2;
           return detectCurrentCountry();
         case 2:
-          loc = _context46.v;
-          _context46.n = 3;
+          loc = _context47.v;
+          _context47.n = 3;
           return fetch("".concat(PULSE_API_BASE, "/v1/guardian/context"), {
             method: "POST",
             headers: {
@@ -14693,22 +14770,22 @@ function _pulseGuardianSyncContext() {
             })
           });
         case 3:
-          r = _context46.v;
-          _context46.n = 4;
+          r = _context47.v;
+          _context47.n = 4;
           return r.json()["catch"](function () {
             return null;
           });
         case 4:
-          j = _context46.v;
+          j = _context47.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context46.n = 5;
+            _context47.n = 5;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 5:
-          return _context46.a(2, j);
+          return _context47.a(2, j);
       }
-    }, _callee46);
+    }, _callee47);
   }));
   return _pulseGuardianSyncContext.apply(this, arguments);
 }
@@ -14745,66 +14822,20 @@ function pulseFetchNearby(_x19, _x20) {
   return _pulseFetchNearby.apply(this, arguments);
 }
 function _pulseFetchNearby() {
-  _pulseFetchNearby = _asyncToGenerator(_regenerator().m(function _callee47(lat, lng) {
+  _pulseFetchNearby = _asyncToGenerator(_regenerator().m(function _callee48(lat, lng) {
     var radius,
       url,
       r,
       j,
-      _args47 = arguments;
-    return _regenerator().w(function (_context47) {
-      while (1) switch (_context47.n) {
-        case 0:
-          radius = _args47.length > 2 && _args47[2] !== undefined ? _args47[2] : 4000;
-          url = "".concat(PULSE_API_BASE, "/v1/signals/nearby?lat=").concat(encodeURIComponent(lat), "&lng=").concat(encodeURIComponent(lng), "&country_code=IT&radius_m=").concat(encodeURIComponent(radius));
-          _context47.n = 1;
-          return fetch(url, {
-            cache: "no-store"
-          });
-        case 1:
-          r = _context47.v;
-          _context47.n = 2;
-          return r.json()["catch"](function () {
-            return null;
-          });
-        case 2:
-          j = _context47.v;
-          if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context47.n = 3;
-            break;
-          }
-          throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
-        case 3:
-          return _context47.a(2, Array.isArray(j.signals) ? j.signals : []);
-      }
-    }, _callee47);
-  }));
-  return _pulseFetchNearby.apply(this, arguments);
-}
-function pulseReportSignal(_x21) {
-  return _pulseReportSignal.apply(this, arguments);
-}
-function _pulseReportSignal() {
-  _pulseReportSignal = _asyncToGenerator(_regenerator().m(function _callee48(_ref70) {
-    var type, lat, lng, locality, r, j;
+      _args48 = arguments;
     return _regenerator().w(function (_context48) {
       while (1) switch (_context48.n) {
         case 0:
-          type = _ref70.type, lat = _ref70.lat, lng = _ref70.lng, locality = _ref70.locality;
+          radius = _args48.length > 2 && _args48[2] !== undefined ? _args48[2] : 4000;
+          url = "".concat(PULSE_API_BASE, "/v1/signals/nearby?lat=").concat(encodeURIComponent(lat), "&lng=").concat(encodeURIComponent(lng), "&country_code=IT&radius_m=").concat(encodeURIComponent(radius));
           _context48.n = 1;
-          return fetch("".concat(PULSE_API_BASE, "/v1/signals/report"), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              app_id: "tripitaly",
-              country_code: "IT",
-              type: pulseTypeForLocal(type),
-              lat: lat,
-              lng: lng,
-              locality: String(locality || "").slice(0, 80),
-              device_id: pulseDeviceId()
-            })
+          return fetch(url, {
+            cache: "no-store"
           });
         case 1:
           r = _context48.v;
@@ -14820,30 +14851,35 @@ function _pulseReportSignal() {
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 3:
-          return _context48.a(2, j);
+          return _context48.a(2, Array.isArray(j.signals) ? j.signals : []);
       }
     }, _callee48);
   }));
+  return _pulseFetchNearby.apply(this, arguments);
+}
+function pulseReportSignal(_x21) {
   return _pulseReportSignal.apply(this, arguments);
 }
-function pulseVoteSignal(_x22, _x23) {
-  return _pulseVoteSignal.apply(this, arguments);
-}
-function _pulseVoteSignal() {
-  _pulseVoteSignal = _asyncToGenerator(_regenerator().m(function _callee49(signalId, vote) {
-    var r, j;
+function _pulseReportSignal() {
+  _pulseReportSignal = _asyncToGenerator(_regenerator().m(function _callee49(_ref70) {
+    var type, lat, lng, locality, r, j;
     return _regenerator().w(function (_context49) {
       while (1) switch (_context49.n) {
         case 0:
+          type = _ref70.type, lat = _ref70.lat, lng = _ref70.lng, locality = _ref70.locality;
           _context49.n = 1;
-          return fetch("".concat(PULSE_API_BASE, "/v1/signals/vote"), {
+          return fetch("".concat(PULSE_API_BASE, "/v1/signals/report"), {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              signal_id: signalId,
-              vote: vote,
+              app_id: "tripitaly",
+              country_code: "IT",
+              type: pulseTypeForLocal(type),
+              lat: lat,
+              lng: lng,
+              locality: String(locality || "").slice(0, 80),
               device_id: pulseDeviceId()
             })
           });
@@ -14864,6 +14900,47 @@ function _pulseVoteSignal() {
           return _context49.a(2, j);
       }
     }, _callee49);
+  }));
+  return _pulseReportSignal.apply(this, arguments);
+}
+function pulseVoteSignal(_x22, _x23) {
+  return _pulseVoteSignal.apply(this, arguments);
+}
+function _pulseVoteSignal() {
+  _pulseVoteSignal = _asyncToGenerator(_regenerator().m(function _callee50(signalId, vote) {
+    var r, j;
+    return _regenerator().w(function (_context50) {
+      while (1) switch (_context50.n) {
+        case 0:
+          _context50.n = 1;
+          return fetch("".concat(PULSE_API_BASE, "/v1/signals/vote"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              signal_id: signalId,
+              vote: vote,
+              device_id: pulseDeviceId()
+            })
+          });
+        case 1:
+          r = _context50.v;
+          _context50.n = 2;
+          return r.json()["catch"](function () {
+            return null;
+          });
+        case 2:
+          j = _context50.v;
+          if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
+            _context50.n = 3;
+            break;
+          }
+          throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
+        case 3:
+          return _context50.a(2, j);
+      }
+    }, _callee50);
   }));
   return _pulseVoteSignal.apply(this, arguments);
 }
@@ -14889,7 +14966,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
     var alive = true;
     var sync = function () {
       var _ref72 = _asyncToGenerator(_regenerator().m(function _callee13() {
-        var _t12;
+        var _t13;
         return _regenerator().w(function (_context13) {
           while (1) switch (_context13.p = _context13.n) {
             case 0:
@@ -14907,9 +14984,9 @@ function ItalyIntelligentDayGuardian(_ref71) {
               break;
             case 3:
               _context13.p = 3;
-              _t12 = _context13.v;
+              _t13 = _context13.v;
               if (alive) setMsg(function (m) {
-                return m || "Guardian sync issue: ".concat(String((_t12 === null || _t12 === void 0 ? void 0 : _t12.message) || _t12));
+                return m || "Guardian sync issue: ".concat(String((_t13 === null || _t13 === void 0 ? void 0 : _t13.message) || _t13));
               });
             case 4:
               return _context13.a(2);
@@ -14929,7 +15006,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
   }, [settings.enabled, settings.weather, settings.leaveTime, settings.route, settings.signals, permission, data]);
   var toggleGuardian = function () {
     var _ref73 = _asyncToGenerator(_regenerator().m(function _callee14(key, label) {
-      var next, _t13;
+      var next, _t14;
       return _regenerator().w(function (_context14) {
         while (1) switch (_context14.p = _context14.n) {
           case 0:
@@ -14955,8 +15032,8 @@ function ItalyIntelligentDayGuardian(_ref71) {
             break;
           case 4:
             _context14.p = 4;
-            _t13 = _context14.v;
-            setMsg("".concat(label, " ").concat(next[key] ? "ON" : "OFF", " locally \xB7 Pulse sync failed: ").concat(String((_t13 === null || _t13 === void 0 ? void 0 : _t13.message) || _t13)));
+            _t14 = _context14.v;
+            setMsg("".concat(label, " ").concat(next[key] ? "ON" : "OFF", " locally \xB7 Pulse sync failed: ").concat(String((_t14 === null || _t14 === void 0 ? void 0 : _t14.message) || _t14)));
           case 5:
             _context14.n = 7;
             break;
@@ -14973,7 +15050,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
   }();
   var enable = function () {
     var _ref74 = _asyncToGenerator(_regenerator().m(function _callee15() {
-      var p, next, _next2, _t14;
+      var p, next, _next2, _t15;
       return _regenerator().w(function (_context15) {
         while (1) switch (_context15.p = _context15.n) {
           case 0:
@@ -15022,8 +15099,8 @@ function ItalyIntelligentDayGuardian(_ref71) {
             break;
           case 7:
             _context15.p = 7;
-            _t14 = _context15.v;
-            setMsg("Guardian permission is enabled, but Pulse subscription failed: ".concat(String((_t14 === null || _t14 === void 0 ? void 0 : _t14.message) || _t14)));
+            _t15 = _context15.v;
+            setMsg("Guardian permission is enabled, but Pulse subscription failed: ".concat(String((_t15 === null || _t15 === void 0 ? void 0 : _t15.message) || _t15)));
           case 8:
             return _context15.a(2);
         }
@@ -15035,7 +15112,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
   }();
   var disable = function () {
     var _ref75 = _asyncToGenerator(_regenerator().m(function _callee16() {
-      var next, _t15;
+      var next, _t16;
       return _regenerator().w(function (_context16) {
         while (1) switch (_context16.p = _context16.n) {
           case 0:
@@ -15053,7 +15130,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
             break;
           case 3:
             _context16.p = 3;
-            _t15 = _context16.v;
+            _t16 = _context16.v;
             setMsg("Guardian alerts are paused on this device.");
           case 4:
             return _context16.a(2);
@@ -15066,7 +15143,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
   }();
   var testNotification = function () {
     var _ref76 = _asyncToGenerator(_regenerator().m(function _callee17() {
-      var reg, n, _t16;
+      var reg, n, _t17;
       return _regenerator().w(function (_context17) {
         while (1) switch (_context17.p = _context17.n) {
           case 0:
@@ -15125,7 +15202,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
             break;
           case 6:
             _context17.p = 6;
-            _t16 = _context17.v;
+            _t17 = _context17.v;
             setMsg("Guardian service worker is not ready yet. Reload once and try again.");
           case 7:
             return _context17.a(2);
@@ -15138,7 +15215,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
   }();
   var testBackendPush = function () {
     var _ref77 = _asyncToGenerator(_regenerator().m(function _callee19() {
-      var runTest, _j, _j2, _j3, _yield$runTest, r, j, _yield$runTest2, _t17;
+      var runTest, _j, _j2, _j3, _yield$runTest, r, j, _yield$runTest2, _t18;
       return _regenerator().w(function (_context19) {
         while (1) switch (_context19.p = _context19.n) {
           case 0:
@@ -15215,8 +15292,8 @@ function ItalyIntelligentDayGuardian(_ref71) {
             break;
           case 7:
             _context19.p = 7;
-            _t17 = _context19.v;
-            setMsg("Backend push test failed: ".concat(String((_t17 === null || _t17 === void 0 ? void 0 : _t17.message) || _t17)));
+            _t18 = _context19.v;
+            setMsg("Backend push test failed: ".concat(String((_t18 === null || _t18 === void 0 ? void 0 : _t18.message) || _t18)));
           case 8:
             return _context19.a(2);
         }
@@ -15495,7 +15572,7 @@ function ItalyIntelligentDaySignals(_ref79) {
     }
     navigator.geolocation.getCurrentPosition(function () {
       var _ref80 = _asyncToGenerator(_regenerator().m(function _callee20(pos) {
-        var remote, merged, helpedDelta, localByServer, _t18;
+        var remote, merged, helpedDelta, localByServer, _t19;
         return _regenerator().w(function (_context20) {
           while (1) switch (_context20.p = _context20.n) {
             case 0:
@@ -15530,7 +15607,7 @@ function ItalyIntelligentDaySignals(_ref79) {
               break;
             case 2:
               _context20.p = 2;
-              _t18 = _context20.v;
+              _t19 = _context20.v;
               setItems(local);
               setPulseState("local");
             case 3:
@@ -15583,7 +15660,7 @@ function ItalyIntelligentDaySignals(_ref79) {
     setMsg("Sending signal…");
     navigator.geolocation.getCurrentPosition(function () {
       var _ref81 = _asyncToGenerator(_regenerator().m(function _callee21(pos) {
-        var meta, now, localItem, local, res, s, _t19;
+        var meta, now, localItem, local, res, s, _t20;
         return _regenerator().w(function (_context21) {
           while (1) switch (_context21.p = _context21.n) {
             case 0:
@@ -15639,7 +15716,7 @@ function ItalyIntelligentDaySignals(_ref79) {
               break;
             case 3:
               _context21.p = 3;
-              _t19 = _context21.v;
+              _t20 = _context21.v;
               local.unshift(localItem);
               saveLocal(local);
               setItems(local);
@@ -15666,7 +15743,7 @@ function ItalyIntelligentDaySignals(_ref79) {
   };
   var confirm = function () {
     var _ref82 = _asyncToGenerator(_regenerator().m(function _callee22(item) {
-      var _res$signal, res, n, _t20;
+      var _res$signal, res, n, _t21;
       return _regenerator().w(function (_context22) {
         while (1) switch (_context22.p = _context22.n) {
           case 0:
@@ -15714,8 +15791,8 @@ function ItalyIntelligentDaySignals(_ref79) {
             break;
           case 5:
             _context22.p = 5;
-            _t20 = _context22.v;
-            if (String((_t20 === null || _t20 === void 0 ? void 0 : _t20.message) || "").includes("Already voted")) {
+            _t21 = _context22.v;
+            if (String((_t21 === null || _t21 === void 0 ? void 0 : _t21.message) || "").includes("Already voted")) {
               rememberVote(item.serverId, "already");
               flashMsg("You already responded to this signal.", "good", 3000);
             } else {
@@ -15732,7 +15809,7 @@ function ItalyIntelligentDaySignals(_ref79) {
   }();
   var gone = function () {
     var _ref83 = _asyncToGenerator(_regenerator().m(function _callee23(item) {
-      var next, _t21;
+      var next, _t22;
       return _regenerator().w(function (_context23) {
         while (1) switch (_context23.p = _context23.n) {
           case 0:
@@ -15760,8 +15837,8 @@ function ItalyIntelligentDaySignals(_ref79) {
             break;
           case 3:
             _context23.p = 3;
-            _t21 = _context23.v;
-            if (String((_t21 === null || _t21 === void 0 ? void 0 : _t21.message) || "").includes("Already voted")) {
+            _t22 = _context23.v;
+            if (String((_t22 === null || _t22 === void 0 ? void 0 : _t22.message) || "").includes("Already voted")) {
               rememberVote(item.serverId, "already");
               flashMsg("You already responded to this signal.", "good", 3000);
             } else {
@@ -15993,7 +16070,7 @@ function ItalyIntelligentDayPrevent(_ref84) {
     }
     navigator.geolocation.getCurrentPosition(function () {
       var _ref85 = _asyncToGenerator(_regenerator().m(function _callee24(pos) {
-        var lat, lng, _w$hourly, _w$current, _w$hourly2, _w$hourly3, _w$hourly4, _w$hourly5, _w$current2, url, r, w, times, startIndex, currentIso, found, endIndex, probs, gusts, codes, visibility, hourly, maxRain, maxGust, minVisibility, minVisibilityIndex, rel, minVisibilityTime, storm, hail, status, _details, visKm, when, _details2, _t22;
+        var lat, lng, _w$hourly, _w$current, _w$hourly2, _w$hourly3, _w$hourly4, _w$hourly5, _w$current2, url, r, w, times, startIndex, currentIso, found, endIndex, probs, gusts, codes, visibility, hourly, maxRain, maxGust, minVisibility, minVisibilityIndex, rel, minVisibilityTime, storm, hail, status, _details, visKm, when, _details2, _t23;
         return _regenerator().w(function (_context24) {
           while (1) switch (_context24.p = _context24.n) {
             case 0:
@@ -16105,7 +16182,7 @@ function ItalyIntelligentDayPrevent(_ref84) {
               break;
             case 5:
               _context24.p = 5;
-              _t22 = _context24.v;
+              _t23 = _context24.v;
               _details2 = localSignals.map(function (x) {
                 return "Traveler signal: ".concat(x.label).concat(x.target ? " \xB7 ".concat(x.target) : "");
               });
@@ -16454,7 +16531,7 @@ function ItalyIntelligentDayRescue(_ref87) {
   };
   var copyPhrase = function () {
     var _ref88 = _asyncToGenerator(_regenerator().m(function _callee25() {
-      var text, _t23;
+      var text, _t24;
       return _regenerator().w(function (_context25) {
         while (1) switch (_context25.p = _context25.n) {
           case 0:
@@ -16468,7 +16545,7 @@ function ItalyIntelligentDayRescue(_ref87) {
             break;
           case 3:
             _context25.p = 3;
-            _t23 = _context25.v;
+            _t24 = _context25.v;
             setMsg(text);
           case 4:
             return _context25.a(2);
@@ -18171,19 +18248,35 @@ function DashboardVoiceAssistant(_ref92) {
     }
   }), React.createElement("button", {
     type: "button",
-    onClick: function onClick() {
-      var ok = window.confirm("Switch the app and Voice Assistant back to English?");
-      if (!ok) return;
-      try {
-        localStorage.setItem("tripengine_ui_language", "en");
-      } catch (_) {}
-      setVoiceReplyName("");
-      setVoiceAssistantLanguage("en");
-      setQuickMenuOpen(false);
-      setPanelOpen(false);
-      setHelpOpen(false);
-      setHeard("");
-    },
+    onClick: _asyncToGenerator(_regenerator().m(function _callee26() {
+      var ok;
+      return _regenerator().w(function (_context26) {
+        while (1) switch (_context26.n) {
+          case 0:
+            _context26.n = 1;
+            return appConfirm("Switch the app and Voice Assistant back to English?");
+          case 1:
+            ok = _context26.v;
+            if (ok) {
+              _context26.n = 2;
+              break;
+            }
+            return _context26.a(2);
+          case 2:
+            try {
+              localStorage.setItem("tripengine_ui_language", "en");
+            } catch (_) {}
+            setVoiceReplyName("");
+            setVoiceAssistantLanguage("en");
+            setQuickMenuOpen(false);
+            setPanelOpen(false);
+            setHelpOpen(false);
+            setHeard("");
+          case 3:
+            return _context26.a(2);
+        }
+      }, _callee26);
+    })),
     style: {
       width: "100%",
       border: 0,
@@ -18251,18 +18344,18 @@ function DashboardVoiceAssistant(_ref92) {
     }
   }, listening ? "•••" : "🎤")));
 }
-function ScreenDashboard(_ref95) {
-  var data = _ref95.data,
-    setData = _ref95.setData,
-    onStartNewTrip = _ref95.onStartNewTrip,
-    uiLanguage = _ref95.uiLanguage,
-    setUiLanguage = _ref95.setUiLanguage,
-    theme = _ref95.theme,
-    setTheme = _ref95.setTheme,
-    archives = _ref95.archives,
-    onRestoreTrip = _ref95.onRestoreTrip,
-    onDeleteArchive = _ref95.onDeleteArchive,
-    onSectionChange = _ref95.onSectionChange;
+function ScreenDashboard(_ref96) {
+  var data = _ref96.data,
+    setData = _ref96.setData,
+    onStartNewTrip = _ref96.onStartNewTrip,
+    uiLanguage = _ref96.uiLanguage,
+    setUiLanguage = _ref96.setUiLanguage,
+    theme = _ref96.theme,
+    setTheme = _ref96.setTheme,
+    archives = _ref96.archives,
+    onRestoreTrip = _ref96.onRestoreTrip,
+    onDeleteArchive = _ref96.onDeleteArchive,
+    onSectionChange = _ref96.onSectionChange;
   var savedDashboardSectionRaw = loadSavedUI().section;
   var savedDashboardSection = ["tickets", "car", "house", "phrasebook"].includes(savedDashboardSectionRaw) ? savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet" : savedDashboardSectionRaw;
   var _useState169 = useState(savedDashboardSection || "overview"),
@@ -18337,12 +18430,12 @@ function ScreenDashboard(_ref95) {
     });
   }, []);
   var addDoc = function () {
-    var _ref96 = _asyncToGenerator(_regenerator().m(function _callee26(sectionId, doc) {
+    var _ref97 = _asyncToGenerator(_regenerator().m(function _callee27(sectionId, doc) {
       var blob, meta;
-      return _regenerator().w(function (_context26) {
-        while (1) switch (_context26.n) {
+      return _regenerator().w(function (_context27) {
+        while (1) switch (_context27.n) {
           case 0:
-            _context26.n = 1;
+            _context27.n = 1;
             return saveTravelDocument(doc);
           case 1:
             blob = doc.blob, meta = _objectWithoutProperties(doc, _excluded2);
@@ -18350,20 +18443,20 @@ function ScreenDashboard(_ref95) {
               return _objectSpread(_objectSpread({}, prev), {}, _defineProperty({}, sectionId, [].concat(_toConsumableArray(prev[sectionId]), [meta])));
             });
           case 2:
-            return _context26.a(2);
+            return _context27.a(2);
         }
-      }, _callee26);
+      }, _callee27);
     }));
     return function addDoc(_x31, _x32) {
-      return _ref96.apply(this, arguments);
+      return _ref97.apply(this, arguments);
     };
   }();
   var removeDoc = function () {
-    var _ref97 = _asyncToGenerator(_regenerator().m(function _callee27(sectionId, id) {
-      return _regenerator().w(function (_context27) {
-        while (1) switch (_context27.n) {
+    var _ref98 = _asyncToGenerator(_regenerator().m(function _callee28(sectionId, id) {
+      return _regenerator().w(function (_context28) {
+        while (1) switch (_context28.n) {
           case 0:
-            _context27.n = 1;
+            _context28.n = 1;
             return deleteTravelDocument(id);
           case 1:
             setDocuments(function (prev) {
@@ -18372,12 +18465,12 @@ function ScreenDashboard(_ref95) {
               })));
             });
           case 2:
-            return _context27.a(2);
+            return _context28.a(2);
         }
-      }, _callee27);
+      }, _callee28);
     }));
     return function removeDoc(_x33, _x34) {
-      return _ref97.apply(this, arguments);
+      return _ref98.apply(this, arguments);
     };
   }();
   var nights = tripLengthDays(data) - 1;
@@ -21269,10 +21362,10 @@ var ASIAN_UI_TEXT = {
   "Local data": ["本地数据", "로컬 데이터"]
 };
 function applyAsianTranslations(table) {
-  Object.entries(ASIAN_UI_TEXT).forEach(function (_ref98) {
-    var _ref99 = _slicedToArray(_ref98, 2),
-      key = _ref99[0],
-      pair = _ref99[1];
+  Object.entries(ASIAN_UI_TEXT).forEach(function (_ref99) {
+    var _ref100 = _slicedToArray(_ref99, 2),
+      key = _ref100[0],
+      pair = _ref100[1];
     if (table[key]) {
       table[key].zh = pair[0];
       table[key].ko = pair[1];
@@ -23072,18 +23165,18 @@ var ASIAN_1144_ATTRIBUTES = {
     "ko": "예: 로마 호텔 이름 또는 이탈리아 전체 주소"
   }
 };
-Object.entries(ASIAN_1144_FIXED_UI).forEach(function (_ref100) {
-  var _ref101 = _slicedToArray(_ref100, 2),
-    english = _ref101[0],
-    translated = _ref101[1];
+Object.entries(ASIAN_1144_FIXED_UI).forEach(function (_ref101) {
+  var _ref102 = _slicedToArray(_ref101, 2),
+    english = _ref102[0],
+    translated = _ref102[1];
   if (PREMENU_TEXT[english]) Object.assign(PREMENU_TEXT[english], translated);
   if (!GLOBAL_UI_TEXT[english]) GLOBAL_UI_TEXT[english] = {};
   Object.assign(GLOBAL_UI_TEXT[english], translated);
 });
-Object.entries(ASIAN_1144_ATTRIBUTES).forEach(function (_ref102) {
-  var _ref103 = _slicedToArray(_ref102, 2),
-    english = _ref103[0],
-    translated = _ref103[1];
+Object.entries(ASIAN_1144_ATTRIBUTES).forEach(function (_ref103) {
+  var _ref104 = _slicedToArray(_ref103, 2),
+    english = _ref104[0],
+    translated = _ref104[1];
   var table = PREMENU_ATTR[english] ? PREMENU_ATTR : GLOBAL_UI_ATTR;
   if (!table[english]) table[english] = {};
   Object.assign(table[english], translated);
@@ -23127,9 +23220,9 @@ function translatePremenuString(value, lang) {
 function localizePremenuDOM(lang) {
   localizeFullAppDOM(lang);
 }
-function VoiceAssistantFirstRun(_ref104) {
-  var onDone = _ref104.onDone,
-    onLanguageChange = _ref104.onLanguageChange;
+function VoiceAssistantFirstRun(_ref105) {
+  var onDone = _ref105.onDone,
+    onLanguageChange = _ref105.onLanguageChange;
   var _React$useState83 = React.useState(function () {
       return getInitialPrimaryAppLanguage();
     }),
@@ -23495,29 +23588,32 @@ function App() {
     });
   }, [step]);
   var startNewTrip = function () {
-    var _ref105 = _asyncToGenerator(_regenerator().m(function _callee28() {
+    var _ref106 = _asyncToGenerator(_regenerator().m(function _callee29() {
       var ok, currentUI, archived;
-      return _regenerator().w(function (_context28) {
-        while (1) switch (_context28.n) {
+      return _regenerator().w(function (_context29) {
+        while (1) switch (_context29.n) {
           case 0:
-            ok = window.confirm(translateGlobalUiString("Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later.", getVoiceAssistantLanguage()));
+            _context29.n = 1;
+            return appConfirm(translateGlobalUiString("Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later.", getVoiceAssistantLanguage()));
+          case 1:
+            ok = _context29.v;
             if (ok) {
-              _context28.n = 1;
+              _context29.n = 2;
               break;
             }
-            return _context28.a(2);
-          case 1:
+            return _context29.a(2);
+          case 2:
             currentUI = loadSavedUI();
             archived = archiveTripSnapshot(data, currentUI);
             if (!archived) {
-              _context28.n = 3;
+              _context29.n = 4;
               break;
             }
-            _context28.n = 2;
+            _context29.n = 3;
             return archiveActiveTravelDocuments(archived.archiveId);
-          case 2:
-            setArchives(loadTripArchive());
           case 3:
+            setArchives(loadTripArchive());
+          case 4:
             try {
               localStorage.removeItem("tripitaly_data");
               clearRouteDraft("itinerary");
@@ -23540,53 +23636,56 @@ function App() {
               homeCurrency: detectHomeCurrency()
             });
             setStep(0);
-          case 4:
-            return _context28.a(2);
+          case 5:
+            return _context29.a(2);
         }
-      }, _callee28);
+      }, _callee29);
     }));
     return function startNewTrip() {
-      return _ref105.apply(this, arguments);
+      return _ref106.apply(this, arguments);
     };
   }();
   var restoreArchivedTrip = function () {
-    var _ref106 = _asyncToGenerator(_regenerator().m(function _callee29(archiveId) {
+    var _ref107 = _asyncToGenerator(_regenerator().m(function _callee30(archiveId) {
       var list, item, ok, currentArchived, remainingArchive, restoredData;
-      return _regenerator().w(function (_context29) {
-        while (1) switch (_context29.n) {
+      return _regenerator().w(function (_context30) {
+        while (1) switch (_context30.n) {
           case 0:
             list = loadTripArchive();
             item = list.find(function (x) {
               return x.archiveId === archiveId;
             });
             if (item) {
-              _context29.n = 1;
+              _context30.n = 1;
               break;
             }
-            return _context29.a(2);
+            return _context30.a(2);
           case 1:
-            ok = window.confirm(translateGlobalUiString("Restore this trip? Your current trip will be archived first if it contains data.", getVoiceAssistantLanguage()));
+            _context30.n = 2;
+            return appConfirm(translateGlobalUiString("Restore this trip? Your current trip will be archived first if it contains data.", getVoiceAssistantLanguage()));
+          case 2:
+            ok = _context30.v;
             if (ok) {
-              _context29.n = 2;
+              _context30.n = 3;
               break;
             }
-            return _context29.a(2);
-          case 2:
+            return _context30.a(2);
+          case 3:
             if (!(data !== null && data !== void 0 && data.budget)) {
-              _context29.n = 3;
+              _context30.n = 4;
               break;
             }
             currentArchived = archiveTripSnapshot(data, loadSavedUI());
             if (!currentArchived) {
-              _context29.n = 3;
+              _context30.n = 4;
               break;
             }
-            _context29.n = 3;
+            _context30.n = 4;
             return archiveActiveTravelDocuments(currentArchived.archiveId);
-          case 3:
-            _context29.n = 4;
-            return restoreArchivedTravelDocuments(archiveId);
           case 4:
+            _context30.n = 5;
+            return restoreArchivedTravelDocuments(archiveId);
+          case 5:
             remainingArchive = loadTripArchive().filter(function (x) {
               return x.archiveId !== archiveId;
             });
@@ -23603,43 +23702,46 @@ function App() {
             } catch (e) {}
             setStep(9);
             window.location.reload();
-          case 5:
-            return _context29.a(2);
+          case 6:
+            return _context30.a(2);
         }
-      }, _callee29);
+      }, _callee30);
     }));
     return function restoreArchivedTrip(_x35) {
-      return _ref106.apply(this, arguments);
+      return _ref107.apply(this, arguments);
     };
   }();
   var deleteArchivedTrip = function () {
-    var _ref107 = _asyncToGenerator(_regenerator().m(function _callee30(archiveId) {
+    var _ref108 = _asyncToGenerator(_regenerator().m(function _callee31(archiveId) {
       var ok, next;
-      return _regenerator().w(function (_context30) {
-        while (1) switch (_context30.n) {
+      return _regenerator().w(function (_context31) {
+        while (1) switch (_context31.n) {
           case 0:
-            ok = window.confirm(translateGlobalUiString("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.", getVoiceAssistantLanguage()));
+            _context31.n = 1;
+            return appConfirm(translateGlobalUiString("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.", getVoiceAssistantLanguage()));
+          case 1:
+            ok = _context31.v;
             if (ok) {
-              _context30.n = 1;
+              _context31.n = 2;
               break;
             }
-            return _context30.a(2);
-          case 1:
-            _context30.n = 2;
-            return deleteArchivedTravelDocuments(archiveId);
+            return _context31.a(2);
           case 2:
+            _context31.n = 3;
+            return deleteArchivedTravelDocuments(archiveId);
+          case 3:
             next = loadTripArchive().filter(function (x) {
               return x.archiveId !== archiveId;
             });
             saveTripArchive(next);
             setArchives(next);
-          case 3:
-            return _context30.a(2);
+          case 4:
+            return _context31.a(2);
         }
-      }, _callee30);
+      }, _callee31);
     }));
     return function deleteArchivedTrip(_x36) {
-      return _ref107.apply(this, arguments);
+      return _ref108.apply(this, arguments);
     };
   }();
   var setupLabels = setupStepLabels(uiLanguage, data.mode === "onsite");
