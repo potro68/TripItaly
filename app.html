@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.10 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.10_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.11 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.11_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2814,6 +2814,14 @@
     color:#243746 !important;
     opacity:1 !important;
     font-weight:700;
+  }
+
+  /* V1.14.11 — "Tap to open in Google Maps" badge on the map: white text on dark badge (was dark on dark). */
+  body .app .map-tap-hint,
+  body:not(.theme-navy) .app .map-tap-hint{
+    color:#FFFFFF !important;
+    background:rgba(14,59,82,0.88) !important;
+    opacity:1 !important;
   }
 </style>
 </head>
