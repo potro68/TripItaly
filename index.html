@@ -1,7 +1,69 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.11 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.11_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.13 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.13_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
+<script id="gate-687">
+// 687 Italy V1.14.13 — app gate.
+// The full app runs only inside the installed 687 Italy Android app (Trusted Web Activity).
+// Opened in a normal browser, tripitaly.app shows a landing page with the store links.
+(function () {
+  var PKG = "com.go687.italy";
+  var KEY = "687_italy_app_ok";
+  var ok = false;
+  function remember() { try { localStorage.setItem(KEY, "1"); } catch (e) {} }
+  try { if (localStorage.getItem(KEY) === "1") ok = true; } catch (e) {}
+  // Launched from the installed Android app: Chrome sets this referrer.
+  if (String(document.referrer || "").indexOf("android-app://" + PKG) === 0) { ok = true; remember(); }
+  // Test Worker only: unlock with #sblocca-687 to test the full app in Chrome.
+  var host = location.hostname;
+  var isTest = host.indexOf("687italy-test.") === 0 || host === "localhost" || host === "127.0.0.1";
+  if (isTest && location.hash === "#sblocca-687") { ok = true; remember(); }
+  if (isTest && location.hash === "#blocca-687") { ok = false; try { localStorage.removeItem(KEY); } catch (e) {} }
+  if (isTest) {
+    window.addEventListener("hashchange", function () {
+      if (location.hash === "#sblocca-687") { remember(); location.reload(); }
+      if (location.hash === "#blocca-687") { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); }
+    });
+  }
+  if (ok) return;
+
+  var it = String(navigator.language || "").toLowerCase().indexOf("it") === 0;
+  var T = it ? {
+    tag: "Il tuo compagno di viaggio in Italia",
+    lead: "Itinerario, mappe, auto e parcheggi, traduttore con voce, budget e avvisi Guardian: tutto in un'app.",
+    note: "687 Italy si usa dall'app. Scaricala dal tuo store:",
+    more: "Scopri di più su go687.com"
+  } : {
+    tag: "Your travel companion for Italy",
+    lead: "Itinerary, maps, car and parking, voice translator, budget and Guardian alerts, all in one app.",
+    note: "687 Italy works from the app. Get it from your store:",
+    more: "Learn more at go687.com"
+  };
+  var html =
+    '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>687 Italy</title><meta name="theme-color" content="#0E3B52">' +
+    '<style>' +
+    ':root{--bg:#eef6fa;--card:#fff;--ink:#132a3a;--muted:#607078;--red:#0e3b52;--pink:#b8860b}' +
+    '@media (prefers-color-scheme:dark){:root{--bg:#081c27;--card:#0f2a3a;--ink:#eef6fa;--muted:#a9bcc6;--pink:#f4b93e}}' +
+    '*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;' +
+    'background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px}' +
+    '.c{width:100%;max-width:440px;background:var(--card);border-radius:22px;padding:30px 24px;text-align:center;' +
+    'box-shadow:0 18px 50px rgba(14,59,82,.14)}' +
+    '.sun{width:72px;height:24px;border-radius:6px;margin:0 auto 16px;background:linear-gradient(90deg,#009246 33.3%,#fff 33.3% 66.6%,#ce2b37 66.6%);box-shadow:0 0 0 1px rgba(0,0,0,.08)}' +
+    'h1{font-size:30px;margin:0;letter-spacing:-.01em}.tag{color:var(--pink);font-weight:700;margin:4px 0 14px}' +
+    'p{margin:0 0 14px;color:var(--muted)}.note{color:var(--ink);font-weight:600}' +
+    'a.b{display:block;text-decoration:none;font-weight:700;border-radius:14px;padding:14px;margin:10px 0}' +
+    'a.p{background:var(--red);color:#fff}a.s{background:#111;color:#fff}' +
+    'a.m{color:var(--pink);font-size:14px;display:inline-block;margin-top:10px}' +
+    '</style></head><body><main class="c"><div class="sun"></div><h1>687 Italy</h1>' +
+    '<div class="tag">' + T.tag + '</div><p>' + T.lead + '</p><p class="note">' + T.note + '</p>' +
+    '<a class="b p" href="https://play.google.com/store/apps/details?id=' + PKG + '">Google Play</a>' +
+    '<a class="b s" href="https://apps.apple.com/app/687italy/id6805967953">App Store</a>' +
+    '<a class="m" href="https://go687.com/">' + T.more + '</a></main></body>';
+  try { window.stop(); } catch (e) {}
+  document.documentElement.innerHTML = html;
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>687 Italy</title>
@@ -2836,7 +2898,9 @@
 
 var _GLOBAL_UI_TEXT;
 var _excluded = ["blob"],
-  _excluded2 = ["blob"];
+  _excluded2 = ["blob"],
+  _excluded3 = ["blob"],
+  _excluded4 = ["data"];
 function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
 function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
@@ -3284,55 +3348,55 @@ function fetchLitAirports(_x) {
   return _fetchLitAirports.apply(this, arguments);
 }
 function _fetchLitAirports() {
-  _fetchLitAirports = _asyncToGenerator(_regenerator().m(function _callee33(originIATA) {
+  _fetchLitAirports = _asyncToGenerator(_regenerator().m(function _callee37(originIATA) {
     var mode,
       results,
       litCodes,
       lit,
-      _args33 = arguments,
-      _t25;
-    return _regenerator().w(function (_context33) {
-      while (1) switch (_context33.p = _context33.n) {
+      _args37 = arguments,
+      _t29;
+    return _regenerator().w(function (_context37) {
+      while (1) switch (_context37.p = _context37.n) {
         case 0:
-          mode = _args33.length > 1 && _args33[1] !== undefined ? _args33[1] : "direct";
+          mode = _args37.length > 1 && _args37[1] !== undefined ? _args37[1] : "direct";
           if (!(!originIATA || !PROXY_URL)) {
-            _context33.n = 1;
+            _context37.n = 1;
             break;
           }
-          return _context33.a(2, null);
+          return _context37.a(2, null);
         case 1:
-          _context33.p = 1;
-          _context33.n = 2;
+          _context37.p = 1;
+          _context37.n = 2;
           return Promise.all(AIRPORTS.map(function () {
-            var _ref109 = _asyncToGenerator(_regenerator().m(function _callee32(airport) {
+            var _ref112 = _asyncToGenerator(_regenerator().m(function _callee36(airport) {
               var url, res, json, hasData;
-              return _regenerator().w(function (_context32) {
-                while (1) switch (_context32.n) {
+              return _regenerator().w(function (_context36) {
+                while (1) switch (_context36.n) {
                   case 0:
                     url = "".concat(PROXY_URL, "?origin=").concat(originIATA, "&destination=").concat(airport.code, "&mode=").concat(mode);
-                    _context32.n = 1;
+                    _context36.n = 1;
                     return fetch(url);
                   case 1:
-                    res = _context32.v;
-                    _context32.n = 2;
+                    res = _context36.v;
+                    _context36.n = 2;
                     return res.json();
                   case 2:
-                    json = _context32.v;
+                    json = _context36.v;
                     hasData = json.success === true && Array.isArray(json.data) && json.data.length > 0;
-                    return _context32.a(2, {
+                    return _context36.a(2, {
                       airportCode: airport.code,
                       hasData: hasData,
                       raw: json
                     });
                 }
-              }, _callee32);
+              }, _callee36);
             }));
-            return function (_x37) {
-              return _ref109.apply(this, arguments);
+            return function (_x42) {
+              return _ref112.apply(this, arguments);
             };
           }()));
         case 2:
-          results = _context33.v;
+          results = _context37.v;
           litCodes = results.filter(function (r) {
             return r.hasData;
           }).map(function (r) {
@@ -3341,13 +3405,13 @@ function _fetchLitAirports() {
           lit = AIRPORTS.filter(function (a) {
             return litCodes.includes(a.code);
           });
-          return _context33.a(2, lit);
+          return _context37.a(2, lit);
         case 3:
-          _context33.p = 3;
-          _t25 = _context33.v;
-          return _context33.a(2, null);
+          _context37.p = 3;
+          _t29 = _context37.v;
+          return _context37.a(2, null);
       }
-    }, _callee33, null, [[1, 3]]);
+    }, _callee37, null, [[1, 3]]);
   }));
   return _fetchLitAirports.apply(this, arguments);
 }
@@ -3362,10 +3426,27 @@ function suggestAirports(origin) {
 function suggestAirport(origin) {
   return suggestAirports(origin)[0] || null;
 }
+function appDateLocale() {
+  try {
+    var l = String(window.__687UiLang || localStorage.getItem("tripengine_ui_language") || "en").slice(0, 2);
+    return {
+      en: "en-US",
+      it: "it-IT",
+      de: "de-DE",
+      fr: "fr-FR",
+      es: "es-ES",
+      ja: "ja-JP",
+      zh: "zh-CN",
+      ko: "ko-KR"
+    }[l] || "en-US";
+  } catch (_) {
+    return "en-US";
+  }
+}
 function formatDateEN(isoDate) {
   if (!isoDate) return "";
   var d = new Date(isoDate + "T00:00:00");
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString(appDateLocale(), {
     month: "short",
     day: "numeric",
     year: "numeric"
@@ -5099,7 +5180,7 @@ function ScreenIntro(_ref8) {
   }, React.createElement("button", {
     className: "btn-primary",
     onClick: onNext
-  }, "Start planning")));
+  }, "Start planning"), React.createElement(ItalyRestoreLink, null)));
 }
 function Stepper(_ref9) {
   var value = _ref9.value,
@@ -6348,18 +6429,18 @@ function tripDateForDay(data, dayNum) {
 }
 function shortDate(d) {
   if (!d) return "";
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString(appDateLocale(), {
     month: "short",
     day: "numeric"
   });
 }
 function formatDayStrip(d) {
   return {
-    weekday: d.toLocaleDateString("en-US", {
+    weekday: d.toLocaleDateString(appDateLocale(), {
       weekday: "short"
     }),
     dayNum: d.getDate(),
-    month: d.toLocaleDateString("en-US", {
+    month: d.toLocaleDateString(appDateLocale(), {
       month: "short"
     })
   };
@@ -6478,42 +6559,42 @@ function fetchCurrencyConversionRate(_x3, _x4) {
   return _fetchCurrencyConversionRate.apply(this, arguments);
 }
 function _fetchCurrencyConversionRate() {
-  _fetchCurrencyConversionRate = _asyncToGenerator(_regenerator().m(function _callee34(fromCurrency, toCurrency) {
-    var from, to, _j$rates2, r, j, v, _t26;
-    return _regenerator().w(function (_context34) {
-      while (1) switch (_context34.p = _context34.n) {
+  _fetchCurrencyConversionRate = _asyncToGenerator(_regenerator().m(function _callee38(fromCurrency, toCurrency) {
+    var from, to, _j$rates2, r, j, v, _t30;
+    return _regenerator().w(function (_context38) {
+      while (1) switch (_context38.p = _context38.n) {
         case 0:
           from = String(fromCurrency || "").toUpperCase();
           to = String(toCurrency || "").toUpperCase();
           if (!(!from || !to)) {
-            _context34.n = 1;
+            _context38.n = 1;
             break;
           }
-          return _context34.a(2, null);
+          return _context38.a(2, null);
         case 1:
           if (!(from === to)) {
-            _context34.n = 2;
+            _context38.n = 2;
             break;
           }
-          return _context34.a(2, 1);
+          return _context38.a(2, 1);
         case 2:
-          _context34.p = 2;
-          _context34.n = 3;
+          _context38.p = 2;
+          _context38.n = 3;
           return fetch("https://api.frankfurter.dev/v1/latest?base=".concat(from, "&symbols=").concat(to));
         case 3:
-          r = _context34.v;
-          _context34.n = 4;
+          r = _context38.v;
+          _context38.n = 4;
           return r.json();
         case 4:
-          j = _context34.v;
+          j = _context38.v;
           v = Number(j === null || j === void 0 || (_j$rates2 = j.rates) === null || _j$rates2 === void 0 ? void 0 : _j$rates2[to]);
-          return _context34.a(2, Number.isFinite(v) && v > 0 ? v : null);
+          return _context38.a(2, Number.isFinite(v) && v > 0 ? v : null);
         case 5:
-          _context34.p = 5;
-          _t26 = _context34.v;
-          return _context34.a(2, null);
+          _context38.p = 5;
+          _t30 = _context38.v;
+          return _context38.a(2, null);
       }
-    }, _callee34, null, [[2, 5]]);
+    }, _callee38, null, [[2, 5]]);
   }));
   return _fetchCurrencyConversionRate.apply(this, arguments);
 }
@@ -8502,18 +8583,18 @@ function detectCurrentCountry() {
   return _detectCurrentCountry.apply(this, arguments);
 }
 function _detectCurrentCountry() {
-  _detectCurrentCountry = _asyncToGenerator(_regenerator().m(function _callee35() {
+  _detectCurrentCountry = _asyncToGenerator(_regenerator().m(function _callee39() {
     var pos, lat, lng, url, res, json, a, countryCode, locality;
-    return _regenerator().w(function (_context35) {
-      while (1) switch (_context35.n) {
+    return _regenerator().w(function (_context39) {
+      while (1) switch (_context39.n) {
         case 0:
           if ("geolocation" in navigator) {
-            _context35.n = 1;
+            _context39.n = 1;
             break;
           }
           throw new Error("Location is not supported on this device.");
         case 1:
-          _context35.n = 2;
+          _context39.n = 2;
           return new Promise(function (resolve, reject) {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,
@@ -8522,32 +8603,32 @@ function _detectCurrentCountry() {
             });
           });
         case 2:
-          pos = _context35.v;
+          pos = _context39.v;
           lat = pos.coords.latitude;
           lng = pos.coords.longitude;
           url = "https://nominatim.openstreetmap.org/reverse?lat=".concat(encodeURIComponent(lat), "&lon=").concat(encodeURIComponent(lng), "&format=json&zoom=10&addressdetails=1");
-          _context35.n = 3;
+          _context39.n = 3;
           return fetch(url, {
             headers: {
               "Accept-Language": "en"
             }
           });
         case 3:
-          res = _context35.v;
+          res = _context39.v;
           if (res.ok) {
-            _context35.n = 4;
+            _context39.n = 4;
             break;
           }
           throw new Error("Location verification is temporarily unavailable.");
         case 4:
-          _context35.n = 5;
+          _context39.n = 5;
           return res.json();
         case 5:
-          json = _context35.v;
+          json = _context39.v;
           a = (json === null || json === void 0 ? void 0 : json.address) || {};
           countryCode = String(a.country_code || "").toUpperCase();
           locality = a.city || a.town || a.village || a.municipality || a.county || "";
-          return _context35.a(2, {
+          return _context39.a(2, {
             lat: lat,
             lng: lng,
             countryCode: countryCode,
@@ -8555,7 +8636,7 @@ function _detectCurrentCountry() {
             locality: locality
           });
       }
-    }, _callee35);
+    }, _callee39);
   }));
   return _detectCurrentCountry.apply(this, arguments);
 }
@@ -8755,16 +8836,16 @@ function saveTravelDocument(_x6) {
   return _saveTravelDocument.apply(this, arguments);
 }
 function _saveTravelDocument() {
-  _saveTravelDocument = _asyncToGenerator(_regenerator().m(function _callee36(record) {
+  _saveTravelDocument = _asyncToGenerator(_regenerator().m(function _callee40(record) {
     var db;
-    return _regenerator().w(function (_context36) {
-      while (1) switch (_context36.n) {
+    return _regenerator().w(function (_context40) {
+      while (1) switch (_context40.n) {
         case 0:
-          _context36.n = 1;
+          _context40.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context36.v;
-          return _context36.a(2, new Promise(function (resolve, reject) {
+          db = _context40.v;
+          return _context40.a(2, new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             tx.objectStore(TRIPITALY_DOC_STORE).put(record);
             tx.oncomplete = function () {
@@ -8777,7 +8858,7 @@ function _saveTravelDocument() {
             };
           }));
       }
-    }, _callee36);
+    }, _callee40);
   }));
   return _saveTravelDocument.apply(this, arguments);
 }
@@ -8785,17 +8866,17 @@ function loadTravelDocuments() {
   return _loadTravelDocuments.apply(this, arguments);
 }
 function _loadTravelDocuments() {
-  _loadTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee37() {
-    var db, _t27;
-    return _regenerator().w(function (_context37) {
-      while (1) switch (_context37.p = _context37.n) {
+  _loadTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee41() {
+    var db, _t31;
+    return _regenerator().w(function (_context41) {
+      while (1) switch (_context41.p = _context41.n) {
         case 0:
-          _context37.p = 0;
-          _context37.n = 1;
+          _context41.p = 0;
+          _context41.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context37.v;
-          _context37.n = 2;
+          db = _context41.v;
+          _context41.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readonly");
             var req = tx.objectStore(TRIPITALY_DOC_STORE).getAll();
@@ -8810,13 +8891,13 @@ function _loadTravelDocuments() {
             };
           });
         case 2:
-          return _context37.a(2, _context37.v);
+          return _context41.a(2, _context41.v);
         case 3:
-          _context37.p = 3;
-          _t27 = _context37.v;
-          return _context37.a(2, []);
+          _context41.p = 3;
+          _t31 = _context41.v;
+          return _context41.a(2, []);
       }
-    }, _callee37, null, [[0, 3]]);
+    }, _callee41, null, [[0, 3]]);
   }));
   return _loadTravelDocuments.apply(this, arguments);
 }
@@ -8824,17 +8905,17 @@ function deleteTravelDocument(_x7) {
   return _deleteTravelDocument.apply(this, arguments);
 }
 function _deleteTravelDocument() {
-  _deleteTravelDocument = _asyncToGenerator(_regenerator().m(function _callee38(id) {
-    var db, _t28;
-    return _regenerator().w(function (_context38) {
-      while (1) switch (_context38.p = _context38.n) {
+  _deleteTravelDocument = _asyncToGenerator(_regenerator().m(function _callee42(id) {
+    var db, _t32;
+    return _regenerator().w(function (_context42) {
+      while (1) switch (_context42.p = _context42.n) {
         case 0:
-          _context38.p = 0;
-          _context38.n = 1;
+          _context42.p = 0;
+          _context42.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context38.v;
-          _context38.n = 2;
+          db = _context42.v;
+          _context42.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             tx.objectStore(TRIPITALY_DOC_STORE)["delete"](id);
@@ -8845,15 +8926,15 @@ function _deleteTravelDocument() {
           });
         case 2:
           db.close();
-          _context38.n = 4;
+          _context42.n = 4;
           break;
         case 3:
-          _context38.p = 3;
-          _t28 = _context38.v;
+          _context42.p = 3;
+          _t32 = _context42.v;
         case 4:
-          return _context38.a(2);
+          return _context42.a(2);
       }
-    }, _callee38, null, [[0, 3]]);
+    }, _callee42, null, [[0, 3]]);
   }));
   return _deleteTravelDocument.apply(this, arguments);
 }
@@ -8861,23 +8942,23 @@ function archiveActiveTravelDocuments(_x8) {
   return _archiveActiveTravelDocuments.apply(this, arguments);
 }
 function _archiveActiveTravelDocuments() {
-  _archiveActiveTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee39(archiveId) {
-    var db, _t29;
-    return _regenerator().w(function (_context39) {
-      while (1) switch (_context39.p = _context39.n) {
+  _archiveActiveTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee43(archiveId) {
+    var db, _t33;
+    return _regenerator().w(function (_context43) {
+      while (1) switch (_context43.p = _context43.n) {
         case 0:
           if (archiveId) {
-            _context39.n = 1;
+            _context43.n = 1;
             break;
           }
-          return _context39.a(2);
+          return _context43.a(2);
         case 1:
-          _context39.p = 1;
-          _context39.n = 2;
+          _context43.p = 1;
+          _context43.n = 2;
           return openTravelDocDB();
         case 2:
-          db = _context39.v;
-          _context39.n = 3;
+          db = _context43.v;
+          _context43.n = 3;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             var store = tx.objectStore(TRIPITALY_DOC_STORE);
@@ -8901,15 +8982,15 @@ function _archiveActiveTravelDocuments() {
           });
         case 3:
           db.close();
-          _context39.n = 5;
+          _context43.n = 5;
           break;
         case 4:
-          _context39.p = 4;
-          _t29 = _context39.v;
+          _context43.p = 4;
+          _t33 = _context43.v;
         case 5:
-          return _context39.a(2);
+          return _context43.a(2);
       }
-    }, _callee39, null, [[1, 4]]);
+    }, _callee43, null, [[1, 4]]);
   }));
   return _archiveActiveTravelDocuments.apply(this, arguments);
 }
@@ -8917,23 +8998,23 @@ function restoreArchivedTravelDocuments(_x9) {
   return _restoreArchivedTravelDocuments.apply(this, arguments);
 }
 function _restoreArchivedTravelDocuments() {
-  _restoreArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee40(archiveId) {
-    var db, _t30;
-    return _regenerator().w(function (_context40) {
-      while (1) switch (_context40.p = _context40.n) {
+  _restoreArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee44(archiveId) {
+    var db, _t34;
+    return _regenerator().w(function (_context44) {
+      while (1) switch (_context44.p = _context44.n) {
         case 0:
           if (archiveId) {
-            _context40.n = 1;
+            _context44.n = 1;
             break;
           }
-          return _context40.a(2);
+          return _context44.a(2);
         case 1:
-          _context40.p = 1;
-          _context40.n = 2;
+          _context44.p = 1;
+          _context44.n = 2;
           return openTravelDocDB();
         case 2:
-          db = _context40.v;
-          _context40.n = 3;
+          db = _context44.v;
+          _context44.n = 3;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             var store = tx.objectStore(TRIPITALY_DOC_STORE);
@@ -8957,15 +9038,15 @@ function _restoreArchivedTravelDocuments() {
           });
         case 3:
           db.close();
-          _context40.n = 5;
+          _context44.n = 5;
           break;
         case 4:
-          _context40.p = 4;
-          _t30 = _context40.v;
+          _context44.p = 4;
+          _t34 = _context44.v;
         case 5:
-          return _context40.a(2);
+          return _context44.a(2);
       }
-    }, _callee40, null, [[1, 4]]);
+    }, _callee44, null, [[1, 4]]);
   }));
   return _restoreArchivedTravelDocuments.apply(this, arguments);
 }
@@ -8973,23 +9054,23 @@ function deleteArchivedTravelDocuments(_x0) {
   return _deleteArchivedTravelDocuments.apply(this, arguments);
 }
 function _deleteArchivedTravelDocuments() {
-  _deleteArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee41(archiveId) {
-    var db, _t31;
-    return _regenerator().w(function (_context41) {
-      while (1) switch (_context41.p = _context41.n) {
+  _deleteArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee45(archiveId) {
+    var db, _t35;
+    return _regenerator().w(function (_context45) {
+      while (1) switch (_context45.p = _context45.n) {
         case 0:
           if (archiveId) {
-            _context41.n = 1;
+            _context45.n = 1;
             break;
           }
-          return _context41.a(2);
+          return _context45.a(2);
         case 1:
-          _context41.p = 1;
-          _context41.n = 2;
+          _context45.p = 1;
+          _context45.n = 2;
           return openTravelDocDB();
         case 2:
-          db = _context41.v;
-          _context41.n = 3;
+          db = _context45.v;
+          _context45.n = 3;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             var store = tx.objectStore(TRIPITALY_DOC_STORE);
@@ -9009,15 +9090,15 @@ function _deleteArchivedTravelDocuments() {
           });
         case 3:
           db.close();
-          _context41.n = 5;
+          _context45.n = 5;
           break;
         case 4:
-          _context41.p = 4;
-          _t31 = _context41.v;
+          _context45.p = 4;
+          _t35 = _context45.v;
         case 5:
-          return _context41.a(2);
+          return _context45.a(2);
       }
-    }, _callee41, null, [[1, 4]]);
+    }, _callee45, null, [[1, 4]]);
   }));
   return _deleteArchivedTravelDocuments.apply(this, arguments);
 }
@@ -9025,17 +9106,17 @@ function clearTravelDocuments() {
   return _clearTravelDocuments.apply(this, arguments);
 }
 function _clearTravelDocuments() {
-  _clearTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee42() {
-    var db, _t32;
-    return _regenerator().w(function (_context42) {
-      while (1) switch (_context42.p = _context42.n) {
+  _clearTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee46() {
+    var db, _t36;
+    return _regenerator().w(function (_context46) {
+      while (1) switch (_context46.p = _context46.n) {
         case 0:
-          _context42.p = 0;
-          _context42.n = 1;
+          _context46.p = 0;
+          _context46.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context42.v;
-          _context42.n = 2;
+          db = _context46.v;
+          _context46.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             tx.objectStore(TRIPITALY_DOC_STORE).clear();
@@ -9046,15 +9127,15 @@ function _clearTravelDocuments() {
           });
         case 2:
           db.close();
-          _context42.n = 4;
+          _context46.n = 4;
           break;
         case 3:
-          _context42.p = 3;
-          _t32 = _context42.v;
+          _context46.p = 3;
+          _t36 = _context46.v;
         case 4:
-          return _context42.a(2);
+          return _context46.a(2);
       }
-    }, _callee42, null, [[0, 3]]);
+    }, _callee46, null, [[0, 3]]);
   }));
   return _clearTravelDocuments.apply(this, arguments);
 }
@@ -9062,17 +9143,17 @@ function openSavedTravelDocument(_x1) {
   return _openSavedTravelDocument.apply(this, arguments);
 }
 function _openSavedTravelDocument() {
-  _openSavedTravelDocument = _asyncToGenerator(_regenerator().m(function _callee43(id) {
-    var db, record, url, a, _t33;
-    return _regenerator().w(function (_context43) {
-      while (1) switch (_context43.p = _context43.n) {
+  _openSavedTravelDocument = _asyncToGenerator(_regenerator().m(function _callee47(id) {
+    var db, record, url, a, _t37;
+    return _regenerator().w(function (_context47) {
+      while (1) switch (_context47.p = _context47.n) {
         case 0:
-          _context43.p = 0;
-          _context43.n = 1;
+          _context47.p = 0;
+          _context47.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context43.v;
-          _context43.n = 2;
+          db = _context47.v;
+          _context47.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readonly");
             var req = tx.objectStore(TRIPITALY_DOC_STORE).get(id);
@@ -9087,12 +9168,12 @@ function _openSavedTravelDocument() {
             };
           });
         case 2:
-          record = _context43.v;
+          record = _context47.v;
           if (record !== null && record !== void 0 && record.blob) {
-            _context43.n = 3;
+            _context47.n = 3;
             break;
           }
-          return _context43.a(2);
+          return _context47.a(2);
         case 3:
           url = URL.createObjectURL(record.blob);
           a = document.createElement("a");
@@ -9105,15 +9186,15 @@ function _openSavedTravelDocument() {
           setTimeout(function () {
             return URL.revokeObjectURL(url);
           }, 60000);
-          _context43.n = 5;
+          _context47.n = 5;
           break;
         case 4:
-          _context43.p = 4;
-          _t33 = _context43.v;
+          _context47.p = 4;
+          _t37 = _context47.v;
         case 5:
-          return _context43.a(2);
+          return _context47.a(2);
       }
-    }, _callee43, null, [[0, 4]]);
+    }, _callee47, null, [[0, 4]]);
   }));
   return _openSavedTravelDocument.apply(this, arguments);
 }
@@ -9496,43 +9577,43 @@ function geocodeAddress(_x11) {
   return _geocodeAddress.apply(this, arguments);
 }
 function _geocodeAddress() {
-  _geocodeAddress = _asyncToGenerator(_regenerator().m(function _callee44(query) {
-    var url, res, json, _t34;
-    return _regenerator().w(function (_context44) {
-      while (1) switch (_context44.p = _context44.n) {
+  _geocodeAddress = _asyncToGenerator(_regenerator().m(function _callee48(query) {
+    var url, res, json, _t38;
+    return _regenerator().w(function (_context48) {
+      while (1) switch (_context48.p = _context48.n) {
         case 0:
-          _context44.p = 0;
+          _context48.p = 0;
           url = "https://nominatim.openstreetmap.org/search?q=".concat(encodeURIComponent(query), "&format=json&limit=1");
-          _context44.n = 1;
+          _context48.n = 1;
           return fetch(url, {
             headers: {
               "Accept-Language": "en"
             }
           });
         case 1:
-          res = _context44.v;
-          _context44.n = 2;
+          res = _context48.v;
+          _context48.n = 2;
           return res.json();
         case 2:
-          json = _context44.v;
+          json = _context48.v;
           if (!(json && json[0])) {
-            _context44.n = 3;
+            _context48.n = 3;
             break;
           }
-          return _context44.a(2, {
+          return _context48.a(2, {
             lat: parseFloat(json[0].lat),
             lng: parseFloat(json[0].lon)
           });
         case 3:
-          _context44.n = 5;
+          _context48.n = 5;
           break;
         case 4:
-          _context44.p = 4;
-          _t34 = _context44.v;
+          _context48.p = 4;
+          _t38 = _context48.v;
         case 5:
-          return _context44.a(2, null);
+          return _context48.a(2, null);
       }
-    }, _callee44, null, [[0, 4]]);
+    }, _callee48, null, [[0, 4]]);
   }));
   return _geocodeAddress.apply(this, arguments);
 }
@@ -10055,7 +10136,7 @@ function printTripItinerary(data) {
   var routeName = data.itinerary || "Italy trip";
   var people = data.people || 1;
   var daysHTML = days.map(function (d) {
-    var dateText = d.date ? d.date.toLocaleDateString("en-US", {
+    var dateText = d.date ? d.date.toLocaleDateString(appDateLocale(), {
       weekday: "long",
       month: "long",
       day: "numeric",
@@ -10159,7 +10240,7 @@ function DayDetailPanel(_ref34) {
     onGoTo = _ref34.onGoTo,
     dailyAmount = _ref34.dailyAmount,
     transfer = _ref34.transfer;
-  var dateLabel = date ? date.toLocaleDateString("en-US", {
+  var dateLabel = date ? date.toLocaleDateString(appDateLocale(), {
     weekday: "long",
     month: "long",
     day: "numeric"
@@ -10529,7 +10610,7 @@ function DashItinerary(_ref36) {
       className: "print-day"
     }, React.createElement("div", {
       className: "print-day-h"
-    }, "Day ", dayNum, date ? " · " + date.toLocaleDateString("en-US", {
+    }, "Day ", dayNum, date ? " · " + date.toLocaleDateString(appDateLocale(), {
       weekday: "long",
       month: "long",
       day: "numeric"
@@ -12396,7 +12477,7 @@ function DashWeather(_ref49) {
       className: "weather-day-chip"
     }, React.createElement("div", {
       className: "weather-day-name"
-    }, d.toLocaleDateString("en-US", {
+    }, d.toLocaleDateString(appDateLocale(), {
       weekday: "short"
     })), React.createElement("div", {
       className: "weather-day-icon"
@@ -12635,7 +12716,7 @@ function DashDrive(_ref52) {
       from: from,
       to: to,
       dayNum: dayNum,
-      dateLabel: date ? date.toLocaleDateString("en-US", {
+      dateLabel: date ? date.toLocaleDateString(appDateLocale(), {
         weekday: "short",
         month: "short",
         day: "numeric"
@@ -12898,9 +12979,691 @@ function HomeItalyTime(_ref54) {
     }
   }, "Home time is saved automatically from your device when you plan the trip and keeps daylight-saving changes in sync."));
 }
-function DashTools(_ref55) {
-  var data = _ref55.data,
-    onDeleteLocalData = _ref55.onDeleteLocalData;
+var IT_BACKUP_SKIP_KEYS = ["tripengine_device_id_v1", "tripitaly_pulse_device_v1", "tripengine_api_rate_v1", "tripengine_api_usage_v1"];
+function itBackupLang() {
+  try {
+    return String(window.__687UiLang || localStorage.getItem("tripengine_ui_language") || "en").slice(0, 2);
+  } catch (_) {
+    return "en";
+  }
+}
+var IT_BACKUP_MSG = {
+  saved: {
+    en: "Backup saved in your Downloads folder.",
+    it: "Backup salvato nella cartella Download.",
+    ja: "バックアップをダウンロードフォルダに保存しました。",
+    es: "Copia de seguridad guardada en la carpeta Descargas.",
+    de: "Sicherung im Ordner Downloads gespeichert.",
+    fr: "Sauvegarde enregistrée dans le dossier Téléchargements.",
+    zh: "备份已保存到“下载”文件夹。",
+    ko: "백업이 다운로드 폴더에 저장되었습니다."
+  },
+  saveError: {
+    en: "The backup could not be saved. Please try again.",
+    it: "Impossibile salvare il backup. Riprova.",
+    ja: "バックアップを保存できませんでした。もう一度お試しください。",
+    es: "No se pudo guardar la copia de seguridad. Inténtalo de nuevo.",
+    de: "Die Sicherung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    fr: "Impossible d’enregistrer la sauvegarde. Réessayez.",
+    zh: "无法保存备份，请重试。",
+    ko: "백업을 저장할 수 없습니다. 다시 시도하세요."
+  },
+  confirm: {
+    en: "Restore this backup?\nThe trip, settings and Wallet documents on this phone will be replaced.",
+    it: "Ripristinare questo backup?\nIl viaggio, le impostazioni e i documenti del Portafoglio su questo telefono verranno sostituiti.",
+    ja: "このバックアップを復元しますか？\nこの端末の旅行・設定・ウォレットの書類は置き換えられます。",
+    es: "¿Restaurar esta copia de seguridad?\nSe sustituirán el viaje, los ajustes y los documentos de la cartera de este teléfono.",
+    de: "Diese Sicherung wiederherstellen?\nReise, Einstellungen und Wallet-Dokumente auf diesem Telefon werden ersetzt.",
+    fr: "Restaurer cette sauvegarde ?\nLe voyage, les réglages et les documents du portefeuille de ce téléphone seront remplacés.",
+    zh: "要恢复此备份吗？\n此手机上的旅行、设置和钱包文件将被替换。",
+    ko: "이 백업을 복원할까요?\n이 휴대폰의 여행, 설정, 지갑 문서가 교체됩니다."
+  },
+  invalid: {
+    en: "This file is not a 687 Italy backup.",
+    it: "Questo file non è un backup di 687 Italy.",
+    ja: "このファイルは687 Italyのバックアップではありません。",
+    es: "Este archivo no es una copia de seguridad de 687 Italy.",
+    de: "Diese Datei ist keine 687-Italy-Sicherung.",
+    fr: "Ce fichier n’est pas une sauvegarde 687 Italy.",
+    zh: "此文件不是687 Italy的备份。",
+    ko: "이 파일은 687 Italy 백업이 아닙니다."
+  },
+  restored: {
+    en: "Backup restored. The app will now reload.",
+    it: "Backup ripristinato. L'app ora si ricarica.",
+    ja: "バックアップを復元しました。アプリを再読み込みします。",
+    es: "Copia restaurada. La app se recargará ahora.",
+    de: "Sicherung wiederhergestellt. Die App wird neu geladen.",
+    fr: "Sauvegarde restaurée. L’app va se recharger.",
+    zh: "备份已恢复，应用将重新加载。",
+    ko: "백업이 복원되었습니다. 앱을 다시 불러옵니다."
+  },
+  restoreError: {
+    en: "The backup could not be restored. Please try again.",
+    it: "Impossibile ripristinare il backup. Riprova.",
+    ja: "バックアップを復元できませんでした。もう一度お試しください。",
+    es: "No se pudo restaurar la copia de seguridad. Inténtalo de nuevo.",
+    de: "Die Sicherung konnte nicht wiederhergestellt werden. Bitte erneut versuchen.",
+    fr: "Impossible de restaurer la sauvegarde. Réessayez.",
+    zh: "无法恢复备份，请重试。",
+    ko: "백업을 복원할 수 없습니다. 다시 시도하세요."
+  }
+};
+function itBackupText(key) {
+  var m = IT_BACKUP_MSG[key] || {};
+  return m[itBackupLang()] || m.en || "";
+}
+function itBlobToDataUrl(blob) {
+  return new Promise(function (resolve, reject) {
+    var r = new FileReader();
+    r.onload = function () {
+      return resolve(String(r.result || ""));
+    };
+    r.onerror = function () {
+      return reject(r.error);
+    };
+    r.readAsDataURL(blob);
+  });
+}
+function itDataUrlToBlob(dataUrl, mime) {
+  var parts = String(dataUrl || "").split(",");
+  var bin = atob(parts[1] || "");
+  var bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], {
+    type: mime || "application/octet-stream"
+  });
+}
+function itBackupKeys() {
+  var keys = [];
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k) continue;
+      if (!(k.indexOf("tripitaly_") === 0 || k.indexOf("tripengine_") === 0)) continue;
+      if (IT_BACKUP_SKIP_KEYS.indexOf(k) >= 0) continue;
+      if (k.indexOf("tripitaly_backup_") === 0) continue;
+      keys.push(k);
+    }
+  } catch (_) {}
+  return keys;
+}
+function itCreateBackup(_x16) {
+  return _itCreateBackup.apply(this, arguments);
+}
+function _itCreateBackup() {
+  _itCreateBackup = _asyncToGenerator(_regenerator().m(function _callee49(includeDocs) {
+    var storage, documents, all, _iterator4, _step4, _d, blob, meta, item, payload, file, d, pad, name, url, a, _t39;
+    return _regenerator().w(function (_context49) {
+      while (1) switch (_context49.p = _context49.n) {
+        case 0:
+          storage = {};
+          itBackupKeys().forEach(function (k) {
+            try {
+              storage[k] = localStorage.getItem(k);
+            } catch (_) {}
+          });
+          documents = [];
+          if (!includeDocs) {
+            _context49.n = 10;
+            break;
+          }
+          _context49.n = 1;
+          return loadTravelDocuments();
+        case 1:
+          all = _context49.v;
+          _iterator4 = _createForOfIteratorHelper(all);
+          _context49.p = 2;
+          _iterator4.s();
+        case 3:
+          if ((_step4 = _iterator4.n()).done) {
+            _context49.n = 7;
+            break;
+          }
+          _d = _step4.value;
+          blob = _d.blob, meta = _objectWithoutProperties(_d, _excluded3);
+          item = _objectSpread({}, meta);
+          if (!blob) {
+            _context49.n = 5;
+            break;
+          }
+          _context49.n = 4;
+          return itBlobToDataUrl(blob);
+        case 4:
+          item.data = _context49.v;
+        case 5:
+          documents.push(item);
+        case 6:
+          _context49.n = 3;
+          break;
+        case 7:
+          _context49.n = 9;
+          break;
+        case 8:
+          _context49.p = 8;
+          _t39 = _context49.v;
+          _iterator4.e(_t39);
+        case 9:
+          _context49.p = 9;
+          _iterator4.f();
+          return _context49.f(9);
+        case 10:
+          payload = {
+            app: "687 Italy",
+            format: 1,
+            createdAt: new Date().toISOString(),
+            localStorage: storage,
+            documents: documents,
+            documentsIncluded: !!includeDocs
+          };
+          file = new Blob([JSON.stringify(payload)], {
+            type: "application/json"
+          });
+          d = new Date();
+          pad = function pad(n) {
+            return String(n).padStart(2, "0");
+          };
+          name = "687-italy-backup-".concat(d.getFullYear(), "-").concat(pad(d.getMonth() + 1), "-").concat(pad(d.getDate()), ".json");
+          url = URL.createObjectURL(file);
+          a = document.createElement("a");
+          a.href = url;
+          a.download = name;
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          itMarkBackedUp();
+          setTimeout(function () {
+            try {
+              URL.revokeObjectURL(url);
+              a.remove();
+            } catch (_) {}
+          }, 4000);
+          return _context49.a(2, name);
+      }
+    }, _callee49, null, [[2, 8, 9, 10]]);
+  }));
+  return _itCreateBackup.apply(this, arguments);
+}
+function itReplaceDocuments(_x17) {
+  return _itReplaceDocuments.apply(this, arguments);
+}
+function _itReplaceDocuments() {
+  _itReplaceDocuments = _asyncToGenerator(_regenerator().m(function _callee50(docs) {
+    var db;
+    return _regenerator().w(function (_context50) {
+      while (1) switch (_context50.n) {
+        case 0:
+          _context50.n = 1;
+          return openTravelDocDB();
+        case 1:
+          db = _context50.v;
+          _context50.n = 2;
+          return new Promise(function (resolve, reject) {
+            var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
+            var store = tx.objectStore(TRIPITALY_DOC_STORE);
+            store.clear();
+            docs.forEach(function (item) {
+              var data = item.data,
+                meta = _objectWithoutProperties(item, _excluded4);
+              var rec = _objectSpread({}, meta);
+              if (data) rec.blob = itDataUrlToBlob(data, meta.mime);
+              store.put(rec);
+            });
+            tx.oncomplete = function () {
+              db.close();
+              resolve();
+            };
+            tx.onerror = function () {
+              db.close();
+              reject(tx.error);
+            };
+          });
+        case 2:
+          return _context50.a(2);
+      }
+    }, _callee50);
+  }));
+  return _itReplaceDocuments.apply(this, arguments);
+}
+function itRestoreBackup(_x18) {
+  return _itRestoreBackup.apply(this, arguments);
+}
+function _itRestoreBackup() {
+  _itRestoreBackup = _asyncToGenerator(_regenerator().m(function _callee51(file) {
+    var text, payload, ok;
+    return _regenerator().w(function (_context51) {
+      while (1) switch (_context51.n) {
+        case 0:
+          _context51.n = 1;
+          return file.text();
+        case 1:
+          text = _context51.v;
+          payload = null;
+          try {
+            payload = JSON.parse(text);
+          } catch (_) {}
+          if (!(!payload || payload.app !== "687 Italy" || _typeof(payload.localStorage) !== "object")) {
+            _context51.n = 3;
+            break;
+          }
+          _context51.n = 2;
+          return appAlert(itBackupText("invalid"));
+        case 2:
+          return _context51.a(2, false);
+        case 3:
+          _context51.n = 4;
+          return appConfirm(itBackupText("confirm"));
+        case 4:
+          ok = _context51.v;
+          if (ok) {
+            _context51.n = 5;
+            break;
+          }
+          return _context51.a(2, false);
+        case 5:
+          itBackupKeys().forEach(function (k) {
+            try {
+              localStorage.removeItem(k);
+            } catch (_) {}
+          });
+          Object.keys(payload.localStorage || {}).forEach(function (k) {
+            if (!(k.indexOf("tripitaly_") === 0 || k.indexOf("tripengine_") === 0)) return;
+            if (IT_BACKUP_SKIP_KEYS.indexOf(k) >= 0) return;
+            if (k.indexOf("tripitaly_backup_") === 0) return;
+            var v = payload.localStorage[k];
+            if (typeof v === "string") {
+              try {
+                localStorage.setItem(k, v);
+              } catch (_) {}
+            }
+          });
+          if (!(payload.documentsIncluded && Array.isArray(payload.documents))) {
+            _context51.n = 6;
+            break;
+          }
+          _context51.n = 6;
+          return itReplaceDocuments(payload.documents);
+        case 6:
+          itMarkBackedUp();
+          _context51.n = 7;
+          return appAlert(itBackupText("restored"));
+        case 7:
+          window.location.reload();
+          return _context51.a(2, true);
+      }
+    }, _callee51);
+  }));
+  return _itRestoreBackup.apply(this, arguments);
+}
+function ItalyBackupField() {
+  var _useState169 = useState(true),
+    _useState170 = _slicedToArray(_useState169, 2),
+    includeDocs = _useState170[0],
+    setIncludeDocs = _useState170[1];
+  var _useState171 = useState(false),
+    _useState172 = _slicedToArray(_useState171, 2),
+    busy = _useState172[0],
+    setBusy = _useState172[1];
+  var _useState173 = useState(""),
+    _useState174 = _slicedToArray(_useState173, 2),
+    msg = _useState174[0],
+    setMsg = _useState174[1];
+  var inputRef = React.useRef(null);
+  var save = function () {
+    var _ref55 = _asyncToGenerator(_regenerator().m(function _callee10() {
+      var _t9;
+      return _regenerator().w(function (_context10) {
+        while (1) switch (_context10.p = _context10.n) {
+          case 0:
+            setBusy(true);
+            setMsg("");
+            _context10.p = 1;
+            _context10.n = 2;
+            return itCreateBackup(includeDocs);
+          case 2:
+            setMsg(itBackupText("saved"));
+            _context10.n = 4;
+            break;
+          case 3:
+            _context10.p = 3;
+            _t9 = _context10.v;
+            setMsg(itBackupText("saveError"));
+          case 4:
+            setBusy(false);
+          case 5:
+            return _context10.a(2);
+        }
+      }, _callee10, null, [[1, 3]]);
+    }));
+    return function save() {
+      return _ref55.apply(this, arguments);
+    };
+  }();
+  var onFile = function () {
+    var _ref56 = _asyncToGenerator(_regenerator().m(function _callee11(e) {
+      var file, _t0;
+      return _regenerator().w(function (_context11) {
+        while (1) switch (_context11.p = _context11.n) {
+          case 0:
+            file = e.target.files && e.target.files[0];
+            e.target.value = "";
+            if (file) {
+              _context11.n = 1;
+              break;
+            }
+            return _context11.a(2);
+          case 1:
+            setBusy(true);
+            setMsg("");
+            _context11.p = 2;
+            _context11.n = 3;
+            return itRestoreBackup(file);
+          case 3:
+            _context11.n = 5;
+            break;
+          case 4:
+            _context11.p = 4;
+            _t0 = _context11.v;
+            setMsg(itBackupText("restoreError"));
+          case 5:
+            setBusy(false);
+          case 6:
+            return _context11.a(2);
+        }
+      }, _callee11, null, [[2, 4]]);
+    }));
+    return function onFile(_x19) {
+      return _ref56.apply(this, arguments);
+    };
+  }();
+  return React.createElement("div", {
+    className: "field"
+  }, React.createElement("label", null, "Trip backup"), React.createElement("p", {
+    className: "park-hint"
+  }, "Save your trip, settings and Travel Wallet documents to a file on this phone. You can restore it later or on a new phone."), React.createElement("p", {
+    className: "park-hint",
+    style: {
+      fontWeight: 700,
+      color: "#A7352A"
+    }
+  }, "Important: on Android your trip is saved inside Chrome. If Chrome's site data is cleared, the trip on this phone is deleted. Keep a backup."), React.createElement("label", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      fontSize: 13,
+      fontWeight: 600,
+      margin: "6px 0 10px",
+      textTransform: "none",
+      letterSpacing: 0
+    }
+  }, React.createElement("input", {
+    type: "checkbox",
+    checked: includeDocs,
+    onChange: function onChange(e) {
+      return setIncludeDocs(e.target.checked);
+    },
+    style: {
+      width: 18,
+      height: 18
+    }
+  }), React.createElement("span", null, "Include Travel Wallet documents")), React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, React.createElement("button", {
+    className: "btn-secondary",
+    style: {
+      flex: 1,
+      marginTop: 0
+    },
+    disabled: busy,
+    onClick: save
+  }, React.createElement("span", null, "💾 "), React.createElement("span", null, "Save backup")), React.createElement("button", {
+    className: "btn-secondary",
+    style: {
+      flex: 1,
+      marginTop: 0
+    },
+    disabled: busy,
+    onClick: function onClick() {
+      return inputRef.current && inputRef.current.click();
+    }
+  }, React.createElement("span", null, "📂 "), React.createElement("span", null, "Restore backup"))), React.createElement("input", {
+    ref: inputRef,
+    type: "file",
+    accept: ".json,application/json",
+    style: {
+      display: "none"
+    },
+    onChange: onFile
+  }), msg && React.createElement("p", {
+    className: "park-hint",
+    style: {
+      marginTop: 8,
+      fontWeight: 700
+    }
+  }, msg));
+}
+Object.assign(IT_BACKUP_MSG, {
+  remind: {
+    en: "Save a backup of your trip, so you don't lose it if Chrome data is cleared.",
+    it: "Salva un backup del viaggio, così non lo perdi se vengono cancellati i dati di Chrome.",
+    ja: "Chromeのデータが削除されても失わないように、旅行のバックアップを保存しましょう。",
+    es: "Guarda una copia de tu viaje para no perderlo si se borran los datos de Chrome.",
+    de: "Speichere eine Sicherung deiner Reise, damit sie nicht verloren geht, wenn Chrome-Daten gelöscht werden.",
+    fr: "Enregistrez une sauvegarde de votre voyage pour ne pas le perdre si les données de Chrome sont effacées.",
+    zh: "保存旅行备份，即使清除了Chrome数据也不会丢失。",
+    ko: "Chrome 데이터가 삭제되어도 잃지 않도록 여행 백업을 저장하세요."
+  },
+  remindSave: {
+    en: "Save",
+    it: "Salva",
+    ja: "保存",
+    es: "Guardar",
+    de: "Speichern",
+    fr: "Enregistrer",
+    zh: "保存",
+    ko: "저장"
+  },
+  remindLater: {
+    en: "Later",
+    it: "Più tardi",
+    ja: "後で",
+    es: "Más tarde",
+    de: "Später",
+    fr: "Plus tard",
+    zh: "稍后",
+    ko: "나중에"
+  },
+  restoreLink: {
+    en: "Have a backup? Restore your trip",
+    it: "Hai un backup? Ripristina il viaggio",
+    ja: "バックアップがありますか？旅行を復元",
+    es: "¿Tienes una copia? Restaura tu viaje",
+    de: "Sicherung vorhanden? Reise wiederherstellen",
+    fr: "Vous avez une sauvegarde ? Restaurez votre voyage",
+    zh: "有备份吗？恢复你的旅行",
+    ko: "백업이 있나요? 여행 복원"
+  }
+});
+function itBackupHash(str) {
+  var h = 5381;
+  var s = String(str || "");
+  for (var i = 0; i < s.length; i++) h = (h * 33 ^ s.charCodeAt(i)) >>> 0;
+  return String(h);
+}
+function itMarkBackedUp() {
+  try {
+    localStorage.setItem("tripitaly_backup_hash", itBackupHash(localStorage.getItem("tripitaly_data")));
+    localStorage.setItem("tripitaly_backup_last_at", String(Date.now()));
+    localStorage.removeItem("tripitaly_backup_remind_at");
+  } catch (_) {}
+  var b = document.getElementById("it-backup-reminder");
+  if (b) b.remove();
+}
+try {
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persisted().then(function (p) {
+      if (!p) navigator.storage.persist()["catch"](function () {});
+    })["catch"](function () {});
+  }
+} catch (_) {}
+function itBackupReminderCheck() {
+  try {
+    if (document.getElementById("it-backup-reminder")) return;
+    var raw = localStorage.getItem("tripitaly_data");
+    var data = null;
+    try {
+      data = JSON.parse(raw || "null");
+    } catch (_) {}
+    if (!data || !data.budget) return;
+    var now = Date.now();
+    var seen = Number(localStorage.getItem("tripitaly_backup_seen_at") || 0);
+    if (!seen) {
+      localStorage.setItem("tripitaly_backup_seen_at", String(now));
+      return;
+    }
+    if (now - seen < 30 * 60 * 1000) return;
+    if (localStorage.getItem("tripitaly_backup_never") === "1") return;
+    if (localStorage.getItem("tripitaly_backup_hash") === itBackupHash(raw)) return;
+    var lastAt = Number(localStorage.getItem("tripitaly_backup_last_at") || 0);
+    if (lastAt && now - lastAt < 7 * 24 * 60 * 60 * 1000) return;
+    var remindAt = Number(localStorage.getItem("tripitaly_backup_remind_at") || 0);
+    if (remindAt && now < remindAt) return;
+    var box = document.createElement("div");
+    box.id = "it-backup-reminder";
+    box.setAttribute("data-687-keep-english", "1");
+    box.style.cssText = "position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 68px);z-index:2147482000;" + "background:#fff;color:#3a0d1a;border:2px solid #0E3B52;border-radius:14px;padding:12px 14px;" + "box-shadow:0 10px 30px rgba(0,0,0,.18);font:600 14px/1.4 Sora,system-ui,sans-serif;max-width:520px;margin:0 auto;";
+    var txt = document.createElement("div");
+    txt.textContent = "💾 " + itBackupText("remind");
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;margin-top:10px;";
+    var later = document.createElement("button");
+    later.textContent = itBackupText("remindLater");
+    later.style.cssText = "border:1px solid #0E3B52;background:#fff;color:#0E3B52;border-radius:10px;padding:8px 14px;font-weight:700;";
+    var save = document.createElement("button");
+    save.textContent = itBackupText("remindSave");
+    save.style.cssText = "border:0;background:#0E3B52;color:#fff;border-radius:10px;padding:8px 16px;font-weight:700;";
+    later.onclick = function () {
+      try {
+        var n = Number(localStorage.getItem("tripitaly_backup_later_count") || 0) + 1;
+        localStorage.setItem("tripitaly_backup_later_count", String(n));
+        if (n >= 3) localStorage.setItem("tripitaly_backup_never", "1");
+        localStorage.setItem("tripitaly_backup_remind_at", String(Date.now() + 7 * 24 * 60 * 60 * 1000));
+      } catch (_) {}
+      box.remove();
+    };
+    save.onclick = _asyncToGenerator(_regenerator().m(function _callee12() {
+      var _t1;
+      return _regenerator().w(function (_context12) {
+        while (1) switch (_context12.p = _context12.n) {
+          case 0:
+            save.disabled = true;
+            _context12.p = 1;
+            _context12.n = 2;
+            return itCreateBackup(true);
+          case 2:
+            txt.textContent = "✅ " + itBackupText("saved");
+            row.remove();
+            setTimeout(function () {
+              return box.remove();
+            }, 3500);
+            _context12.n = 4;
+            break;
+          case 3:
+            _context12.p = 3;
+            _t1 = _context12.v;
+            txt.textContent = itBackupText("saveError");
+            save.disabled = false;
+          case 4:
+            return _context12.a(2);
+        }
+      }, _callee12, null, [[1, 3]]);
+    }));
+    row.appendChild(later);
+    row.appendChild(save);
+    box.appendChild(txt);
+    box.appendChild(row);
+    document.body.appendChild(box);
+    setTimeout(function () {
+      if (document.body.contains(box) && !save.disabled) later.onclick();
+    }, 12000);
+  } catch (_) {}
+}
+setTimeout(itBackupReminderCheck, 15000);
+setInterval(itBackupReminderCheck, 5 * 60 * 1000);
+function ItalyRestoreLink() {
+  var inputRef = React.useRef(null);
+  return React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginTop: 8
+    },
+    "data-687-keep-english": "1"
+  }, React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      return inputRef.current && inputRef.current.click();
+    },
+    style: {
+      background: "transparent",
+      border: 0,
+      color: "#0E3B52",
+      fontWeight: 700,
+      fontSize: 13.5,
+      textDecoration: "underline",
+      padding: 6
+    }
+  }, "📂 " + itBackupText("restoreLink")), React.createElement("input", {
+    ref: inputRef,
+    type: "file",
+    accept: ".json,application/json",
+    style: {
+      display: "none"
+    },
+    onChange: function () {
+      var _onChange3 = _asyncToGenerator(_regenerator().m(function _callee13(e) {
+        var file, _t10;
+        return _regenerator().w(function (_context13) {
+          while (1) switch (_context13.p = _context13.n) {
+            case 0:
+              file = e.target.files && e.target.files[0];
+              e.target.value = "";
+              if (file) {
+                _context13.n = 1;
+                break;
+              }
+              return _context13.a(2);
+            case 1:
+              _context13.p = 1;
+              _context13.n = 2;
+              return itRestoreBackup(file);
+            case 2:
+              _context13.n = 4;
+              break;
+            case 3:
+              _context13.p = 3;
+              _t10 = _context13.v;
+              _context13.n = 4;
+              return appAlert(itBackupText("restoreError"));
+            case 4:
+              return _context13.a(2);
+          }
+        }, _callee13, null, [[1, 3]]);
+      }));
+      function onChange(_x20) {
+        return _onChange3.apply(this, arguments);
+      }
+      return onChange;
+    }()
+  }));
+}
+function DashTools(_ref58) {
+  var data = _ref58.data,
+    onDeleteLocalData = _ref58.onDeleteLocalData;
   return React.createElement("div", null, React.createElement(DashWeather, {
     data: data
   }), React.createElement(DashCurrency, {
@@ -12960,7 +13723,7 @@ function DashTools(_ref55) {
       });
     },
     rel: "noopener noreferrer"
-  }, "Support"))), React.createElement("div", {
+  }, "Support"))), React.createElement(ItalyBackupField, null), React.createElement("div", {
     className: "field"
   }, React.createElement("label", null, "Local data"), React.createElement("p", {
     className: "park-hint"
@@ -13274,7 +14037,7 @@ function italyNowConvertVerifiedPrice(price, homeCurrency, eurToHome) {
   return null;
 }
 function italyNowPriceAffordability(place, budgetLeft, homeCurrency, eurToHome) {
-  var _ref56, _converted$budgetMax, _converted$budgetMin;
+  var _ref59, _converted$budgetMax, _converted$budgetMin;
   var raw = verifiedPlacePrice(place),
     converted = italyNowConvertVerifiedPrice(raw, homeCurrency, eurToHome);
   if (!raw.known) return {
@@ -13292,7 +14055,7 @@ function italyNowPriceAffordability(place, budgetLeft, homeCurrency, eurToHome) 
     raw: raw,
     converted: converted
   };
-  var hi = Number((_ref56 = (_converted$budgetMax = converted.budgetMax) !== null && _converted$budgetMax !== void 0 ? _converted$budgetMax : converted.budgetMin) !== null && _ref56 !== void 0 ? _ref56 : 0),
+  var hi = Number((_ref59 = (_converted$budgetMax = converted.budgetMax) !== null && _converted$budgetMax !== void 0 ? _converted$budgetMax : converted.budgetMin) !== null && _ref59 !== void 0 ? _ref59 : 0),
     lo = Number((_converted$budgetMin = converted.budgetMin) !== null && _converted$budgetMin !== void 0 ? _converted$budgetMin : hi);
   if (lo > Number(budgetLeft)) return {
     status: "over",
@@ -13311,7 +14074,7 @@ function italyNowPriceAffordability(place, budgetLeft, homeCurrency, eurToHome) 
   };
 }
 function italyNowFormatVerifiedPrice(place, homeCurrency, eurToHome) {
-  var _ref57, _p$max2;
+  var _ref60, _p$max2;
   var p = verifiedPlacePrice(place);
   if (!p.known) {
     var level = placePriceLevelLabel(place);
@@ -13334,7 +14097,7 @@ function italyNowFormatVerifiedPrice(place, homeCurrency, eurToHome) {
     approxText: ""
   };
   var lo = Number(p.min || 0),
-    hi = Number((_ref57 = (_p$max2 = p.max) !== null && _p$max2 !== void 0 ? _p$max2 : p.min) !== null && _ref57 !== void 0 ? _ref57 : 0);
+    hi = Number((_ref60 = (_p$max2 = p.max) !== null && _p$max2 !== void 0 ? _p$max2 : p.min) !== null && _ref60 !== void 0 ? _ref60 : 0);
   var text = lo === hi ? formatCurrencyAmount(p.currency, lo, 0) : "".concat(formatCurrencyAmount(p.currency, lo, 0), "\u2013").concat(formatCurrencyAmount(p.currency, hi, 0));
   var approxText = "",
     target = String(homeCurrency || "EUR").toUpperCase();
@@ -13358,7 +14121,7 @@ function italyNowSummarizeVerifiedRouteCost(route, homeCurrency, eurToHome) {
     missing = 0,
     unconverted = 0;
   stops.forEach(function (stop) {
-    var _ref58, _converted$budgetMax2;
+    var _ref61, _converted$budgetMax2;
     var raw = verifiedPlacePrice(stop);
     if (!raw.known) {
       missing++;
@@ -13370,7 +14133,7 @@ function italyNowSummarizeVerifiedRouteCost(route, homeCurrency, eurToHome) {
       return;
     }
     min += Number(converted.budgetMin || 0);
-    max += Number((_ref58 = (_converted$budgetMax2 = converted.budgetMax) !== null && _converted$budgetMax2 !== void 0 ? _converted$budgetMax2 : converted.budgetMin) !== null && _ref58 !== void 0 ? _ref58 : 0);
+    max += Number((_ref61 = (_converted$budgetMax2 = converted.budgetMax) !== null && _converted$budgetMax2 !== void 0 ? _converted$budgetMax2 : converted.budgetMin) !== null && _ref61 !== void 0 ? _ref61 : 0);
     known++;
   });
   return {
@@ -13444,7 +14207,7 @@ function italyNowBuildSmartRoute(candidates) {
   var remaining = availableMinutes == null ? null : Math.max(0, Number(availableMinutes)),
     moneyRemaining = budgetLeft == null ? null : Math.max(0, Number(budgetLeft));
   for (var step = 0; step < maxStops; step++) {
-    var _ref59, _pick$place$priceLeve, _ref60, _pick$place$verifiedP, _ref61, _pick$place$verifiedP2;
+    var _ref62, _pick$place$priceLeve, _ref63, _pick$place$verifiedP, _ref64, _pick$place$verifiedP2;
     var ranked = pool.filter(function (p) {
       return !chosen.some(function (c) {
         return c.name === p.name;
@@ -13492,9 +14255,9 @@ function italyNowBuildSmartRoute(candidates) {
       end: italyNowMinutesToClock(finish),
       matchedType: pick.place.matchedType || "",
       priceRange: pick.place.priceRange || pick.place.price_range || null,
-      priceLevel: (_ref59 = (_pick$place$priceLeve = pick.place.priceLevel) !== null && _pick$place$priceLeve !== void 0 ? _pick$place$priceLeve : pick.place.price_level) !== null && _ref59 !== void 0 ? _ref59 : null,
-      verifiedPriceMin: (_ref60 = (_pick$place$verifiedP = pick.place.verifiedPriceMin) !== null && _pick$place$verifiedP !== void 0 ? _pick$place$verifiedP : pick.place.priceMin) !== null && _ref60 !== void 0 ? _ref60 : null,
-      verifiedPriceMax: (_ref61 = (_pick$place$verifiedP2 = pick.place.verifiedPriceMax) !== null && _pick$place$verifiedP2 !== void 0 ? _pick$place$verifiedP2 : pick.place.priceMax) !== null && _ref61 !== void 0 ? _ref61 : null,
+      priceLevel: (_ref62 = (_pick$place$priceLeve = pick.place.priceLevel) !== null && _pick$place$priceLeve !== void 0 ? _pick$place$priceLeve : pick.place.price_level) !== null && _ref62 !== void 0 ? _ref62 : null,
+      verifiedPriceMin: (_ref63 = (_pick$place$verifiedP = pick.place.verifiedPriceMin) !== null && _pick$place$verifiedP !== void 0 ? _pick$place$verifiedP : pick.place.priceMin) !== null && _ref63 !== void 0 ? _ref63 : null,
+      verifiedPriceMax: (_ref64 = (_pick$place$verifiedP2 = pick.place.verifiedPriceMax) !== null && _pick$place$verifiedP2 !== void 0 ? _pick$place$verifiedP2 : pick.place.priceMax) !== null && _ref64 !== void 0 ? _ref64 : null,
       verifiedPriceCurrency: pick.place.verifiedPriceCurrency || pick.place.priceCurrency || pick.place.currency || "",
       verifiedPriceSource: pick.place.verifiedPriceSource || pick.place.priceSource || ""
     });
@@ -13514,11 +14277,11 @@ function italyNowBuildSmartRoute(candidates) {
   }
   return chosen;
 }
-function ItalyDashNow(_ref62) {
-  var data = _ref62.data,
-    setData = _ref62.setData,
-    onGoTo = _ref62.onGoTo,
-    dailyAmount = _ref62.dailyAmount;
+function ItalyDashNow(_ref65) {
+  var data = _ref65.data,
+    setData = _ref65.setData,
+    onGoTo = _ref65.onGoTo,
+    dailyAmount = _ref65.dailyAmount;
   var deviceTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Rome";
   var _React$useState3 = React.useState(deviceTimeZone),
     _React$useState4 = _slicedToArray(_React$useState3, 2),
@@ -13598,99 +14361,99 @@ function ItalyDashNow(_ref62) {
     });
   };
   var syncLocation = function () {
-    var _ref63 = _asyncToGenerator(_regenerator().m(function _callee10() {
-      var loc, u, r, j, _t9, _t0;
-      return _regenerator().w(function (_context10) {
-        while (1) switch (_context10.p = _context10.n) {
+    var _ref66 = _asyncToGenerator(_regenerator().m(function _callee14() {
+      var loc, u, r, j, _t11, _t12;
+      return _regenerator().w(function (_context14) {
+        while (1) switch (_context14.p = _context14.n) {
           case 0:
-            _context10.p = 0;
-            _context10.n = 1;
+            _context14.p = 0;
+            _context14.n = 1;
             return detectCurrentCountry();
           case 1:
-            loc = _context10.v;
+            loc = _context14.v;
             setCurrentLocationName(loc.locality || loc.country || "");
             setLiveCoords({
               lat: Number(loc.lat),
               lng: Number(loc.lng)
             });
             setGpsState(loc.countryCode === "IT" ? "inside" : "outside");
-            _context10.p = 2;
+            _context14.p = 2;
             u = "https://api.open-meteo.com/v1/forecast?latitude=".concat(loc.lat, "&longitude=").concat(loc.lng, "&current=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1");
-            _context10.n = 3;
+            _context14.n = 3;
             return fetch(u);
           case 3:
-            r = _context10.v;
-            _context10.n = 4;
+            r = _context14.v;
+            _context14.n = 4;
             return r.json();
           case 4:
-            j = _context10.v;
+            j = _context14.v;
             if (j !== null && j !== void 0 && j.timezone) setLiveTimeZone(j.timezone);
             if (j !== null && j !== void 0 && j.current) setWeather(j.current);
-            _context10.n = 6;
+            _context14.n = 6;
             break;
           case 5:
-            _context10.p = 5;
-            _t9 = _context10.v;
+            _context14.p = 5;
+            _t11 = _context14.v;
           case 6:
-            return _context10.a(2, loc);
+            return _context14.a(2, loc);
           case 7:
-            _context10.p = 7;
-            _t0 = _context10.v;
-            setGpsState(Number(_t0 === null || _t0 === void 0 ? void 0 : _t0.code) === 1 ? "denied" : "error");
-            return _context10.a(2, null);
+            _context14.p = 7;
+            _t12 = _context14.v;
+            setGpsState(Number(_t12 === null || _t12 === void 0 ? void 0 : _t12.code) === 1 ? "denied" : "error");
+            return _context14.a(2, null);
         }
-      }, _callee10, null, [[2, 5], [0, 7]]);
+      }, _callee14, null, [[2, 5], [0, 7]]);
     }));
     return function syncLocation() {
-      return _ref63.apply(this, arguments);
+      return _ref66.apply(this, arguments);
     };
   }();
   React.useEffect(function () {
     syncLocation();
   }, []);
   var refreshLiveContext = function () {
-    var _ref64 = _asyncToGenerator(_regenerator().m(function _callee11() {
-      var loc, currentWeather, u, r, j, wInfo, types, params, guard, pr, pj, raw, normalizedPlans, enriched, _t1, _t10;
-      return _regenerator().w(function (_context11) {
-        while (1) switch (_context11.p = _context11.n) {
+    var _ref67 = _asyncToGenerator(_regenerator().m(function _callee15() {
+      var loc, currentWeather, u, r, j, wInfo, types, params, guard, pr, pj, raw, normalizedPlans, enriched, _t13, _t14;
+      return _regenerator().w(function (_context15) {
+        while (1) switch (_context15.p = _context15.n) {
           case 0:
             setLiveLoading(true);
             setLiveError("");
-            _context11.p = 1;
-            _context11.n = 2;
+            _context15.p = 1;
+            _context15.n = 2;
             return syncLocation();
           case 2:
-            loc = _context11.v;
+            loc = _context15.v;
             if (!(!loc || loc.countryCode !== "IT")) {
-              _context11.n = 3;
+              _context15.n = 3;
               break;
             }
             setLiveError("Live suggestions are available when your GPS confirms you are in Italy.");
             setLivePlaces([]);
             setLiveLoading(false);
-            return _context11.a(2);
+            return _context15.a(2);
           case 3:
             currentWeather = weather;
-            _context11.p = 4;
+            _context15.p = 4;
             u = "https://api.open-meteo.com/v1/forecast?latitude=".concat(loc.lat, "&longitude=").concat(loc.lng, "&current=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1");
-            _context11.n = 5;
+            _context15.n = 5;
             return fetch(u);
           case 5:
-            r = _context11.v;
-            _context11.n = 6;
+            r = _context15.v;
+            _context15.n = 6;
             return r.json();
           case 6:
-            j = _context11.v;
+            j = _context15.v;
             if (j !== null && j !== void 0 && j.current) {
               currentWeather = j.current;
               setWeather(j.current);
             }
             if (j !== null && j !== void 0 && j.timezone) setLiveTimeZone(j.timezone);
-            _context11.n = 8;
+            _context15.n = 8;
             break;
           case 7:
-            _context11.p = 7;
-            _t1 = _context11.v;
+            _context15.p = 7;
+            _t13 = _context15.v;
           case 8:
             wInfo = currentWeather ? italyNowWeatherDescription(currentWeather.weather_code) : null;
             types = italyNowContextTypes(wInfo, clock.hour, budgetLow);
@@ -13704,23 +14467,23 @@ function ItalyDashNow(_ref62) {
             });
             guard = checkApiRate("places");
             if (guard.ok) {
-              _context11.n = 9;
+              _context15.n = 9;
               break;
             }
             setLiveError(apiRateMessage(guard));
             setLivePlaces([]);
             setLiveLoading(false);
-            return _context11.a(2);
+            return _context15.a(2);
           case 9:
             recordApiUsage("places", 1);
-            _context11.n = 10;
+            _context15.n = 10;
             return fetch("".concat(PROXY_URL, "?").concat(params.toString()));
           case 10:
-            pr = _context11.v;
-            _context11.n = 11;
+            pr = _context15.v;
+            _context15.n = 11;
             return pr.json();
           case 11:
-            pj = _context11.v;
+            pj = _context15.v;
             raw = pj.success && Array.isArray(pj.data) ? pj.data : [];
             normalizedPlans = currentPlans.map(function (x) {
               return String(x || "").trim().toLowerCase();
@@ -13755,22 +14518,22 @@ function ItalyDashNow(_ref62) {
             }).slice(0, 8);
             setLivePlaces(enriched);
             if (!enriched.length) setLiveError("No suitable open places found nearby right now.");
-            _context11.n = 13;
+            _context15.n = 13;
             break;
           case 12:
-            _context11.p = 12;
-            _t10 = _context11.v;
+            _context15.p = 12;
+            _t14 = _context15.v;
             setLiveError("Live suggestions are temporarily unavailable.");
             setLivePlaces([]);
           case 13:
             setLiveLoading(false);
           case 14:
-            return _context11.a(2);
+            return _context15.a(2);
         }
-      }, _callee11, null, [[4, 7], [1, 12]]);
+      }, _callee15, null, [[4, 7], [1, 12]]);
     }));
     return function refreshLiveContext() {
-      return _ref64.apply(this, arguments);
+      return _ref67.apply(this, arguments);
     };
   }();
   var addPlaceToToday = function addPlaceToToday(place) {
@@ -13850,7 +14613,7 @@ function ItalyDashNow(_ref62) {
     }, 160);
   };
   var replaceSmartStop = function replaceSmartStop(stop) {
-    var _ref65, _p$priceLevel, _ref66, _p$verifiedPriceMin, _ref67, _p$verifiedPriceMax;
+    var _ref68, _p$priceLevel, _ref69, _p$verifiedPriceMin, _ref70, _p$verifiedPriceMax;
     if (!livePlaces.length) {
       setSmartDayMessage("Tap Show suggestions first to find a live replacement.");
       return;
@@ -13915,9 +14678,9 @@ function ItalyDashNow(_ref62) {
       visitMin: pick.visit,
       matchedType: p.matchedType || "",
       priceRange: p.priceRange || p.price_range || null,
-      priceLevel: (_ref65 = (_p$priceLevel = p.priceLevel) !== null && _p$priceLevel !== void 0 ? _p$priceLevel : p.price_level) !== null && _ref65 !== void 0 ? _ref65 : null,
-      verifiedPriceMin: (_ref66 = (_p$verifiedPriceMin = p.verifiedPriceMin) !== null && _p$verifiedPriceMin !== void 0 ? _p$verifiedPriceMin : p.priceMin) !== null && _ref66 !== void 0 ? _ref66 : null,
-      verifiedPriceMax: (_ref67 = (_p$verifiedPriceMax = p.verifiedPriceMax) !== null && _p$verifiedPriceMax !== void 0 ? _p$verifiedPriceMax : p.priceMax) !== null && _ref67 !== void 0 ? _ref67 : null,
+      priceLevel: (_ref68 = (_p$priceLevel = p.priceLevel) !== null && _p$priceLevel !== void 0 ? _p$priceLevel : p.price_level) !== null && _ref68 !== void 0 ? _ref68 : null,
+      verifiedPriceMin: (_ref69 = (_p$verifiedPriceMin = p.verifiedPriceMin) !== null && _p$verifiedPriceMin !== void 0 ? _p$verifiedPriceMin : p.priceMin) !== null && _ref69 !== void 0 ? _ref69 : null,
+      verifiedPriceMax: (_ref70 = (_p$verifiedPriceMax = p.verifiedPriceMax) !== null && _p$verifiedPriceMax !== void 0 ? _p$verifiedPriceMax : p.priceMax) !== null && _ref70 !== void 0 ? _ref70 : null,
       verifiedPriceCurrency: p.verifiedPriceCurrency || p.priceCurrency || p.currency || "",
       verifiedPriceSource: p.verifiedPriceSource || p.priceSource || ""
     });
@@ -14232,59 +14995,59 @@ function ItalyIntelligentDayLocationClock() {
     setStatus = _React$useState28[1];
   React.useEffect(function () {
     var alive = true;
-    _asyncToGenerator(_regenerator().m(function _callee12() {
-      var loc, u, r, j, _t11, _t12;
-      return _regenerator().w(function (_context12) {
-        while (1) switch (_context12.p = _context12.n) {
+    _asyncToGenerator(_regenerator().m(function _callee16() {
+      var loc, u, r, j, _t15, _t16;
+      return _regenerator().w(function (_context16) {
+        while (1) switch (_context16.p = _context16.n) {
           case 0:
-            _context12.p = 0;
-            _context12.n = 1;
+            _context16.p = 0;
+            _context16.n = 1;
             return detectCurrentCountry();
           case 1:
-            loc = _context12.v;
+            loc = _context16.v;
             if (alive) {
-              _context12.n = 2;
+              _context16.n = 2;
               break;
             }
-            return _context12.a(2);
+            return _context16.a(2);
           case 2:
             setPlace(String((loc === null || loc === void 0 ? void 0 : loc.locality) || (loc === null || loc === void 0 ? void 0 : loc.country) || "").trim() || "Current location");
-            _context12.p = 3;
+            _context16.p = 3;
             u = "https://api.open-meteo.com/v1/forecast?latitude=".concat(encodeURIComponent(loc.lat), "&longitude=").concat(encodeURIComponent(loc.lng), "&current=temperature_2m&timezone=auto&forecast_days=1");
-            _context12.n = 4;
+            _context16.n = 4;
             return fetch(u);
           case 4:
-            r = _context12.v;
+            r = _context16.v;
             if (!r.ok) {
-              _context12.n = 6;
+              _context16.n = 6;
               break;
             }
-            _context12.n = 5;
+            _context16.n = 5;
             return r.json();
           case 5:
-            j = _context12.v;
+            j = _context16.v;
             if (alive && j !== null && j !== void 0 && j.timezone) setTimeZone(j.timezone);
           case 6:
-            _context12.n = 8;
+            _context16.n = 8;
             break;
           case 7:
-            _context12.p = 7;
-            _t11 = _context12.v;
+            _context16.p = 7;
+            _t15 = _context16.v;
           case 8:
             if (alive) setStatus("ok");
-            _context12.n = 10;
+            _context16.n = 10;
             break;
           case 9:
-            _context12.p = 9;
-            _t12 = _context12.v;
+            _context16.p = 9;
+            _t16 = _context16.v;
             if (alive) {
               setPlace("");
               setStatus("error");
             }
           case 10:
-            return _context12.a(2);
+            return _context16.a(2);
         }
-      }, _callee12, null, [[3, 7], [0, 9]]);
+      }, _callee16, null, [[3, 7], [0, 9]]);
     }))();
     return function () {
       alive = false;
@@ -14326,11 +15089,11 @@ function ItalyIntelligentDayLocationClock() {
     className: "iday-location-time"
   }, clock || "--:--"));
 }
-function ItalyIntelligentToday(_ref69) {
-  var data = _ref69.data,
-    setData = _ref69.setData,
-    dailyAmount = _ref69.dailyAmount,
-    onGoTo = _ref69.onGoTo;
+function ItalyIntelligentToday(_ref72) {
+  var data = _ref72.data,
+    setData = _ref72.setData,
+    dailyAmount = _ref72.dailyAmount,
+    onGoTo = _ref72.onGoTo;
   var workingDay = italyIntelligentWorkingDay(data);
   var totalDays = tripLengthDays(data);
   var currentPlans = (data.dayPlans || {})[workingDay] || [];
@@ -14624,86 +15387,86 @@ function guardianEnsureServiceWorker() {
   return _guardianEnsureServiceWorker.apply(this, arguments);
 }
 function _guardianEnsureServiceWorker() {
-  _guardianEnsureServiceWorker = _asyncToGenerator(_regenerator().m(function _callee45() {
-    var registration, ready, _t35;
-    return _regenerator().w(function (_context45) {
-      while (1) switch (_context45.p = _context45.n) {
+  _guardianEnsureServiceWorker = _asyncToGenerator(_regenerator().m(function _callee52() {
+    var registration, ready, _t40;
+    return _regenerator().w(function (_context52) {
+      while (1) switch (_context52.p = _context52.n) {
         case 0:
           if ("serviceWorker" in navigator) {
-            _context45.n = 1;
+            _context52.n = 1;
             break;
           }
           throw new Error("Service Worker unavailable");
         case 1:
-          _context45.n = 2;
+          _context52.n = 2;
           return navigator.serviceWorker.register("/service-worker.js?v=1136f", {
             scope: "/",
             updateViaCache: "none"
           });
         case 2:
-          registration = _context45.v;
-          _context45.p = 3;
-          _context45.n = 4;
+          registration = _context52.v;
+          _context52.p = 3;
+          _context52.n = 4;
           return registration.update();
         case 4:
-          _context45.n = 6;
+          _context52.n = 6;
           break;
         case 5:
-          _context45.p = 5;
-          _t35 = _context45.v;
+          _context52.p = 5;
+          _t40 = _context52.v;
         case 6:
-          _context45.n = 7;
+          _context52.n = 7;
           return navigator.serviceWorker.ready;
         case 7:
-          ready = _context45.v;
-          return _context45.a(2, ready || registration);
+          ready = _context52.v;
+          return _context52.a(2, ready || registration);
       }
-    }, _callee45, null, [[3, 5]]);
+    }, _callee52, null, [[3, 5]]);
   }));
   return _guardianEnsureServiceWorker.apply(this, arguments);
 }
-function pulseGuardianSubscribe(_x16) {
+function pulseGuardianSubscribe(_x21) {
   return _pulseGuardianSubscribe.apply(this, arguments);
 }
 function _pulseGuardianSubscribe() {
-  _pulseGuardianSubscribe = _asyncToGenerator(_regenerator().m(function _callee46(preferences) {
+  _pulseGuardianSubscribe = _asyncToGenerator(_regenerator().m(function _callee53(preferences) {
     var reg, subscription, r, j;
-    return _regenerator().w(function (_context46) {
-      while (1) switch (_context46.n) {
+    return _regenerator().w(function (_context53) {
+      while (1) switch (_context53.n) {
         case 0:
           if ("serviceWorker" in navigator) {
-            _context46.n = 1;
+            _context53.n = 1;
             break;
           }
           throw new Error("Service Worker unavailable");
         case 1:
           if ("PushManager" in window) {
-            _context46.n = 2;
+            _context53.n = 2;
             break;
           }
           throw new Error("Push notifications are not supported on this device");
         case 2:
-          _context46.n = 3;
+          _context53.n = 3;
           return guardianEnsureServiceWorker();
         case 3:
-          reg = _context46.v;
-          _context46.n = 4;
+          reg = _context53.v;
+          _context53.n = 4;
           return reg.pushManager.getSubscription();
         case 4:
-          subscription = _context46.v;
+          subscription = _context53.v;
           if (subscription) {
-            _context46.n = 6;
+            _context53.n = 6;
             break;
           }
-          _context46.n = 5;
+          _context53.n = 5;
           return reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: guardianUrlBase64ToUint8Array(GUARDIAN_VAPID_PUBLIC_KEY)
           });
         case 5:
-          subscription = _context46.v;
+          subscription = _context53.v;
         case 6:
-          _context46.n = 7;
+          _context53.n = 7;
           return fetch("".concat(PULSE_API_BASE, "/v1/push/subscribe"), {
             method: "POST",
             headers: {
@@ -14724,42 +15487,42 @@ function _pulseGuardianSubscribe() {
             })
           });
         case 7:
-          r = _context46.v;
-          _context46.n = 8;
+          r = _context53.v;
+          _context53.n = 8;
           return r.json()["catch"](function () {
             return null;
           });
         case 8:
-          j = _context46.v;
+          j = _context53.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context46.n = 9;
+            _context53.n = 9;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 9:
-          return _context46.a(2, {
+          return _context53.a(2, {
             subscription: subscription,
             pulse: j
           });
       }
-    }, _callee46);
+    }, _callee53);
   }));
   return _pulseGuardianSubscribe.apply(this, arguments);
 }
-function pulseGuardianSyncContext(_x17, _x18) {
+function pulseGuardianSyncContext(_x22, _x23) {
   return _pulseGuardianSyncContext.apply(this, arguments);
 }
 function _pulseGuardianSyncContext() {
-  _pulseGuardianSyncContext = _asyncToGenerator(_regenerator().m(function _callee47(data, settings) {
+  _pulseGuardianSyncContext = _asyncToGenerator(_regenerator().m(function _callee54(data, settings) {
     var workingDay, plans, completed, nextStop, commitment, commitmentAt, tz, cp, mins, loc, r, j;
-    return _regenerator().w(function (_context47) {
-      while (1) switch (_context47.n) {
+    return _regenerator().w(function (_context54) {
+      while (1) switch (_context54.n) {
         case 0:
           if (settings !== null && settings !== void 0 && settings.enabled) {
-            _context47.n = 1;
+            _context54.n = 1;
             break;
           }
-          return _context47.a(2, {
+          return _context54.a(2, {
             ok: false,
             skipped: "paused"
           });
@@ -14785,11 +15548,11 @@ function _pulseGuardianSyncContext() {
               }
             }
           } catch (_) {}
-          _context47.n = 2;
+          _context54.n = 2;
           return detectCurrentCountry();
         case 2:
-          loc = _context47.v;
-          _context47.n = 3;
+          loc = _context54.v;
+          _context54.n = 3;
           return fetch("".concat(PULSE_API_BASE, "/v1/guardian/context"), {
             method: "POST",
             headers: {
@@ -14810,22 +15573,22 @@ function _pulseGuardianSyncContext() {
             })
           });
         case 3:
-          r = _context47.v;
-          _context47.n = 4;
+          r = _context54.v;
+          _context54.n = 4;
           return r.json()["catch"](function () {
             return null;
           });
         case 4:
-          j = _context47.v;
+          j = _context54.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context47.n = 5;
+            _context54.n = 5;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 5:
-          return _context47.a(2, j);
+          return _context54.a(2, j);
       }
-    }, _callee47);
+    }, _callee54);
   }));
   return _pulseGuardianSyncContext.apply(this, arguments);
 }
@@ -14858,56 +15621,56 @@ function localMetaForPulseType(type) {
     return pulseTypeForLocal(x[0]) === type;
   }) || [localType, "📡", String(type || "Signal"), 45];
 }
-function pulseFetchNearby(_x19, _x20) {
+function pulseFetchNearby(_x24, _x25) {
   return _pulseFetchNearby.apply(this, arguments);
 }
 function _pulseFetchNearby() {
-  _pulseFetchNearby = _asyncToGenerator(_regenerator().m(function _callee48(lat, lng) {
+  _pulseFetchNearby = _asyncToGenerator(_regenerator().m(function _callee55(lat, lng) {
     var radius,
       url,
       r,
       j,
-      _args48 = arguments;
-    return _regenerator().w(function (_context48) {
-      while (1) switch (_context48.n) {
+      _args55 = arguments;
+    return _regenerator().w(function (_context55) {
+      while (1) switch (_context55.n) {
         case 0:
-          radius = _args48.length > 2 && _args48[2] !== undefined ? _args48[2] : 4000;
+          radius = _args55.length > 2 && _args55[2] !== undefined ? _args55[2] : 4000;
           url = "".concat(PULSE_API_BASE, "/v1/signals/nearby?lat=").concat(encodeURIComponent(lat), "&lng=").concat(encodeURIComponent(lng), "&country_code=IT&radius_m=").concat(encodeURIComponent(radius));
-          _context48.n = 1;
+          _context55.n = 1;
           return fetch(url, {
             cache: "no-store"
           });
         case 1:
-          r = _context48.v;
-          _context48.n = 2;
+          r = _context55.v;
+          _context55.n = 2;
           return r.json()["catch"](function () {
             return null;
           });
         case 2:
-          j = _context48.v;
+          j = _context55.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context48.n = 3;
+            _context55.n = 3;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 3:
-          return _context48.a(2, Array.isArray(j.signals) ? j.signals : []);
+          return _context55.a(2, Array.isArray(j.signals) ? j.signals : []);
       }
-    }, _callee48);
+    }, _callee55);
   }));
   return _pulseFetchNearby.apply(this, arguments);
 }
-function pulseReportSignal(_x21) {
+function pulseReportSignal(_x26) {
   return _pulseReportSignal.apply(this, arguments);
 }
 function _pulseReportSignal() {
-  _pulseReportSignal = _asyncToGenerator(_regenerator().m(function _callee49(_ref70) {
+  _pulseReportSignal = _asyncToGenerator(_regenerator().m(function _callee56(_ref73) {
     var type, lat, lng, locality, r, j;
-    return _regenerator().w(function (_context49) {
-      while (1) switch (_context49.n) {
+    return _regenerator().w(function (_context56) {
+      while (1) switch (_context56.n) {
         case 0:
-          type = _ref70.type, lat = _ref70.lat, lng = _ref70.lng, locality = _ref70.locality;
-          _context49.n = 1;
+          type = _ref73.type, lat = _ref73.lat, lng = _ref73.lng, locality = _ref73.locality;
+          _context56.n = 1;
           return fetch("".concat(PULSE_API_BASE, "/v1/signals/report"), {
             method: "POST",
             headers: {
@@ -14924,35 +15687,35 @@ function _pulseReportSignal() {
             })
           });
         case 1:
-          r = _context49.v;
-          _context49.n = 2;
+          r = _context56.v;
+          _context56.n = 2;
           return r.json()["catch"](function () {
             return null;
           });
         case 2:
-          j = _context49.v;
+          j = _context56.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context49.n = 3;
+            _context56.n = 3;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 3:
-          return _context49.a(2, j);
+          return _context56.a(2, j);
       }
-    }, _callee49);
+    }, _callee56);
   }));
   return _pulseReportSignal.apply(this, arguments);
 }
-function pulseVoteSignal(_x22, _x23) {
+function pulseVoteSignal(_x27, _x28) {
   return _pulseVoteSignal.apply(this, arguments);
 }
 function _pulseVoteSignal() {
-  _pulseVoteSignal = _asyncToGenerator(_regenerator().m(function _callee50(signalId, vote) {
+  _pulseVoteSignal = _asyncToGenerator(_regenerator().m(function _callee57(signalId, vote) {
     var r, j;
-    return _regenerator().w(function (_context50) {
-      while (1) switch (_context50.n) {
+    return _regenerator().w(function (_context57) {
+      while (1) switch (_context57.n) {
         case 0:
-          _context50.n = 1;
+          _context57.n = 1;
           return fetch("".concat(PULSE_API_BASE, "/v1/signals/vote"), {
             method: "POST",
             headers: {
@@ -14965,27 +15728,27 @@ function _pulseVoteSignal() {
             })
           });
         case 1:
-          r = _context50.v;
-          _context50.n = 2;
+          r = _context57.v;
+          _context57.n = 2;
           return r.json()["catch"](function () {
             return null;
           });
         case 2:
-          j = _context50.v;
+          j = _context57.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context50.n = 3;
+            _context57.n = 3;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 3:
-          return _context50.a(2, j);
+          return _context57.a(2, j);
       }
-    }, _callee50);
+    }, _callee57);
   }));
   return _pulseVoteSignal.apply(this, arguments);
 }
-function ItalyIntelligentDayGuardian(_ref71) {
-  var data = _ref71.data;
+function ItalyIntelligentDayGuardian(_ref74) {
+  var data = _ref74.data;
   var _React$useState31 = React.useState(loadGuardianSettings),
     _React$useState32 = _slicedToArray(_React$useState31, 2),
     settings = _React$useState32[0],
@@ -15005,36 +15768,36 @@ function ItalyIntelligentDayGuardian(_ref71) {
     if (!settings.enabled || permission !== "granted") return;
     var alive = true;
     var sync = function () {
-      var _ref72 = _asyncToGenerator(_regenerator().m(function _callee13() {
-        var _t13;
-        return _regenerator().w(function (_context13) {
-          while (1) switch (_context13.p = _context13.n) {
+      var _ref75 = _asyncToGenerator(_regenerator().m(function _callee17() {
+        var _t17;
+        return _regenerator().w(function (_context17) {
+          while (1) switch (_context17.p = _context17.n) {
             case 0:
-              _context13.p = 0;
-              _context13.n = 1;
+              _context17.p = 0;
+              _context17.n = 1;
               return pulseGuardianSubscribe(settings);
             case 1:
-              _context13.n = 2;
+              _context17.n = 2;
               return pulseGuardianSyncContext(data, settings);
             case 2:
               if (alive) setMsg(function (m) {
                 return m || "Guardian connected to 687 Pulse.";
               });
-              _context13.n = 4;
+              _context17.n = 4;
               break;
             case 3:
-              _context13.p = 3;
-              _t13 = _context13.v;
+              _context17.p = 3;
+              _t17 = _context17.v;
               if (alive) setMsg(function (m) {
-                return m || "Guardian sync issue: ".concat(String((_t13 === null || _t13 === void 0 ? void 0 : _t13.message) || _t13));
+                return m || "Guardian sync issue: ".concat(String((_t17 === null || _t17 === void 0 ? void 0 : _t17.message) || _t17));
               });
             case 4:
-              return _context13.a(2);
+              return _context17.a(2);
           }
-        }, _callee13, null, [[0, 3]]);
+        }, _callee17, null, [[0, 3]]);
       }));
       return function sync() {
-        return _ref72.apply(this, arguments);
+        return _ref75.apply(this, arguments);
       };
     }();
     sync();
@@ -15045,71 +15808,71 @@ function ItalyIntelligentDayGuardian(_ref71) {
     };
   }, [settings.enabled, settings.weather, settings.leaveTime, settings.route, settings.signals, permission, data]);
   var toggleGuardian = function () {
-    var _ref73 = _asyncToGenerator(_regenerator().m(function _callee14(key, label) {
-      var next, _t14;
-      return _regenerator().w(function (_context14) {
-        while (1) switch (_context14.p = _context14.n) {
+    var _ref76 = _asyncToGenerator(_regenerator().m(function _callee18(key, label) {
+      var next, _t18;
+      return _regenerator().w(function (_context18) {
+        while (1) switch (_context18.p = _context18.n) {
           case 0:
             next = _objectSpread(_objectSpread({}, settings), {}, _defineProperty({}, key, !settings[key]));
             setSettings(next);
             saveGuardianSettings(next);
             setMsg("".concat(label, " ").concat(next[key] ? "ON" : "OFF", " \xB7 saving\u2026"));
             if (!(typeof Notification !== "undefined" && Notification.permission === "granted")) {
-              _context14.n = 6;
+              _context18.n = 6;
               break;
             }
-            _context14.p = 1;
-            _context14.n = 2;
+            _context18.p = 1;
+            _context18.n = 2;
             return pulseGuardianSubscribe(next);
           case 2:
-            _context14.n = 3;
+            _context18.n = 3;
             return pulseGuardianSyncContext(data, next)["catch"](function () {
               return null;
             });
           case 3:
             setMsg("".concat(label, " ").concat(next[key] ? "ON" : "OFF", " \xB7 saved to 687 Pulse."));
-            _context14.n = 5;
+            _context18.n = 5;
             break;
           case 4:
-            _context14.p = 4;
-            _t14 = _context14.v;
-            setMsg("".concat(label, " ").concat(next[key] ? "ON" : "OFF", " locally \xB7 Pulse sync failed: ").concat(String((_t14 === null || _t14 === void 0 ? void 0 : _t14.message) || _t14)));
+            _context18.p = 4;
+            _t18 = _context18.v;
+            setMsg("".concat(label, " ").concat(next[key] ? "ON" : "OFF", " locally \xB7 Pulse sync failed: ").concat(String((_t18 === null || _t18 === void 0 ? void 0 : _t18.message) || _t18)));
           case 5:
-            _context14.n = 7;
+            _context18.n = 7;
             break;
           case 6:
             setMsg("".concat(label, " ").concat(next[key] ? "ON" : "OFF", " locally."));
           case 7:
-            return _context14.a(2);
+            return _context18.a(2);
         }
-      }, _callee14, null, [[1, 4]]);
+      }, _callee18, null, [[1, 4]]);
     }));
-    return function toggleGuardian(_x24, _x25) {
-      return _ref73.apply(this, arguments);
+    return function toggleGuardian(_x29, _x30) {
+      return _ref76.apply(this, arguments);
     };
   }();
   var enable = function () {
-    var _ref74 = _asyncToGenerator(_regenerator().m(function _callee15() {
-      var p, next, _next2, _t15;
-      return _regenerator().w(function (_context15) {
-        while (1) switch (_context15.p = _context15.n) {
+    var _ref77 = _asyncToGenerator(_regenerator().m(function _callee19() {
+      var p, next, _next2, _t19;
+      return _regenerator().w(function (_context19) {
+        while (1) switch (_context19.p = _context19.n) {
           case 0:
             setMsg("");
             if (supported) {
-              _context15.n = 1;
+              _context19.n = 1;
               break;
             }
             setMsg("Notifications are not supported in this browser yet.");
-            return _context15.a(2);
+            return _context19.a(2);
           case 1:
-            _context15.p = 1;
-            _context15.n = 2;
+            _context19.p = 1;
+            _context19.n = 2;
             return Notification.requestPermission();
           case 2:
-            p = _context15.v;
+            p = _context19.v;
             setPermission(p);
             if (!(p === "granted")) {
-              _context15.n = 5;
+              _context19.n = 5;
               break;
             }
             next = _objectSpread(_objectSpread({}, settings), {}, {
@@ -15118,14 +15881,14 @@ function ItalyIntelligentDayGuardian(_ref71) {
             setSettings(next);
             saveGuardianSettings(next);
             setMsg("Connecting Guardian to 687 Pulse…");
-            _context15.n = 3;
+            _context19.n = 3;
             return pulseGuardianSubscribe(next);
           case 3:
-            _context15.n = 4;
+            _context19.n = 4;
             return pulseGuardianSyncContext(data, next);
           case 4:
             setMsg("Guardian is armed, connected to 687 Pulse, and automatic monitoring is ready.");
-            _context15.n = 6;
+            _context19.n = 6;
             break;
           case 5:
             _next2 = _objectSpread(_objectSpread({}, settings), {}, {
@@ -15135,83 +15898,83 @@ function ItalyIntelligentDayGuardian(_ref71) {
             saveGuardianSettings(_next2);
             setMsg(p === "denied" ? "Notifications are blocked for this site/device." : "Notification permission was not granted.");
           case 6:
-            _context15.n = 8;
+            _context19.n = 8;
             break;
           case 7:
-            _context15.p = 7;
-            _t15 = _context15.v;
-            setMsg("Guardian permission is enabled, but Pulse subscription failed: ".concat(String((_t15 === null || _t15 === void 0 ? void 0 : _t15.message) || _t15)));
+            _context19.p = 7;
+            _t19 = _context19.v;
+            setMsg("Guardian permission is enabled, but Pulse subscription failed: ".concat(String((_t19 === null || _t19 === void 0 ? void 0 : _t19.message) || _t19)));
           case 8:
-            return _context15.a(2);
+            return _context19.a(2);
         }
-      }, _callee15, null, [[1, 7]]);
+      }, _callee19, null, [[1, 7]]);
     }));
     return function enable() {
-      return _ref74.apply(this, arguments);
+      return _ref77.apply(this, arguments);
     };
   }();
   var disable = function () {
-    var _ref75 = _asyncToGenerator(_regenerator().m(function _callee16() {
-      var next, _t16;
-      return _regenerator().w(function (_context16) {
-        while (1) switch (_context16.p = _context16.n) {
+    var _ref78 = _asyncToGenerator(_regenerator().m(function _callee20() {
+      var next, _t20;
+      return _regenerator().w(function (_context20) {
+        while (1) switch (_context20.p = _context20.n) {
           case 0:
             next = _objectSpread(_objectSpread({}, settings), {}, {
               enabled: false
             });
             setSettings(next);
             saveGuardianSettings(next);
-            _context16.p = 1;
-            _context16.n = 2;
+            _context20.p = 1;
+            _context20.n = 2;
             return pulseGuardianSubscribe(next);
           case 2:
             setMsg("Guardian alerts are paused on this device and Pulse was updated.");
-            _context16.n = 4;
+            _context20.n = 4;
             break;
           case 3:
-            _context16.p = 3;
-            _t16 = _context16.v;
+            _context20.p = 3;
+            _t20 = _context20.v;
             setMsg("Guardian alerts are paused on this device.");
           case 4:
-            return _context16.a(2);
+            return _context20.a(2);
         }
-      }, _callee16, null, [[1, 3]]);
+      }, _callee20, null, [[1, 3]]);
     }));
     return function disable() {
-      return _ref75.apply(this, arguments);
+      return _ref78.apply(this, arguments);
     };
   }();
   var testNotification = function () {
-    var _ref76 = _asyncToGenerator(_regenerator().m(function _callee17() {
-      var reg, n, _t17;
-      return _regenerator().w(function (_context17) {
-        while (1) switch (_context17.p = _context17.n) {
+    var _ref79 = _asyncToGenerator(_regenerator().m(function _callee21() {
+      var reg, n, _t21;
+      return _regenerator().w(function (_context21) {
+        while (1) switch (_context21.p = _context21.n) {
           case 0:
             setMsg("");
             if (supported) {
-              _context17.n = 1;
+              _context21.n = 1;
               break;
             }
             setMsg("Notifications are not supported in this browser yet.");
-            return _context17.a(2);
+            return _context21.a(2);
           case 1:
             if (!(Notification.permission !== "granted")) {
-              _context17.n = 2;
+              _context21.n = 2;
               break;
             }
             setMsg("Enable notifications first.");
-            return _context17.a(2);
+            return _context21.a(2);
           case 2:
-            _context17.p = 2;
+            _context21.p = 2;
             if (!("serviceWorker" in navigator)) {
-              _context17.n = 5;
+              _context21.n = 5;
               break;
             }
-            _context17.n = 3;
+            _context21.n = 3;
             return guardianEnsureServiceWorker();
           case 3:
-            reg = _context17.v;
-            _context17.n = 4;
+            reg = _context21.v;
+            _context21.n = 4;
             return reg.showNotification("687 Trip Guardian", {
               body: "Test alert: Guardian can notify you about weather, leave time, route problems and important signals.",
               tag: "687-guardian-test",
@@ -15224,7 +15987,7 @@ function ItalyIntelligentDayGuardian(_ref71) {
             });
           case 4:
             setMsg("System notification sent through Guardian service worker.");
-            return _context17.a(2);
+            return _context21.a(2);
           case 5:
             n = new Notification("687 Trip Guardian", {
               body: "Test alert: Guardian can notify you about weather, leave time, route problems and important signals.",
@@ -15238,35 +16001,35 @@ function ItalyIntelligentDayGuardian(_ref71) {
               n.close();
             };
             setMsg("Test notification sent.");
-            _context17.n = 7;
+            _context21.n = 7;
             break;
           case 6:
-            _context17.p = 6;
-            _t17 = _context17.v;
+            _context21.p = 6;
+            _t21 = _context21.v;
             setMsg("Guardian service worker is not ready yet. Reload once and try again.");
           case 7:
-            return _context17.a(2);
+            return _context21.a(2);
         }
-      }, _callee17, null, [[2, 6]]);
+      }, _callee21, null, [[2, 6]]);
     }));
     return function testNotification() {
-      return _ref76.apply(this, arguments);
+      return _ref79.apply(this, arguments);
     };
   }();
   var testBackendPush = function () {
-    var _ref77 = _asyncToGenerator(_regenerator().m(function _callee19() {
-      var runTest, _j, _j2, _j3, _yield$runTest, r, j, _yield$runTest2, _t18;
-      return _regenerator().w(function (_context19) {
-        while (1) switch (_context19.p = _context19.n) {
+    var _ref80 = _asyncToGenerator(_regenerator().m(function _callee23() {
+      var runTest, _j, _j2, _j3, _yield$runTest, r, j, _yield$runTest2, _t22;
+      return _regenerator().w(function (_context23) {
+        while (1) switch (_context23.p = _context23.n) {
           case 0:
             setMsg("Sending backend push test…");
             runTest = function () {
-              var _ref78 = _asyncToGenerator(_regenerator().m(function _callee18() {
+              var _ref81 = _asyncToGenerator(_regenerator().m(function _callee22() {
                 var r, j;
-                return _regenerator().w(function (_context18) {
-                  while (1) switch (_context18.n) {
+                return _regenerator().w(function (_context22) {
+                  while (1) switch (_context22.n) {
                     case 0:
-                      _context18.n = 1;
+                      _context22.n = 1;
                       return fetch("".concat(PULSE_API_BASE, "/v1/push/test"), {
                         method: "POST",
                         headers: {
@@ -15279,68 +16042,68 @@ function ItalyIntelligentDayGuardian(_ref71) {
                         })
                       });
                     case 1:
-                      r = _context18.v;
-                      _context18.n = 2;
+                      r = _context22.v;
+                      _context22.n = 2;
                       return r.json()["catch"](function () {
                         return null;
                       });
                     case 2:
-                      j = _context18.v;
-                      return _context18.a(2, {
+                      j = _context22.v;
+                      return _context22.a(2, {
                         r: r,
                         j: j
                       });
                   }
-                }, _callee18);
+                }, _callee22);
               }));
               return function runTest() {
-                return _ref78.apply(this, arguments);
+                return _ref81.apply(this, arguments);
               };
             }();
-            _context19.p = 1;
-            _context19.n = 2;
+            _context23.p = 1;
+            _context23.n = 2;
             return runTest();
           case 2:
-            _yield$runTest = _context19.v;
+            _yield$runTest = _context23.v;
             r = _yield$runTest.r;
             j = _yield$runTest.j;
             if (!(!r.ok && r.status === 404 && String(((_j = j) === null || _j === void 0 ? void 0 : _j.error) || "").toLowerCase().includes("no active push subscription"))) {
-              _context19.n = 5;
+              _context23.n = 5;
               break;
             }
             setMsg("Repairing Guardian push subscription…");
-            _context19.n = 3;
+            _context23.n = 3;
             return pulseGuardianSubscribe(_objectSpread(_objectSpread({}, settings), {}, {
               enabled: true
             }));
           case 3:
-            _context19.n = 4;
+            _context23.n = 4;
             return runTest();
           case 4:
-            _yield$runTest2 = _context19.v;
+            _yield$runTest2 = _context23.v;
             r = _yield$runTest2.r;
             j = _yield$runTest2.j;
           case 5:
             if (!(!r.ok || !((_j2 = j) !== null && _j2 !== void 0 && _j2.ok))) {
-              _context19.n = 6;
+              _context23.n = 6;
               break;
             }
             throw new Error(((_j3 = j) === null || _j3 === void 0 ? void 0 : _j3.error) || "Pulse ".concat(r.status));
           case 6:
             setMsg("Backend push accepted by 687 Pulse. Minimize the app and check the notification.");
-            _context19.n = 8;
+            _context23.n = 8;
             break;
           case 7:
-            _context19.p = 7;
-            _t18 = _context19.v;
-            setMsg("Backend push test failed: ".concat(String((_t18 === null || _t18 === void 0 ? void 0 : _t18.message) || _t18)));
+            _context23.p = 7;
+            _t22 = _context23.v;
+            setMsg("Backend push test failed: ".concat(String((_t22 === null || _t22 === void 0 ? void 0 : _t22.message) || _t22)));
           case 8:
-            return _context19.a(2);
+            return _context23.a(2);
         }
-      }, _callee19, null, [[1, 7]]);
+      }, _callee23, null, [[1, 7]]);
     }));
     return function testBackendPush() {
-      return _ref77.apply(this, arguments);
+      return _ref80.apply(this, arguments);
     };
   }();
   var statusText = !supported ? "Not supported here" : permission === "denied" ? "Blocked by device/browser" : settings.enabled && permission === "granted" ? "Guardian armed" : "Guardian paused";
@@ -15419,8 +16182,8 @@ function ItalyIntelligentDayGuardian(_ref71) {
     className: "iday-guardian-note"
   }, "Guardian keeps the current day context synced to 687 Pulse while armed. The backend can alert for severe weather, leave-time, route problems and important Signals. Closed-app automatic checks also require the Pulse backend's scheduled monitoring to be enabled."));
 }
-function ItalyIntelligentDaySignals(_ref79) {
-  var data = _ref79.data;
+function ItalyIntelligentDaySignals(_ref82) {
+  var data = _ref82.data;
   var key = "tripitaly_live_signals_v1";
   var statsKey = "tripitaly_signal_contribution_stats_v1";
   var ownIdsKey = "tripitaly_signal_own_ids_v1";
@@ -15611,16 +16374,16 @@ function ItalyIntelligentDaySignals(_ref79) {
       return;
     }
     navigator.geolocation.getCurrentPosition(function () {
-      var _ref80 = _asyncToGenerator(_regenerator().m(function _callee20(pos) {
-        var remote, merged, helpedDelta, localByServer, _t19;
-        return _regenerator().w(function (_context20) {
-          while (1) switch (_context20.p = _context20.n) {
+      var _ref83 = _asyncToGenerator(_regenerator().m(function _callee24(pos) {
+        var remote, merged, helpedDelta, localByServer, _t23;
+        return _regenerator().w(function (_context24) {
+          while (1) switch (_context24.p = _context24.n) {
             case 0:
-              _context20.p = 0;
-              _context20.n = 1;
+              _context24.p = 0;
+              _context24.n = 1;
               return pulseFetchNearby(pos.coords.latitude, pos.coords.longitude, 4000);
             case 1:
-              remote = _context20.v;
+              remote = _context24.v;
               merged = mergeSignals(local, remote);
               helpedDelta = 0;
               localByServer = new Map((local || []).filter(function (x) {
@@ -15643,20 +16406,20 @@ function ItalyIntelligentDaySignals(_ref79) {
               setItems(merged);
               saveLocal(merged);
               setPulseState("online");
-              _context20.n = 3;
+              _context24.n = 3;
               break;
             case 2:
-              _context20.p = 2;
-              _t19 = _context20.v;
+              _context24.p = 2;
+              _t23 = _context24.v;
               setItems(local);
               setPulseState("local");
             case 3:
-              return _context20.a(2);
+              return _context24.a(2);
           }
-        }, _callee20, null, [[0, 2]]);
+        }, _callee24, null, [[0, 2]]);
       }));
-      return function (_x26) {
-        return _ref80.apply(this, arguments);
+      return function (_x31) {
+        return _ref83.apply(this, arguments);
       };
     }(), function () {
       setItems(local);
@@ -15699,10 +16462,10 @@ function ItalyIntelligentDaySignals(_ref79) {
     setMsgKind("good");
     setMsg("Sending signal…");
     navigator.geolocation.getCurrentPosition(function () {
-      var _ref81 = _asyncToGenerator(_regenerator().m(function _callee21(pos) {
-        var meta, now, localItem, local, res, s, _t20;
-        return _regenerator().w(function (_context21) {
-          while (1) switch (_context21.p = _context21.n) {
+      var _ref84 = _asyncToGenerator(_regenerator().m(function _callee25(pos) {
+        var meta, now, localItem, local, res, s, _t24;
+        return _regenerator().w(function (_context25) {
+          while (1) switch (_context25.p = _context25.n) {
             case 0:
               meta = IDAY_SIGNAL_TYPES.find(function (x) {
                 return x[0] === t;
@@ -15725,8 +16488,8 @@ function ItalyIntelligentDaySignals(_ref79) {
                 lastSeenConfirmations: 1
               };
               local = loadLocal();
-              _context21.p = 1;
-              _context21.n = 2;
+              _context25.p = 1;
+              _context25.n = 2;
               return pulseReportSignal({
                 type: t,
                 lat: pos.coords.latitude,
@@ -15734,7 +16497,7 @@ function ItalyIntelligentDaySignals(_ref79) {
                 locality: target.target
               });
             case 2:
-              res = _context21.v;
+              res = _context25.v;
               s = res.signal;
               localItem.serverId = (s === null || s === void 0 ? void 0 : s.id) || "";
               localItem.source = "pulse";
@@ -15752,11 +16515,11 @@ function ItalyIntelligentDaySignals(_ref79) {
               setTarget(null);
               flashMsg(res.merged ? "Thanks \u2014 signal confirmed for ".concat(target.target, ".") : "Thanks \u2014 your signal can help travelers near ".concat(target.target, "."));
               refresh();
-              _context21.n = 4;
+              _context25.n = 4;
               break;
             case 3:
-              _context21.p = 3;
-              _t20 = _context21.v;
+              _context25.p = 3;
+              _t24 = _context25.v;
               local.unshift(localItem);
               saveLocal(local);
               setItems(local);
@@ -15765,12 +16528,12 @@ function ItalyIntelligentDaySignals(_ref79) {
               setMsgKind("error");
               setMsg("Pulse is temporarily unavailable. Report saved on this device for ".concat(target.target, "."));
             case 4:
-              return _context21.a(2);
+              return _context25.a(2);
           }
-        }, _callee21, null, [[1, 3]]);
+        }, _callee25, null, [[1, 3]]);
       }));
-      return function (_x27) {
-        return _ref81.apply(this, arguments);
+      return function (_x32) {
+        return _ref84.apply(this, arguments);
       };
     }(), function () {
       setMsgKind("error");
@@ -15782,37 +16545,37 @@ function ItalyIntelligentDaySignals(_ref79) {
     });
   };
   var confirm = function () {
-    var _ref82 = _asyncToGenerator(_regenerator().m(function _callee22(item) {
-      var _res$signal, res, n, _t21;
-      return _regenerator().w(function (_context22) {
-        while (1) switch (_context22.p = _context22.n) {
+    var _ref85 = _asyncToGenerator(_regenerator().m(function _callee26(item) {
+      var _res$signal, res, n, _t25;
+      return _regenerator().w(function (_context26) {
+        while (1) switch (_context26.p = _context26.n) {
           case 0:
             if (item.serverId) {
-              _context22.n = 1;
+              _context26.n = 1;
               break;
             }
             flashMsg("This local-only signal cannot be confirmed on Pulse yet.", "error", 3800);
-            return _context22.a(2);
+            return _context26.a(2);
           case 1:
             if (!isOwnSignal(item)) {
-              _context22.n = 2;
+              _context26.n = 2;
               break;
             }
             flashMsg("This is your report — other travelers can confirm it.", "good", 3200);
-            return _context22.a(2);
+            return _context26.a(2);
           case 2:
             if (!voteFor(item)) {
-              _context22.n = 3;
+              _context26.n = 3;
               break;
             }
             flashMsg("You already responded to this signal.", "good", 2800);
-            return _context22.a(2);
+            return _context26.a(2);
           case 3:
-            _context22.p = 3;
-            _context22.n = 4;
+            _context26.p = 3;
+            _context26.n = 4;
             return pulseVoteSignal(item.serverId, "confirm");
           case 4:
-            res = _context22.v;
+            res = _context26.v;
             rememberVote(item.serverId, "confirm");
             bumpStats({
               confirms: 1
@@ -15827,45 +16590,45 @@ function ItalyIntelligentDaySignals(_ref79) {
             });
             flashMsg("Thanks — your confirmation helps travelers nearby.");
             setTimeout(refresh, 300);
-            _context22.n = 6;
+            _context26.n = 6;
             break;
           case 5:
-            _context22.p = 5;
-            _t21 = _context22.v;
-            if (String((_t21 === null || _t21 === void 0 ? void 0 : _t21.message) || "").includes("Already voted")) {
+            _context26.p = 5;
+            _t25 = _context26.v;
+            if (String((_t25 === null || _t25 === void 0 ? void 0 : _t25.message) || "").includes("Already voted")) {
               rememberVote(item.serverId, "already");
               flashMsg("You already responded to this signal.", "good", 3000);
             } else {
               flashMsg("Could not confirm on Pulse right now.", "error", 3800);
             }
           case 6:
-            return _context22.a(2);
+            return _context26.a(2);
         }
-      }, _callee22, null, [[3, 5]]);
+      }, _callee26, null, [[3, 5]]);
     }));
-    return function confirm(_x28) {
-      return _ref82.apply(this, arguments);
+    return function confirm(_x33) {
+      return _ref85.apply(this, arguments);
     };
   }();
   var gone = function () {
-    var _ref83 = _asyncToGenerator(_regenerator().m(function _callee23(item) {
-      var next, _t22;
-      return _regenerator().w(function (_context23) {
-        while (1) switch (_context23.p = _context23.n) {
+    var _ref86 = _asyncToGenerator(_regenerator().m(function _callee27(item) {
+      var next, _t26;
+      return _regenerator().w(function (_context27) {
+        while (1) switch (_context27.p = _context27.n) {
           case 0:
             if (!item.serverId) {
-              _context23.n = 4;
+              _context27.n = 4;
               break;
             }
             if (!voteFor(item)) {
-              _context23.n = 1;
+              _context27.n = 1;
               break;
             }
             flashMsg("You already responded to this signal.", "good", 2800);
-            return _context23.a(2);
+            return _context27.a(2);
           case 1:
-            _context23.p = 1;
-            _context23.n = 2;
+            _context27.p = 1;
+            _context27.n = 2;
             return pulseVoteSignal(item.serverId, "gone");
           case 2:
             rememberVote(item.serverId, "gone");
@@ -15873,12 +16636,12 @@ function ItalyIntelligentDaySignals(_ref79) {
               gone: 1
             });
             flashMsg("Thanks — marked Gone on 687 Pulse.");
-            _context23.n = 4;
+            _context27.n = 4;
             break;
           case 3:
-            _context23.p = 3;
-            _t22 = _context23.v;
-            if (String((_t22 === null || _t22 === void 0 ? void 0 : _t22.message) || "").includes("Already voted")) {
+            _context27.p = 3;
+            _t26 = _context27.v;
+            if (String((_t26 === null || _t26 === void 0 ? void 0 : _t26.message) || "").includes("Already voted")) {
               rememberVote(item.serverId, "already");
               flashMsg("You already responded to this signal.", "good", 3000);
             } else {
@@ -15892,12 +16655,12 @@ function ItalyIntelligentDaySignals(_ref79) {
             saveLocal(next);
             setTimeout(refresh, 300);
           case 5:
-            return _context23.a(2);
+            return _context27.a(2);
         }
-      }, _callee23, null, [[1, 3]]);
+      }, _callee27, null, [[1, 3]]);
     }));
-    return function gone(_x29) {
-      return _ref83.apply(this, arguments);
+    return function gone(_x34) {
+      return _ref86.apply(this, arguments);
     };
   }();
   var relevant = items.filter(function (x) {
@@ -16054,9 +16817,9 @@ function ItalyIntelligentDaySignals(_ref79) {
     }
   }, "687 Pulse is now connected. Reports are shared anonymously when the backend is reachable; local storage remains only as a safety fallback."));
 }
-function ItalyIntelligentDayPrevent(_ref84) {
-  var data = _ref84.data,
-    onOpenNow = _ref84.onOpenNow;
+function ItalyIntelligentDayPrevent(_ref87) {
+  var data = _ref87.data,
+    onOpenNow = _ref87.onOpenNow;
   var _React$useState49 = React.useState({
       loading: true,
       status: "good",
@@ -16109,28 +16872,28 @@ function ItalyIntelligentDayPrevent(_ref84) {
       return;
     }
     navigator.geolocation.getCurrentPosition(function () {
-      var _ref85 = _asyncToGenerator(_regenerator().m(function _callee24(pos) {
-        var lat, lng, _w$hourly, _w$current, _w$hourly2, _w$hourly3, _w$hourly4, _w$hourly5, _w$current2, url, r, w, times, startIndex, currentIso, found, endIndex, probs, gusts, codes, visibility, hourly, maxRain, maxGust, minVisibility, minVisibilityIndex, rel, minVisibilityTime, storm, hail, status, _details, visKm, when, _details2, _t23;
-        return _regenerator().w(function (_context24) {
-          while (1) switch (_context24.p = _context24.n) {
+      var _ref88 = _asyncToGenerator(_regenerator().m(function _callee28(pos) {
+        var lat, lng, _w$hourly, _w$current, _w$hourly2, _w$hourly3, _w$hourly4, _w$hourly5, _w$current2, url, r, w, times, startIndex, currentIso, found, endIndex, probs, gusts, codes, visibility, hourly, maxRain, maxGust, minVisibility, minVisibilityIndex, rel, minVisibilityTime, storm, hail, status, _details, visKm, when, _details2, _t27;
+        return _regenerator().w(function (_context28) {
+          while (1) switch (_context28.p = _context28.n) {
             case 0:
               lat = pos.coords.latitude, lng = pos.coords.longitude;
-              _context24.p = 1;
+              _context28.p = 1;
               url = "https://api.open-meteo.com/v1/forecast?latitude=".concat(encodeURIComponent(lat)) + "&longitude=".concat(encodeURIComponent(lng)) + "&current=temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m" + "&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,visibility" + "&forecast_days=2&timezone=auto";
-              _context24.n = 2;
+              _context28.n = 2;
               return fetch(url);
             case 2:
-              r = _context24.v;
+              r = _context28.v;
               if (r.ok) {
-                _context24.n = 3;
+                _context28.n = 3;
                 break;
               }
               throw new Error("weather");
             case 3:
-              _context24.n = 4;
+              _context28.n = 4;
               return r.json();
             case 4:
-              w = _context24.v;
+              w = _context28.v;
               times = ((_w$hourly = w.hourly) === null || _w$hourly === void 0 ? void 0 : _w$hourly.time) || [];
               startIndex = 0;
               currentIso = String(((_w$current = w.current) === null || _w$current === void 0 ? void 0 : _w$current.time) || "");
@@ -16218,11 +16981,11 @@ function ItalyIntelligentDayPrevent(_ref84) {
                   minute: "2-digit"
                 })
               });
-              _context24.n = 6;
+              _context28.n = 6;
               break;
             case 5:
-              _context24.p = 5;
-              _t23 = _context24.v;
+              _context28.p = 5;
+              _t27 = _context28.v;
               _details2 = localSignals.map(function (x) {
                 return "Traveler signal: ".concat(x.label).concat(x.target ? " \xB7 ".concat(x.target) : "");
               });
@@ -16236,12 +16999,12 @@ function ItalyIntelligentDayPrevent(_ref84) {
                 updatedAt: ""
               });
             case 6:
-              return _context24.a(2);
+              return _context28.a(2);
           }
-        }, _callee24, null, [[1, 5]]);
+        }, _callee28, null, [[1, 5]]);
       }));
-      return function (_x30) {
-        return _ref85.apply(this, arguments);
+      return function (_x35) {
+        return _ref88.apply(this, arguments);
       };
     }(), function () {
       setState({
@@ -16340,12 +17103,12 @@ function ItalyIntelligentDayPrevent(_ref84) {
     onClick: onOpenNow
   }, "\u2728 Fix in NOW"))));
 }
-function ItalyIntelligentDayBudget(_ref86) {
-  var data = _ref86.data,
-    dailyAmount = _ref86.dailyAmount,
-    onOpenItinerary = _ref86.onOpenItinerary,
-    _ref86$compact = _ref86.compact,
-    compact = _ref86$compact === void 0 ? false : _ref86$compact;
+function ItalyIntelligentDayBudget(_ref89) {
+  var data = _ref89.data,
+    dailyAmount = _ref89.dailyAmount,
+    onOpenItinerary = _ref89.onOpenItinerary,
+    _ref89$compact = _ref89.compact,
+    compact = _ref89$compact === void 0 ? false : _ref89$compact;
   var ic = IDAY_LOCALIZED[getVoiceAssistantLanguage()] || IDAY_LOCALIZED.en;
   var workingDay = italyIntelligentWorkingDay(data);
   var totalDays = tripLengthDays(data);
@@ -16497,10 +17260,10 @@ function ItalyIntelligentDayBudget(_ref86) {
     onClick: onOpenItinerary
   }, ic.edit)));
 }
-function ItalyIntelligentDayRescue(_ref87) {
-  var data = _ref87.data,
-    onGoTo = _ref87.onGoTo,
-    onOpenNow = _ref87.onOpenNow;
+function ItalyIntelligentDayRescue(_ref90) {
+  var data = _ref90.data,
+    onGoTo = _ref90.onGoTo,
+    onOpenNow = _ref90.onOpenNow;
   var _React$useState51 = React.useState("train"),
     _React$useState52 = _slicedToArray(_React$useState51, 2),
     kind = _React$useState52[0],
@@ -16570,30 +17333,30 @@ function ItalyIntelligentDayRescue(_ref87) {
     }
   };
   var copyPhrase = function () {
-    var _ref88 = _asyncToGenerator(_regenerator().m(function _callee25() {
-      var text, _t24;
-      return _regenerator().w(function (_context25) {
-        while (1) switch (_context25.p = _context25.n) {
+    var _ref91 = _asyncToGenerator(_regenerator().m(function _callee29() {
+      var text, _t28;
+      return _regenerator().w(function (_context29) {
+        while (1) switch (_context29.p = _context29.n) {
           case 0:
             text = phrases[kind] || "Potete aiutarmi?";
-            _context25.p = 1;
-            _context25.n = 2;
+            _context29.p = 1;
+            _context29.n = 2;
             return navigator.clipboard.writeText(text);
           case 2:
             setMsg("Italian phrase copied.");
-            _context25.n = 4;
+            _context29.n = 4;
             break;
           case 3:
-            _context25.p = 3;
-            _t24 = _context25.v;
+            _context29.p = 3;
+            _t28 = _context29.v;
             setMsg(text);
           case 4:
-            return _context25.a(2);
+            return _context29.a(2);
         }
-      }, _callee25, null, [[1, 3]]);
+      }, _callee29, null, [[1, 3]]);
     }));
     return function copyPhrase() {
-      return _ref88.apply(this, arguments);
+      return _ref91.apply(this, arguments);
     };
   }();
   var actions = {
@@ -16718,10 +17481,10 @@ function ItalyIntelligentDayRescue(_ref87) {
     }
   }, current.text), React.createElement("div", {
     className: "rescue-actions"
-  }, (actions[kind] || []).map(function (_ref89) {
-    var _ref90 = _slicedToArray(_ref89, 2),
-      id = _ref90[0],
-      label = _ref90[1];
+  }, (actions[kind] || []).map(function (_ref92) {
+    var _ref93 = _slicedToArray(_ref92, 2),
+      id = _ref93[0],
+      label = _ref93[1];
     return React.createElement("button", {
       key: id,
       className: "rescue-action" + (id === "112" ? " emergency" : ""),
@@ -16735,11 +17498,11 @@ function ItalyIntelligentDayRescue(_ref87) {
     className: "rescue-note"
   }, "112 is the European emergency number used in Italy. Rescue opens maps, translation, Wallet, Nearby or NOW; it does not replace emergency services.")));
 }
-function IntelligentDayMenuShell(_ref91) {
-  var onGoTo = _ref91.onGoTo,
-    data = _ref91.data,
-    setData = _ref91.setData,
-    dailyAmount = _ref91.dailyAmount;
+function IntelligentDayMenuShell(_ref94) {
+  var onGoTo = _ref94.onGoTo,
+    data = _ref94.data,
+    setData = _ref94.setData,
+    dailyAmount = _ref94.dailyAmount;
   var ic = IDAY_LOCALIZED[getVoiceAssistantLanguage()] || IDAY_LOCALIZED.en;
   var _React$useState57 = React.useState("today"),
     _React$useState58 = _slicedToArray(_React$useState57, 2),
@@ -16907,10 +17670,10 @@ function IntelligentDayMenuShell(_ref91) {
     }
   }, ic.shared))));
 }
-function DashboardVoiceAssistant(_ref92) {
-  var onGoTo = _ref92.onGoTo,
-    data = _ref92.data,
-    currentSection = _ref92.currentSection;
+function DashboardVoiceAssistant(_ref95) {
+  var onGoTo = _ref95.onGoTo,
+    data = _ref95.data,
+    currentSection = _ref95.currentSection;
   var _React$useState59 = React.useState(false),
     _React$useState60 = _slicedToArray(_React$useState59, 2),
     listening = _React$useState60[0],
@@ -18156,10 +18919,10 @@ function DashboardVoiceAssistant(_ref92) {
       opacity: .68,
       marginBottom: 9
     }
-  }, helpCopy.subtitle), helpCopy.groups.map(function (_ref93) {
-    var _ref94 = _slicedToArray(_ref93, 2),
-      group = _ref94[0],
-      examples = _ref94[1];
+  }, helpCopy.subtitle), helpCopy.groups.map(function (_ref96) {
+    var _ref97 = _slicedToArray(_ref96, 2),
+      group = _ref97[0],
+      examples = _ref97[1];
     return React.createElement("div", {
       key: group,
       style: {
@@ -18288,20 +19051,20 @@ function DashboardVoiceAssistant(_ref92) {
     }
   }), React.createElement("button", {
     type: "button",
-    onClick: _asyncToGenerator(_regenerator().m(function _callee26() {
+    onClick: _asyncToGenerator(_regenerator().m(function _callee30() {
       var ok;
-      return _regenerator().w(function (_context26) {
-        while (1) switch (_context26.n) {
+      return _regenerator().w(function (_context30) {
+        while (1) switch (_context30.n) {
           case 0:
-            _context26.n = 1;
+            _context30.n = 1;
             return appConfirm("Switch the app and Voice Assistant back to English?");
           case 1:
-            ok = _context26.v;
+            ok = _context30.v;
             if (ok) {
-              _context26.n = 2;
+              _context30.n = 2;
               break;
             }
-            return _context26.a(2);
+            return _context30.a(2);
           case 2:
             try {
               localStorage.setItem("tripengine_ui_language", "en");
@@ -18313,9 +19076,9 @@ function DashboardVoiceAssistant(_ref92) {
             setHelpOpen(false);
             setHeard("");
           case 3:
-            return _context26.a(2);
+            return _context30.a(2);
         }
-      }, _callee26);
+      }, _callee30);
     })),
     style: {
       width: "100%",
@@ -18384,24 +19147,24 @@ function DashboardVoiceAssistant(_ref92) {
     }
   }, listening ? "•••" : "🎤")));
 }
-function ScreenDashboard(_ref96) {
-  var data = _ref96.data,
-    setData = _ref96.setData,
-    onStartNewTrip = _ref96.onStartNewTrip,
-    uiLanguage = _ref96.uiLanguage,
-    setUiLanguage = _ref96.setUiLanguage,
-    theme = _ref96.theme,
-    setTheme = _ref96.setTheme,
-    archives = _ref96.archives,
-    onRestoreTrip = _ref96.onRestoreTrip,
-    onDeleteArchive = _ref96.onDeleteArchive,
-    onSectionChange = _ref96.onSectionChange;
+function ScreenDashboard(_ref99) {
+  var data = _ref99.data,
+    setData = _ref99.setData,
+    onStartNewTrip = _ref99.onStartNewTrip,
+    uiLanguage = _ref99.uiLanguage,
+    setUiLanguage = _ref99.setUiLanguage,
+    theme = _ref99.theme,
+    setTheme = _ref99.setTheme,
+    archives = _ref99.archives,
+    onRestoreTrip = _ref99.onRestoreTrip,
+    onDeleteArchive = _ref99.onDeleteArchive,
+    onSectionChange = _ref99.onSectionChange;
   var savedDashboardSectionRaw = loadSavedUI().section;
   var savedDashboardSection = ["tickets", "car", "house", "phrasebook"].includes(savedDashboardSectionRaw) ? savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet" : savedDashboardSectionRaw;
-  var _useState169 = useState(savedDashboardSection || "overview"),
-    _useState170 = _slicedToArray(_useState169, 2),
-    section = _useState170[0],
-    setSection = _useState170[1];
+  var _useState175 = useState(savedDashboardSection || "overview"),
+    _useState176 = _slicedToArray(_useState175, 2),
+    section = _useState176[0],
+    setSection = _useState176[1];
   var previousSectionRef = React.useRef(savedDashboardSection && savedDashboardSection !== "live" ? savedDashboardSection : "overview");
   var goSection = function goSection(id) {
     if (id === "live" && section !== "live") previousSectionRef.current = section;
@@ -18444,14 +19207,14 @@ function ScreenDashboard(_ref96) {
       return window.removeEventListener("tripitaly-open-section", handler);
     };
   }, []);
-  var _useState171 = useState({
+  var _useState177 = useState({
       tickets: [],
       car: [],
       house: []
     }),
-    _useState172 = _slicedToArray(_useState171, 2),
-    documents = _useState172[0],
-    setDocuments = _useState172[1];
+    _useState178 = _slicedToArray(_useState177, 2),
+    documents = _useState178[0],
+    setDocuments = _useState178[1];
   React.useEffect(function () {
     loadTravelDocuments().then(function (all) {
       var grouped = {
@@ -18470,12 +19233,12 @@ function ScreenDashboard(_ref96) {
     });
   }, []);
   var addDoc = function () {
-    var _ref97 = _asyncToGenerator(_regenerator().m(function _callee27(sectionId, doc) {
+    var _ref100 = _asyncToGenerator(_regenerator().m(function _callee31(sectionId, doc) {
       var blob, meta;
-      return _regenerator().w(function (_context27) {
-        while (1) switch (_context27.n) {
+      return _regenerator().w(function (_context31) {
+        while (1) switch (_context31.n) {
           case 0:
-            _context27.n = 1;
+            _context31.n = 1;
             return saveTravelDocument(doc);
           case 1:
             blob = doc.blob, meta = _objectWithoutProperties(doc, _excluded2);
@@ -18483,20 +19246,20 @@ function ScreenDashboard(_ref96) {
               return _objectSpread(_objectSpread({}, prev), {}, _defineProperty({}, sectionId, [].concat(_toConsumableArray(prev[sectionId]), [meta])));
             });
           case 2:
-            return _context27.a(2);
+            return _context31.a(2);
         }
-      }, _callee27);
+      }, _callee31);
     }));
-    return function addDoc(_x31, _x32) {
-      return _ref97.apply(this, arguments);
+    return function addDoc(_x36, _x37) {
+      return _ref100.apply(this, arguments);
     };
   }();
   var removeDoc = function () {
-    var _ref98 = _asyncToGenerator(_regenerator().m(function _callee28(sectionId, id) {
-      return _regenerator().w(function (_context28) {
-        while (1) switch (_context28.n) {
+    var _ref101 = _asyncToGenerator(_regenerator().m(function _callee32(sectionId, id) {
+      return _regenerator().w(function (_context32) {
+        while (1) switch (_context32.n) {
           case 0:
-            _context28.n = 1;
+            _context32.n = 1;
             return deleteTravelDocument(id);
           case 1:
             setDocuments(function (prev) {
@@ -18505,12 +19268,12 @@ function ScreenDashboard(_ref96) {
               })));
             });
           case 2:
-            return _context28.a(2);
+            return _context32.a(2);
         }
-      }, _callee28);
+      }, _callee32);
     }));
-    return function removeDoc(_x33, _x34) {
-      return _ref98.apply(this, arguments);
+    return function removeDoc(_x38, _x39) {
+      return _ref101.apply(this, arguments);
     };
   }();
   var nights = tripLengthDays(data) - 1;
@@ -21402,10 +22165,10 @@ var ASIAN_UI_TEXT = {
   "Local data": ["本地数据", "로컬 데이터"]
 };
 function applyAsianTranslations(table) {
-  Object.entries(ASIAN_UI_TEXT).forEach(function (_ref99) {
-    var _ref100 = _slicedToArray(_ref99, 2),
-      key = _ref100[0],
-      pair = _ref100[1];
+  Object.entries(ASIAN_UI_TEXT).forEach(function (_ref102) {
+    var _ref103 = _slicedToArray(_ref102, 2),
+      key = _ref103[0],
+      pair = _ref103[1];
     if (table[key]) {
       table[key].zh = pair[0];
       table[key].ko = pair[1];
@@ -21629,6 +22392,60 @@ applyAsianTranslations(GLOBAL_UI_TEXT);
     table[en] = _objectSpread(_objectSpread({}, langs), table[en] || {});
   }
 })();
+GLOBAL_UI_TEXT["Trip backup"] = {
+  "it": "Backup del viaggio",
+  "ja": "旅行のバックアップ",
+  "es": "Copia de seguridad del viaje",
+  "de": "Reise-Sicherung",
+  "fr": "Sauvegarde du voyage",
+  "zh": "旅行备份",
+  "ko": "여행 백업"
+};
+GLOBAL_UI_TEXT["Save your trip, settings and Travel Wallet documents to a file on this phone. You can restore it later or on a new phone."] = {
+  "it": "Salva viaggio, impostazioni e documenti del Portafoglio in un file su questo telefono. Potrai ripristinarlo più avanti o su un nuovo telefono.",
+  "ja": "旅行・設定・ウォレットの書類をこの端末にファイルとして保存します。後で、または新しい端末で復元できます。",
+  "es": "Guarda tu viaje, ajustes y documentos de la cartera en un archivo en este teléfono. Podrás restaurarlo más tarde o en un teléfono nuevo.",
+  "de": "Speichere Reise, Einstellungen und Wallet-Dokumente als Datei auf diesem Telefon. Du kannst sie später oder auf einem neuen Telefon wiederherstellen.",
+  "fr": "Enregistrez votre voyage, vos réglages et les documents du portefeuille dans un fichier sur ce téléphone. Vous pourrez le restaurer plus tard ou sur un nouveau téléphone.",
+  "zh": "将旅行、设置和钱包文件保存为此手机上的文件，之后或在新手机上即可恢复。",
+  "ko": "여행, 설정, 지갑 문서를 이 휴대폰에 파일로 저장합니다. 나중에 또는 새 휴대폰에서 복원할 수 있습니다."
+};
+GLOBAL_UI_TEXT["Important: on Android your trip is saved inside Chrome. If Chrome's site data is cleared, the trip on this phone is deleted. Keep a backup."] = {
+  "it": "Importante: su Android il viaggio è salvato dentro Chrome. Se vengono cancellati i dati dei siti di Chrome, il viaggio su questo telefono viene eliminato. Tieni un backup.",
+  "ja": "重要：Androidでは旅行データはChrome内に保存されます。Chromeのサイトデータを削除すると、この端末の旅行も削除されます。バックアップを保存してください。",
+  "es": "Importante: en Android tu viaje se guarda dentro de Chrome. Si se borran los datos de sitios de Chrome, el viaje de este teléfono se elimina. Guarda una copia.",
+  "de": "Wichtig: Unter Android wird deine Reise in Chrome gespeichert. Werden die Websitedaten von Chrome gelöscht, wird die Reise auf diesem Telefon gelöscht. Erstelle eine Sicherung.",
+  "fr": "Important : sur Android, votre voyage est enregistré dans Chrome. Si les données des sites de Chrome sont effacées, le voyage de ce téléphone est supprimé. Gardez une sauvegarde.",
+  "zh": "重要：在Android上，旅行数据保存在Chrome中。如果清除Chrome的网站数据，此手机上的旅行将被删除。请保存备份。",
+  "ko": "중요: Android에서는 여행이 Chrome 안에 저장됩니다. Chrome 사이트 데이터를 삭제하면 이 휴대폰의 여행도 삭제됩니다. 백업을 보관하세요."
+};
+GLOBAL_UI_TEXT["Include Travel Wallet documents"] = {
+  "it": "Includi i documenti del Portafoglio",
+  "ja": "ウォレットの書類を含める",
+  "es": "Incluir documentos de la cartera",
+  "de": "Wallet-Dokumente einbeziehen",
+  "fr": "Inclure les documents du portefeuille",
+  "zh": "包含钱包文件",
+  "ko": "지갑 문서 포함"
+};
+GLOBAL_UI_TEXT["Save backup"] = {
+  "it": "Salva backup",
+  "ja": "バックアップを保存",
+  "es": "Guardar copia",
+  "de": "Sicherung speichern",
+  "fr": "Enregistrer la sauvegarde",
+  "zh": "保存备份",
+  "ko": "백업 저장"
+};
+GLOBAL_UI_TEXT["Restore backup"] = {
+  "it": "Ripristina backup",
+  "ja": "バックアップを復元",
+  "es": "Restaurar copia",
+  "de": "Sicherung wiederherstellen",
+  "fr": "Restaurer la sauvegarde",
+  "zh": "恢复备份",
+  "ko": "백업 복원"
+};
 function translateGlobalUiString(value, lang) {
   var table = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : GLOBAL_UI_TEXT;
   if (!value) return value;
@@ -21653,6 +22470,22 @@ function translateGlobalUiString(value, lang) {
     }
   }
   if (lang !== "en") {
+    var extraDyn = window.IT_EXTRA_DYN && window.IT_EXTRA_DYN[lang] || [];
+    var _iterator2 = _createForOfIteratorHelper(extraDyn),
+      _step2;
+    try {
+      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+        var _step2$value = _slicedToArray(_step2.value, 2),
+          re = _step2$value[0],
+          repl = _step2$value[1];
+        var R = new RegExp(re);
+        if (R.test(trimmed)) return raw.replace(trimmed, trimmed.replace(R, repl));
+      }
+    } catch (err) {
+      _iterator2.e(err);
+    } finally {
+      _iterator2.f();
+    }
     var dyn = {
       it: [[/^Day (\d+)$/, "Giorno $1"], [/^([·•]?\s*)Open now$/, "$1Aperto ora"], [/^([·•]?\s*)Closed$/, "$1Chiuso"], [/^Parking: (.+)$/, "Parcheggio: $1"], [/^Emergency: (.+)$/, "Emergenza: $1"], [/^(\d+) days left$/, "$1 giorni rimasti"], [/^Smart pace · Budget influence: (NORMAL|LOW|OVER)$/, "Ritmo smart · Influenza budget: $1"]],
       ja: [[/^Day (\d+)$/, "$1日目"], [/^([·•]?\s*)Open now$/, "$1営業中"], [/^([·•]?\s*)Closed$/, "$1閉店"], [/^Parking: (.+)$/, "駐車: $1"], [/^Emergency: (.+)$/, "緊急: $1"], [/^(\d+) days left$/, "残り$1日"]],
@@ -21662,19 +22495,19 @@ function translateGlobalUiString(value, lang) {
       zh: [[/^Day (\d+)$/, "第 $1 天"], [/^([·•]?\s*)Open now$/, "$1现在营业"], [/^([·•]?\s*)Closed$/, "$1已关闭"], [/^Parking: (.+)$/, "停车：$1"], [/^Emergency: (.+)$/, "紧急：$1"], [/^(\d+) days left$/, "剩余 $1 天"]],
       ko: [[/^Day (\d+)$/, "$1일차"], [/^([·•]?\s*)Open now$/, "$1영업 중"], [/^([·•]?\s*)Closed$/, "$1영업 종료"], [/^Parking: (.+)$/, "주차: $1"], [/^Emergency: (.+)$/, "긴급: $1"], [/^(\d+) days left$/, "$1일 남음"]]
     }[lang] || [];
-    var _iterator2 = _createForOfIteratorHelper(dyn),
-      _step2;
+    var _iterator3 = _createForOfIteratorHelper(dyn),
+      _step3;
     try {
-      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-        var _step2$value = _slicedToArray(_step2.value, 2),
-          re = _step2$value[0],
-          repl = _step2$value[1];
-        if (re.test(trimmed)) return raw.replace(trimmed, trimmed.replace(re, repl));
+      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+        var _step3$value = _slicedToArray(_step3.value, 2),
+          _re = _step3$value[0],
+          _repl = _step3$value[1];
+        if (_re.test(trimmed)) return raw.replace(trimmed, trimmed.replace(_re, _repl));
       }
     } catch (err) {
-      _iterator2.e(err);
+      _iterator3.e(err);
     } finally {
-      _iterator2.f();
+      _iterator3.f();
     }
   }
   var routePrefixes = {
@@ -21738,6 +22571,747 @@ function translateGlobalUiString(value, lang) {
   }
   return value;
 }
+(function () {
+  var T = {
+    "/ day": {
+      "it": "/ giorno",
+      "de": "/ Tag",
+      "fr": "/ jour",
+      "es": "/ día",
+      "ja": "/ 日",
+      "zh": "/ 天",
+      "ko": "/ 일"
+    },
+    "687 Italy stores your trip and Travel Wallet documents on this device so you can return to them later.": {
+      "it": "687 Italy salva il viaggio e i documenti del Portafoglio su questo dispositivo, così puoi ritrovarli più tardi.",
+      "de": "687 Italy speichert deine Reise und die Wallet-Dokumente auf diesem Gerät, damit du später darauf zurückgreifen kannst.",
+      "fr": "687 Italy enregistre votre voyage et les documents du portefeuille sur cet appareil pour que vous puissiez les retrouver plus tard.",
+      "es": "687 Italy guarda tu viaje y los documentos de la cartera en este dispositivo para que puedas volver a ellos más tarde.",
+      "ja": "687 Italyは旅行とウォレットの書類をこの端末に保存し、後で見返せるようにします。",
+      "zh": "687 Italy会将你的旅行和钱包文件保存在此设备上，方便之后查看。",
+      "ko": "687 Italy는 여행과 지갑 문서를 이 기기에 저장해 나중에 다시 볼 수 있게 합니다."
+    },
+    "687 Italy · version 1.0": {
+      "it": "687 Italy · versione 1.0",
+      "de": "687 Italy · Version 1.0",
+      "fr": "687 Italy · version 1.0",
+      "es": "687 Italy · versión 1.0",
+      "ja": "687 Italy · バージョン 1.0",
+      "zh": "687 Italy · 版本 1.0",
+      "ko": "687 Italy · 버전 1.0"
+    },
+    "Add boarding passes, tickets or flight confirmations": {
+      "it": "Aggiungi carte d'imbarco, biglietti o conferme di volo",
+      "de": "Bordkarten, Tickets oder Flugbestätigungen hinzufügen",
+      "fr": "Ajoutez cartes d'embarquement, billets ou confirmations de vol",
+      "es": "Añade tarjetas de embarque, billetes o confirmaciones de vuelo",
+      "ja": "搭乗券、チケット、フライト確認書を追加",
+      "zh": "添加登机牌、机票或航班确认",
+      "ko": "탑승권, 티켓 또는 항공편 확인서 추가"
+    },
+    "Budget": {
+      "it": "Budget",
+      "de": "Budget",
+      "fr": "Budget",
+      "es": "Presupuesto",
+      "ja": "予算",
+      "zh": "预算",
+      "ko": "예산"
+    },
+    "Budget · Day": {
+      "it": "Budget · Giorno",
+      "de": "Budget · Tag",
+      "fr": "Budget · Jour",
+      "es": "Presupuesto · Día",
+      "ja": "予算 · 日",
+      "zh": "预算 · 天",
+      "ko": "예산 · 일"
+    },
+    "Built automatically from Your Route. On each travel day, Navigate starts from your phone's current location.": {
+      "it": "Creato automaticamente dal tuo percorso. In ogni giorno di viaggio, Naviga parte dalla posizione attuale del telefono.",
+      "de": "Automatisch aus deiner Route erstellt. An jedem Reisetag startet die Navigation an deinem aktuellen Standort.",
+      "fr": "Créé automatiquement à partir de votre itinéraire. Chaque jour de voyage, Naviguer part de la position actuelle de votre téléphone.",
+      "es": "Creado automáticamente a partir de tu ruta. Cada día de viaje, Navegar parte de la ubicación actual de tu teléfono.",
+      "ja": "ルートから自動作成。移動日はナビが現在地から開始します。",
+      "zh": "根据你的路线自动生成。每个出行日，导航都会从手机当前位置出发。",
+      "ko": "여행 경로에서 자동으로 만들어집니다. 이동하는 날에는 내비가 휴대폰의 현재 위치에서 시작합니다."
+    },
+    "Check road signs and route conditions before entering city centres or toll roads.": {
+      "it": "Controlla la segnaletica e le condizioni del percorso prima di entrare nei centri città o in autostrada.",
+      "de": "Prüfe Verkehrsschilder und Streckenbedingungen, bevor du in Innenstädte oder auf Mautstraßen fährst.",
+      "fr": "Vérifiez la signalisation et l'état de la route avant d'entrer dans les centres-villes ou sur les autoroutes à péage.",
+      "es": "Revisa las señales y el estado de la ruta antes de entrar en centros urbanos o autopistas de peaje.",
+      "ja": "市街中心部や有料道路に入る前に、標識と道路状況を確認してください。",
+      "zh": "进入市中心或收费公路前，请查看路标和路况。",
+      "ko": "도심이나 유료 도로에 들어가기 전에 표지판과 도로 상황을 확인하세요."
+    },
+    "Checks conditions against your day before they become a problem.": {
+      "it": "Controlla le condizioni rispetto alla tua giornata prima che diventino un problema.",
+      "de": "Prüft die Bedingungen für deinen Tag, bevor sie zum Problem werden.",
+      "fr": "Vérifie les conditions par rapport à votre journée avant qu'elles ne posent problème.",
+      "es": "Comprueba las condiciones de tu día antes de que se conviertan en un problema.",
+      "ja": "問題になる前に、その日の状況を確認します。",
+      "zh": "在问题出现之前对照你的行程检查状况。",
+      "ko": "문제가 되기 전에 하루 일정에 맞춰 상황을 확인합니다."
+    },
+    "Comfortable walking shoes": {
+      "it": "Scarpe comode da camminata",
+      "de": "Bequeme Wanderschuhe",
+      "fr": "Chaussures de marche confortables",
+      "es": "Calzado cómodo para caminar",
+      "ja": "歩きやすい靴",
+      "zh": "舒适的步行鞋",
+      "ko": "편한 워킹화"
+    },
+    "Delete trip & local data": {
+      "it": "Elimina viaggio e dati locali",
+      "de": "Reise und lokale Daten löschen",
+      "fr": "Supprimer le voyage et les données locales",
+      "es": "Eliminar viaje y datos locales",
+      "ja": "旅行と端末内データを削除",
+      "zh": "删除旅行和本地数据",
+      "ko": "여행 및 로컬 데이터 삭제"
+    },
+    "Does this train go to…?": {
+      "it": "Questo treno va a…?",
+      "de": "Fährt dieser Zug nach…?",
+      "fr": "Ce train va-t-il à… ?",
+      "es": "¿Este tren va a…?",
+      "ja": "この電車は…に行きますか？",
+      "zh": "这趟火车去……吗？",
+      "ko": "이 기차가 …에 가나요?"
+    },
+    "Emergency numbers": {
+      "it": "Numeri di emergenza",
+      "de": "Notrufnummern",
+      "fr": "Numéros d'urgence",
+      "es": "Números de emergencia",
+      "ja": "緊急電話番号",
+      "zh": "紧急电话",
+      "ko": "긴급 전화번호"
+    },
+    "Enter a price in euros to estimate it in your home currency.": {
+      "it": "Inserisci un prezzo in euro per stimarlo nella tua valuta.",
+      "de": "Gib einen Preis in Euro ein, um ihn in deiner Währung zu schätzen.",
+      "fr": "Saisissez un prix en euros pour l'estimer dans votre devise.",
+      "es": "Introduce un precio en euros para estimarlo en tu moneda.",
+      "ja": "ユーロの金額を入力すると、自国通貨での目安を表示します。",
+      "zh": "输入欧元价格，估算为你的本国货币。",
+      "ko": "유로 가격을 입력하면 자국 통화로 환산합니다."
+    },
+    "Enter an amount in euros.": {
+      "it": "Inserisci un importo in euro.",
+      "de": "Gib einen Betrag in Euro ein.",
+      "fr": "Saisissez un montant en euros.",
+      "es": "Introduce un importe en euros.",
+      "ja": "ユーロで金額を入力してください。",
+      "zh": "请输入欧元金额。",
+      "ko": "유로 금액을 입력하세요."
+    },
+    "Euro · EUR": {
+      "it": "Euro · EUR",
+      "de": "Euro · EUR",
+      "fr": "Euro · EUR",
+      "es": "Euro · EUR",
+      "ja": "ユーロ · EUR",
+      "zh": "欧元 · EUR",
+      "ko": "유로 · EUR"
+    },
+    "Excuse me": {
+      "it": "Mi scusi",
+      "de": "Entschuldigung",
+      "fr": "Excusez-moi",
+      "es": "Disculpe",
+      "ja": "すみません",
+      "zh": "打扰一下",
+      "ko": "실례합니다"
+    },
+    "Fast help when something has already gone wrong.": {
+      "it": "Aiuto rapido quando qualcosa è già andato storto.",
+      "de": "Schnelle Hilfe, wenn schon etwas schiefgegangen ist.",
+      "fr": "Aide rapide quand quelque chose a déjà mal tourné.",
+      "es": "Ayuda rápida cuando algo ya ha salido mal.",
+      "ja": "すでに問題が起きたときの素早いサポート。",
+      "zh": "出现问题时的快速帮助。",
+      "ko": "이미 문제가 생겼을 때 빠른 도움."
+    },
+    "Flight documents": {
+      "it": "Documenti di volo",
+      "de": "Flugdokumente",
+      "fr": "Documents de vol",
+      "es": "Documentos de vuelo",
+      "ja": "フライト書類",
+      "zh": "航班文件",
+      "ko": "항공 서류"
+    },
+    "Home time is saved automatically from your device when you plan the trip and keeps daylight-saving changes in sync.": {
+      "it": "L'ora di casa viene salvata automaticamente dal dispositivo quando pianifichi il viaggio e segue i cambi dell'ora legale.",
+      "de": "Die Heimatzeit wird bei der Reiseplanung automatisch vom Gerät übernommen und berücksichtigt die Sommerzeit.",
+      "fr": "L'heure de chez vous est enregistrée automatiquement depuis l'appareil lors de la planification et suit les changements d'heure.",
+      "es": "La hora de casa se guarda automáticamente desde el dispositivo al planificar el viaje y sigue los cambios de horario.",
+      "ja": "自宅の時刻は旅行計画時に端末から自動保存され、夏時間の変更にも対応します。",
+      "zh": "规划行程时会自动从设备保存家乡时间，并同步夏令时变化。",
+      "ko": "여행을 계획할 때 기기에서 집 시간이 자동 저장되며 서머타임 변경도 반영됩니다."
+    },
+    "How Intelligent Day works": {
+      "it": "Come funziona la Giornata intelligente",
+      "de": "So funktioniert der Smarte Tag",
+      "fr": "Comment fonctionne la Journée intelligente",
+      "es": "Cómo funciona el Día inteligente",
+      "ja": "スマートデイの仕組み",
+      "zh": "智能行程如何运作",
+      "ko": "스마트 데이 작동 방식"
+    },
+    "How much is it?": {
+      "it": "Quanto costa?",
+      "de": "Wie viel kostet das?",
+      "fr": "Combien ça coûte ?",
+      "es": "¿Cuánto cuesta?",
+      "ja": "いくらですか？",
+      "zh": "多少钱？",
+      "ko": "얼마예요?"
+    },
+    "I need help": {
+      "it": "Ho bisogno di aiuto",
+      "de": "Ich brauche Hilfe",
+      "fr": "J'ai besoin d'aide",
+      "es": "Necesito ayuda",
+      "ja": "助けが必要です",
+      "zh": "我需要帮助",
+      "ko": "도움이 필요해요"
+    },
+    "Italy": {
+      "it": "Italia",
+      "de": "Italien",
+      "fr": "Italie",
+      "es": "Italia",
+      "ja": "イタリア",
+      "zh": "意大利",
+      "ko": "이탈리아"
+    },
+    "🇮🇹 Italy": {
+      "it": "🇮🇹 Italia",
+      "de": "🇮🇹 Italien",
+      "fr": "🇮🇹 Italie",
+      "es": "🇮🇹 Italia",
+      "ja": "🇮🇹 イタリア",
+      "zh": "🇮🇹 意大利",
+      "ko": "🇮🇹 이탈리아"
+    },
+    "Italy and home are on the same time": {
+      "it": "L'Italia e casa hanno la stessa ora",
+      "de": "Italien und dein Zuhause haben dieselbe Uhrzeit",
+      "fr": "L'Italie et chez vous sont à la même heure",
+      "es": "Italia y tu casa tienen la misma hora",
+      "ja": "イタリアと自宅は同じ時刻です",
+      "zh": "意大利与家乡时间相同",
+      "ko": "이탈리아와 집의 시간이 같습니다"
+    },
+    "Italy currency": {
+      "it": "Valuta in Italia",
+      "de": "Währung in Italien",
+      "fr": "Devise en Italie",
+      "es": "Moneda en Italia",
+      "ja": "イタリアの通貨",
+      "zh": "意大利货币",
+      "ko": "이탈리아 통화"
+    },
+    "Itinerary and Nearby write to the same plan. Intelligent Day does not create a second itinerary.": {
+      "it": "Itinerario e Nelle vicinanze scrivono nello stesso piano. La Giornata intelligente non crea un secondo itinerario.",
+      "de": "Reiseplan und In der Nähe schreiben in denselben Plan. Der Smarte Tag erstellt keinen zweiten Reiseplan.",
+      "fr": "Itinéraire et À proximité écrivent dans le même plan. La Journée intelligente ne crée pas de second itinéraire.",
+      "es": "Itinerario y Cerca escriben en el mismo plan. El Día inteligente no crea un segundo itinerario.",
+      "ja": "旅程と周辺は同じ計画に書き込みます。スマートデイが別の旅程を作ることはありません。",
+      "zh": "行程与附近写入同一个计划。智能行程不会创建第二份行程。",
+      "ko": "일정과 주변은 같은 계획에 기록됩니다. 스마트 데이는 두 번째 일정을 만들지 않습니다."
+    },
+    "Left today": {
+      "it": "Rimasto oggi",
+      "de": "Heute übrig",
+      "fr": "Reste aujourd'hui",
+      "es": "Queda hoy",
+      "ja": "今日の残り",
+      "zh": "今日剩余",
+      "ko": "오늘 남은 금액"
+    },
+    "Local data": {
+      "it": "Dati locali",
+      "de": "Lokale Daten",
+      "fr": "Données locales",
+      "es": "Datos locales",
+      "ja": "端末内データ",
+      "zh": "本地数据",
+      "ko": "로컬 데이터"
+    },
+    "Medications": {
+      "it": "Medicinali",
+      "de": "Medikamente",
+      "fr": "Médicaments",
+      "es": "Medicamentos",
+      "ja": "常備薬",
+      "zh": "药品",
+      "ko": "상비약"
+    },
+    "Nearby live search is available when you are physically in Italy. Tap below to verify your real GPS location. Planning, bookings, itinerary, wallet, packing and translation remain available everywhere.": {
+      "it": "La ricerca dal vivo Nelle vicinanze è disponibile quando sei fisicamente in Italia. Tocca qui sotto per verificare la tua vera posizione GPS. Pianificazione, prenotazioni, itinerario, portafoglio, bagaglio e traduzioni restano disponibili ovunque.",
+      "de": "Die Live-Suche In der Nähe ist verfügbar, wenn du dich tatsächlich in Italien befindest. Tippe unten, um deinen echten GPS-Standort zu prüfen. Planung, Buchungen, Reiseplan, Wallet, Packliste und Übersetzung sind überall verfügbar.",
+      "fr": "La recherche en direct À proximité est disponible lorsque vous êtes physiquement en Italie. Touchez ci-dessous pour vérifier votre position GPS réelle. Planification, réservations, itinéraire, portefeuille, bagages et traduction restent disponibles partout.",
+      "es": "La búsqueda en directo de Cerca está disponible cuando estás físicamente en Italia. Toca abajo para verificar tu ubicación GPS real. La planificación, reservas, itinerario, cartera, equipaje y traducción siguen disponibles en cualquier lugar.",
+      "ja": "周辺のライブ検索は、実際にイタリアにいるときに利用できます。下をタップして実際のGPS位置を確認してください。計画・予約・旅程・ウォレット・荷物・翻訳はどこでも使えます。",
+      "zh": "附近实时搜索仅在你实际身处意大利时可用。点击下方验证你的真实GPS位置。规划、预订、行程、钱包、行李和翻译在任何地方都可使用。",
+      "ko": "주변 실시간 검색은 실제로 이탈리아에 있을 때 사용할 수 있습니다. 아래를 눌러 실제 GPS 위치를 확인하세요. 계획, 예약, 일정, 지갑, 짐 꾸리기, 번역은 어디서나 사용할 수 있습니다."
+    },
+    "No meat, please": {
+      "it": "Niente carne, per favore",
+      "de": "Kein Fleisch, bitte",
+      "fr": "Pas de viande, s'il vous plaît",
+      "es": "Sin carne, por favor",
+      "ja": "肉なしでお願いします",
+      "zh": "请不要放肉",
+      "ko": "고기는 빼 주세요"
+    },
+    "No spending yet": {
+      "it": "Ancora nessuna spesa",
+      "de": "Noch keine Ausgaben",
+      "fr": "Aucune dépense pour l'instant",
+      "es": "Aún sin gastos",
+      "ja": "まだ支出はありません",
+      "zh": "暂无支出",
+      "ko": "아직 지출 없음"
+    },
+    "Nothing planned yet. Add places from Nearby or Itinerary.": {
+      "it": "Ancora niente in programma. Aggiungi luoghi da Nelle vicinanze o da Itinerario.",
+      "de": "Noch nichts geplant. Füge Orte über In der Nähe oder den Reiseplan hinzu.",
+      "fr": "Rien de prévu pour l'instant. Ajoutez des lieux depuis À proximité ou Itinéraire.",
+      "es": "Aún no hay nada planeado. Añade lugares desde Cerca o Itinerario.",
+      "ja": "まだ予定はありません。周辺または旅程から場所を追加してください。",
+      "zh": "暂无计划。从附近或行程中添加地点。",
+      "ko": "아직 계획이 없습니다. 주변이나 일정에서 장소를 추가하세요."
+    },
+    "Notify bank of travel": {
+      "it": "Avvisa la banca del viaggio",
+      "de": "Bank über die Reise informieren",
+      "fr": "Prévenir la banque du voyage",
+      "es": "Avisar al banco del viaje",
+      "ja": "銀行に旅行を連絡",
+      "zh": "告知银行出行计划",
+      "ko": "은행에 여행 알리기"
+    },
+    "Open today's itinerary": {
+      "it": "Apri l'itinerario di oggi",
+      "de": "Heutigen Reiseplan öffnen",
+      "fr": "Ouvrir l'itinéraire du jour",
+      "es": "Abrir el itinerario de hoy",
+      "ja": "今日の旅程を開く",
+      "zh": "打开今日行程",
+      "ko": "오늘 일정 열기"
+    },
+    "Original daily target from your ground budget, over": {
+      "it": "Obiettivo giornaliero iniziale dal budget sul posto, su",
+      "de": "Ursprüngliches Tagesziel aus deinem Budget vor Ort, über",
+      "fr": "Objectif quotidien initial issu de votre budget sur place, sur",
+      "es": "Objetivo diario original de tu presupuesto en destino, durante",
+      "ja": "現地予算からの当初の1日目標、期間",
+      "zh": "根据当地预算得出的原始每日目标，共",
+      "ko": "현지 예산 기준 원래 일일 목표, 기간"
+    },
+    "Over budget": {
+      "it": "Oltre il budget",
+      "de": "Über Budget",
+      "fr": "Budget dépassé",
+      "es": "Por encima del presupuesto",
+      "ja": "予算超過",
+      "zh": "超出预算",
+      "ko": "예산 초과"
+    },
+    "Packing list ·": {
+      "it": "Lista bagaglio ·",
+      "de": "Packliste ·",
+      "fr": "Liste de bagages ·",
+      "es": "Lista de equipaje ·",
+      "ja": "持ち物リスト ·",
+      "zh": "行李清单 ·",
+      "ko": "짐 목록 ·"
+    },
+    "Passport / ID": {
+      "it": "Passaporto / documento d'identità",
+      "de": "Reisepass / Ausweis",
+      "fr": "Passeport / pièce d'identité",
+      "es": "Pasaporte / DNI",
+      "ja": "パスポート / 身分証",
+      "zh": "护照 / 身份证",
+      "ko": "여권 / 신분증"
+    },
+    "Phone charger & adapter (Type F/L)": {
+      "it": "Caricabatterie e adattatore (tipo F/L)",
+      "de": "Ladegerät & Adapter (Typ F/L)",
+      "fr": "Chargeur et adaptateur (type F/L)",
+      "es": "Cargador y adaptador (tipo F/L)",
+      "ja": "充電器と変換プラグ（F/Lタイプ）",
+      "zh": "充电器和转换插头（F/L型）",
+      "ko": "충전기 및 어댑터(F/L 타입)"
+    },
+    "Privacy": {
+      "it": "Privacy",
+      "de": "Datenschutz",
+      "fr": "Confidentialité",
+      "es": "Privacidad",
+      "ja": "プライバシー",
+      "zh": "隐私",
+      "ko": "개인정보"
+    },
+    "Privacy & support": {
+      "it": "Privacy e assistenza",
+      "de": "Datenschutz & Hilfe",
+      "fr": "Confidentialité et assistance",
+      "es": "Privacidad y soporte",
+      "ja": "プライバシーとサポート",
+      "zh": "隐私与支持",
+      "ko": "개인정보 및 지원"
+    },
+    "Reads itinerary expenses and shows what is safe today.": {
+      "it": "Legge le spese dell'itinerario e mostra quanto puoi spendere oggi in sicurezza.",
+      "de": "Liest die Ausgaben des Reiseplans und zeigt, was heute sicher ausgegeben werden kann.",
+      "fr": "Lit les dépenses de l'itinéraire et indique ce que vous pouvez dépenser sans risque aujourd'hui.",
+      "es": "Lee los gastos del itinerario y muestra lo que puedes gastar hoy con seguridad.",
+      "ja": "旅程の支出を読み取り、今日安心して使える額を表示します。",
+      "zh": "读取行程支出并显示今天可安全花费的金额。",
+      "ko": "일정의 지출을 읽고 오늘 안전하게 쓸 수 있는 금액을 보여 줍니다."
+    },
+    "Reference conversion only. Card issuers, banks and cash exchanges may use different rates or fees.": {
+      "it": "Conversione solo indicativa. Carte, banche e cambiavalute possono applicare tassi o commissioni diversi.",
+      "de": "Nur Richtwert. Kartenanbieter, Banken und Wechselstuben können andere Kurse oder Gebühren verwenden.",
+      "fr": "Conversion indicative uniquement. Les émetteurs de cartes, banques et bureaux de change peuvent appliquer d'autres taux ou frais.",
+      "es": "Conversión solo orientativa. Tarjetas, bancos y casas de cambio pueden aplicar otros tipos o comisiones.",
+      "ja": "参考換算です。カード会社・銀行・両替所では異なるレートや手数料が適用される場合があります。",
+      "zh": "仅供参考。发卡机构、银行和兑换点可能使用不同的汇率或费用。",
+      "ko": "참고용 환산입니다. 카드사, 은행, 환전소는 다른 환율이나 수수료를 적용할 수 있습니다."
+    },
+    "Round trip to": {
+      "it": "Andata e ritorno per",
+      "de": "Hin- und Rückflug nach",
+      "fr": "Aller-retour vers",
+      "es": "Ida y vuelta a",
+      "ja": "往復：",
+      "zh": "往返：",
+      "ko": "왕복:"
+    },
+    "Safe today": {
+      "it": "Sicuro oggi",
+      "de": "Heute sicher",
+      "fr": "Sûr aujourd'hui",
+      "es": "Seguro hoy",
+      "ja": "今日使える額",
+      "zh": "今日可安全花费",
+      "ko": "오늘 안전 지출"
+    },
+    "Single European emergency number · free to call": {
+      "it": "Numero unico europeo di emergenza · chiamata gratuita",
+      "de": "Einheitliche europäische Notrufnummer · kostenlos",
+      "fr": "Numéro d'urgence européen unique · appel gratuit",
+      "es": "Número único europeo de emergencias · llamada gratuita",
+      "ja": "欧州共通の緊急番号 · 通話無料",
+      "zh": "欧洲统一紧急电话 · 免费拨打",
+      "ko": "유럽 공통 긴급 번호 · 무료 통화"
+    },
+    "Spent today": {
+      "it": "Speso oggi",
+      "de": "Heute ausgegeben",
+      "fr": "Dépensé aujourd'hui",
+      "es": "Gastado hoy",
+      "ja": "今日の支出",
+      "zh": "今日已花费",
+      "ko": "오늘 지출"
+    },
+    "Sunscreen": {
+      "it": "Crema solare",
+      "de": "Sonnencreme",
+      "fr": "Crème solaire",
+      "es": "Protector solar",
+      "ja": "日焼け止め",
+      "zh": "防晒霜",
+      "ko": "선크림"
+    },
+    "Support": {
+      "it": "Assistenza",
+      "de": "Hilfe",
+      "fr": "Assistance",
+      "es": "Soporte",
+      "ja": "サポート",
+      "zh": "支持",
+      "ko": "지원"
+    },
+    "Terms": {
+      "it": "Termini",
+      "de": "Bedingungen",
+      "fr": "Conditions",
+      "es": "Términos",
+      "ja": "利用規約",
+      "zh": "条款",
+      "ko": "약관"
+    },
+    "Thank you": {
+      "it": "Grazie",
+      "de": "Danke",
+      "fr": "Merci",
+      "es": "Gracias",
+      "ja": "ありがとう",
+      "zh": "谢谢",
+      "ko": "감사합니다"
+    },
+    "Total": {
+      "it": "Totale",
+      "de": "Gesamt",
+      "fr": "Total",
+      "es": "Total",
+      "ja": "合計",
+      "zh": "总计",
+      "ko": "합계"
+    },
+    "Type in any language — or choose the language you're speaking before using the microphone.": {
+      "it": "Scrivi in qualsiasi lingua, oppure scegli la lingua che parli prima di usare il microfono.",
+      "de": "Schreibe in einer beliebigen Sprache – oder wähle vor dem Mikrofon die Sprache, die du sprichst.",
+      "fr": "Écrivez dans n'importe quelle langue, ou choisissez la langue que vous parlez avant d'utiliser le micro.",
+      "es": "Escribe en cualquier idioma, o elige el idioma que hablas antes de usar el micrófono.",
+      "ja": "どの言語でも入力できます。マイクを使う前に話す言語を選んでください。",
+      "zh": "可用任意语言输入，或在使用麦克风前选择你说的语言。",
+      "ko": "어떤 언어로든 입력하거나, 마이크를 쓰기 전에 말할 언어를 선택하세요."
+    },
+    "Uses location, time, weather and nearby places to tell you what makes sense now.": {
+      "it": "Usa posizione, ora, meteo e luoghi vicini per dirti cosa conviene fare adesso.",
+      "de": "Nutzt Standort, Uhrzeit, Wetter und Orte in der Nähe, um dir zu sagen, was jetzt sinnvoll ist.",
+      "fr": "Utilise la position, l'heure, la météo et les lieux proches pour vous dire ce qui a du sens maintenant.",
+      "es": "Usa la ubicación, la hora, el tiempo y los lugares cercanos para decirte qué conviene hacer ahora.",
+      "ja": "位置・時刻・天気・周辺の場所から、今すべきことを提案します。",
+      "zh": "根据位置、时间、天气和附近地点，告诉你现在适合做什么。",
+      "ko": "위치, 시간, 날씨, 주변 장소를 바탕으로 지금 하기 좋은 일을 알려 줍니다."
+    },
+    "Watch for ZTL & toll roads": {
+      "it": "Attenzione a ZTL e autostrade a pedaggio",
+      "de": "Achte auf ZTL & Mautstraßen",
+      "fr": "Attention aux ZTL et routes à péage",
+      "es": "Atención a las ZTL y autopistas de peaje",
+      "ja": "ZTLと有料道路に注意",
+      "zh": "注意ZTL限行区和收费公路",
+      "ko": "ZTL 및 유료 도로 주의"
+    },
+    "Where is the station?": {
+      "it": "Dov'è la stazione?",
+      "de": "Wo ist der Bahnhof?",
+      "fr": "Où est la gare ?",
+      "es": "¿Dónde está la estación?",
+      "ja": "駅はどこですか？",
+      "zh": "车站在哪里？",
+      "ko": "역이 어디예요?"
+    },
+    "Where is the toilet?": {
+      "it": "Dov'è il bagno?",
+      "de": "Wo ist die Toilette?",
+      "fr": "Où sont les toilettes ?",
+      "es": "¿Dónde está el baño?",
+      "ja": "トイレはどこですか？",
+      "zh": "洗手间在哪里？",
+      "ko": "화장실이 어디예요?"
+    },
+    "Will notify you about important changes once Guardian is connected.": {
+      "it": "Ti avviserà dei cambiamenti importanti quando Guardian sarà attivo.",
+      "de": "Benachrichtigt dich über wichtige Änderungen, sobald Guardian verbunden ist.",
+      "fr": "Vous avertira des changements importants une fois Guardian connecté.",
+      "es": "Te avisará de los cambios importantes cuando Guardian esté conectado.",
+      "ja": "Guardianを接続すると、重要な変更を通知します。",
+      "zh": "连接Guardian后，会通知你重要变化。",
+      "ko": "Guardian이 연결되면 중요한 변경 사항을 알려 드립니다."
+    },
+    "Will show live reports around your planned stops and routes.": {
+      "it": "Mostrerà le segnalazioni in tempo reale intorno alle tue tappe e ai tuoi percorsi.",
+      "de": "Zeigt Live-Meldungen rund um deine geplanten Stopps und Routen.",
+      "fr": "Affichera les signalements en direct autour de vos étapes et itinéraires prévus.",
+      "es": "Mostrará avisos en directo alrededor de tus paradas y rutas previstas.",
+      "ja": "予定の立ち寄り先やルート周辺のリアルタイム情報を表示します。",
+      "zh": "将显示你计划的站点和路线周边的实时报告。",
+      "ko": "계획한 장소와 경로 주변의 실시간 제보를 보여 줍니다."
+    },
+    "Within budget": {
+      "it": "Entro il budget",
+      "de": "Im Budget",
+      "fr": "Dans le budget",
+      "es": "Dentro del presupuesto",
+      "ja": "予算内",
+      "zh": "在预算内",
+      "ko": "예산 이내"
+    },
+    "Your plan stays at the center": {
+      "it": "Il tuo piano resta al centro",
+      "de": "Dein Plan bleibt im Mittelpunkt",
+      "fr": "Votre plan reste au centre",
+      "es": "Tu plan sigue en el centro",
+      "ja": "あなたの計画が中心です",
+      "zh": "你的计划始终是核心",
+      "ko": "계획이 언제나 중심입니다"
+    },
+    "days": {
+      "it": "giorni",
+      "de": "Tage",
+      "fr": "jours",
+      "es": "días",
+      "ja": "日間",
+      "zh": "天",
+      "ko": "일"
+    },
+    "locked in · of": {
+      "it": "già impegnati · su",
+      "de": "fest gebucht · von",
+      "fr": "engagés · sur",
+      "es": "comprometidos · de",
+      "ja": "確定済み · 総額",
+      "zh": "已锁定 · 共",
+      "ko": "확정 · 총"
+    },
+    "nights ·": {
+      "it": "notti ·",
+      "de": "Nächte ·",
+      "fr": "nuits ·",
+      "es": "noches ·",
+      "ja": "泊 ·",
+      "zh": "晚 ·",
+      "ko": "박 ·"
+    },
+    "packed": {
+      "it": "in valigia",
+      "de": "gepackt",
+      "fr": "emballé(s)",
+      "es": "empacado(s)",
+      "ja": "準備済み",
+      "zh": "已打包",
+      "ko": "챙김"
+    },
+    "saved document": {
+      "it": "documento salvato",
+      "de": "gespeichertes Dokument",
+      "fr": "document enregistré",
+      "es": "documento guardado",
+      "ja": "保存済みの書類",
+      "zh": "已保存文件",
+      "ko": "저장된 문서"
+    },
+    "saved documents": {
+      "it": "documenti salvati",
+      "de": "gespeicherte Dokumente",
+      "fr": "documents enregistrés",
+      "es": "documentos guardados",
+      "ja": "保存済みの書類",
+      "zh": "已保存文件",
+      "ko": "저장된 문서"
+    },
+    "total": {
+      "it": "totale",
+      "de": "gesamt",
+      "fr": "total",
+      "es": "total",
+      "ja": "合計",
+      "zh": "总计",
+      "ko": "합계"
+    },
+    "traveler": {
+      "it": "viaggiatore",
+      "de": "Reisender",
+      "fr": "voyageur",
+      "es": "viajero",
+      "ja": "人",
+      "zh": "位旅客",
+      "ko": "명"
+    },
+    "travelers": {
+      "it": "viaggiatori",
+      "de": "Reisende",
+      "fr": "voyageurs",
+      "es": "viajeros",
+      "ja": "人",
+      "zh": "位旅客",
+      "ko": "명"
+    },
+    "🎤 English is selected by default. If you speak another language, choose it before tapping the microphone. “Auto” uses the phone/browser language.": {
+      "it": "🎤 L'inglese è selezionato di default. Se parli un'altra lingua, sceglila prima di toccare il microfono. “Auto” usa la lingua del telefono/browser.",
+      "de": "🎤 Englisch ist standardmäßig ausgewählt. Wenn du eine andere Sprache sprichst, wähle sie, bevor du auf das Mikrofon tippst. „Auto“ nutzt die Sprache von Telefon/Browser.",
+      "fr": "🎤 L'anglais est sélectionné par défaut. Si vous parlez une autre langue, choisissez-la avant de toucher le micro. « Auto » utilise la langue du téléphone/navigateur.",
+      "es": "🎤 El inglés está seleccionado por defecto. Si hablas otro idioma, elígelo antes de tocar el micrófono. «Auto» usa el idioma del teléfono/navegador.",
+      "ja": "🎤 初期設定は英語です。別の言語を話す場合は、マイクを押す前に選んでください。「自動」は端末/ブラウザの言語を使います。",
+      "zh": "🎤 默认选择英语。如果你说其他语言，请在点按麦克风前选择。“自动”使用手机/浏览器语言。",
+      "ko": "🎤 기본값은 영어입니다. 다른 언어를 사용한다면 마이크를 누르기 전에 선택하세요. ‘자동’은 휴대폰/브라우저 언어를 사용합니다."
+    },
+    "🏠 Home ·": {
+      "it": "🏠 Casa ·",
+      "de": "🏠 Zuhause ·",
+      "fr": "🏠 Domicile ·",
+      "es": "🏠 Casa ·",
+      "ja": "🏠 自宅 ·",
+      "zh": "🏠 家乡 ·",
+      "ko": "🏠 집 ·"
+    }
+  };
+  var A = {
+    "Add an item": {
+      "it": "Aggiungi un oggetto",
+      "de": "Gegenstand hinzufügen",
+      "fr": "Ajouter un objet",
+      "es": "Añadir un artículo",
+      "ja": "項目を追加",
+      "zh": "添加物品",
+      "ko": "항목 추가"
+    },
+    "Level / Row / Spot": {
+      "it": "Livello / Fila / Posto",
+      "de": "Ebene / Reihe / Platz",
+      "fr": "Niveau / Rangée / Place",
+      "es": "Nivel / Fila / Plaza",
+      "ja": "階 / 列 / 区画",
+      "zh": "楼层 / 排 / 车位",
+      "ko": "층 / 열 / 자리"
+    },
+    "Parking lot / garage name": {
+      "it": "Nome del parcheggio / garage",
+      "de": "Name des Parkplatzes / Parkhauses",
+      "fr": "Nom du parking / garage",
+      "es": "Nombre del aparcamiento / garaje",
+      "ja": "駐車場 / ガレージ名",
+      "zh": "停车场 / 车库名称",
+      "ko": "주차장 / 차고 이름"
+    },
+    "Parking phone number": {
+      "it": "Numero di telefono del parcheggio",
+      "de": "Telefonnummer des Parkplatzes",
+      "fr": "Numéro de téléphone du parking",
+      "es": "Teléfono del aparcamiento",
+      "ja": "駐車場の電話番号",
+      "zh": "停车场电话",
+      "ko": "주차장 전화번호"
+    },
+    "Shuttle info (e.g. every 15 min, Zone B)": {
+      "it": "Info navetta (es. ogni 15 min, Zona B)",
+      "de": "Shuttle-Info (z. B. alle 15 Min., Zone B)",
+      "fr": "Infos navette (ex. toutes les 15 min, zone B)",
+      "es": "Info del traslado (p. ej. cada 15 min, Zona B)",
+      "ja": "シャトル情報（例：15分ごと、Bゾーン）",
+      "zh": "接驳信息（例如每15分钟，B区）",
+      "ko": "셔틀 정보(예: 15분마다, B구역)"
+    }
+  };
+  Object.keys(T).forEach(function (k) {
+    GLOBAL_UI_TEXT[k] = Object.assign({}, T[k], GLOBAL_UI_TEXT[k] || {});
+  });
+  Object.keys(A).forEach(function (k) {
+    GLOBAL_UI_ATTR[k] = Object.assign({}, A[k], GLOBAL_UI_ATTR[k] || {});
+  });
+  window.IT_EXTRA_DYN = {
+    "it": [["^You're using (\\d+)% of today's original target\\.$", "Stai usando il $1% dell'obiettivo iniziale di oggi."]],
+    "de": [["^You're using (\\d+)% of today's original target\\.$", "Du nutzt $1 % des ursprünglichen Tagesziels."]],
+    "fr": [["^You're using (\\d+)% of today's original target\\.$", "Vous utilisez $1 % de l'objectif initial du jour."]],
+    "es": [["^You're using (\\d+)% of today's original target\\.$", "Estás usando el $1 % del objetivo original de hoy."]],
+    "ja": [["^You're using (\\d+)% of today's original target\\.$", "今日の当初目標の$1%を使用中です。"]],
+    "zh": [["^You're using (\\d+)% of today's original target\\.$", "你已使用今日原始目标的 $1%。"]],
+    "ko": [["^You're using (\\d+)% of today's original target\\.$", "오늘 원래 목표의 $1%를 사용 중입니다."]]
+  };
+})();
 function localizeFullAppDOM(lang) {
   var root = document.querySelector(".app");
   if (!root) return;
@@ -23205,18 +24779,18 @@ var ASIAN_1144_ATTRIBUTES = {
     "ko": "예: 로마 호텔 이름 또는 이탈리아 전체 주소"
   }
 };
-Object.entries(ASIAN_1144_FIXED_UI).forEach(function (_ref101) {
-  var _ref102 = _slicedToArray(_ref101, 2),
-    english = _ref102[0],
-    translated = _ref102[1];
+Object.entries(ASIAN_1144_FIXED_UI).forEach(function (_ref104) {
+  var _ref105 = _slicedToArray(_ref104, 2),
+    english = _ref105[0],
+    translated = _ref105[1];
   if (PREMENU_TEXT[english]) Object.assign(PREMENU_TEXT[english], translated);
   if (!GLOBAL_UI_TEXT[english]) GLOBAL_UI_TEXT[english] = {};
   Object.assign(GLOBAL_UI_TEXT[english], translated);
 });
-Object.entries(ASIAN_1144_ATTRIBUTES).forEach(function (_ref103) {
-  var _ref104 = _slicedToArray(_ref103, 2),
-    english = _ref104[0],
-    translated = _ref104[1];
+Object.entries(ASIAN_1144_ATTRIBUTES).forEach(function (_ref106) {
+  var _ref107 = _slicedToArray(_ref106, 2),
+    english = _ref107[0],
+    translated = _ref107[1];
   var table = PREMENU_ATTR[english] ? PREMENU_ATTR : GLOBAL_UI_ATTR;
   if (!table[english]) table[english] = {};
   Object.assign(table[english], translated);
@@ -23260,9 +24834,9 @@ function translatePremenuString(value, lang) {
 function localizePremenuDOM(lang) {
   localizeFullAppDOM(lang);
 }
-function VoiceAssistantFirstRun(_ref105) {
-  var onDone = _ref105.onDone,
-    onLanguageChange = _ref105.onLanguageChange;
+function VoiceAssistantFirstRun(_ref108) {
+  var onDone = _ref108.onDone,
+    onLanguageChange = _ref108.onLanguageChange;
   var _React$useState83 = React.useState(function () {
       return getInitialPrimaryAppLanguage();
     }),
@@ -23453,15 +25027,15 @@ function setupStepLabels(lang, onsite) {
 function App() {
   var savedTrip = loadSavedTrip();
   var savedUI = loadSavedUI();
-  var _useState173 = useState(savedTrip ? Number(savedUI.step) || 9 : 0),
-    _useState174 = _slicedToArray(_useState173, 2),
-    step = _useState174[0],
-    setStep = _useState174[1];
-  var _useState175 = useState(loadSavedUI().section || "overview"),
-    _useState176 = _slicedToArray(_useState175, 2),
-    dashboardSection = _useState176[0],
-    setDashboardSection = _useState176[1];
-  var _useState177 = useState(savedTrip || {
+  var _useState179 = useState(savedTrip ? Number(savedUI.step) || 9 : 0),
+    _useState180 = _slicedToArray(_useState179, 2),
+    step = _useState180[0],
+    setStep = _useState180[1];
+  var _useState181 = useState(loadSavedUI().section || "overview"),
+    _useState182 = _slicedToArray(_useState181, 2),
+    dashboardSection = _useState182[0],
+    setDashboardSection = _useState182[1];
+  var _useState183 = useState(savedTrip || {
       budget: null,
       startDate: "",
       endDate: "",
@@ -23472,39 +25046,39 @@ function App() {
       airport: null,
       homeCurrency: detectHomeCurrency()
     }),
-    _useState178 = _slicedToArray(_useState177, 2),
-    data = _useState178[0],
-    setData = _useState178[1];
-  var _useState179 = useState(function () {
+    _useState184 = _slicedToArray(_useState183, 2),
+    data = _useState184[0],
+    setData = _useState184[1];
+  var _useState185 = useState(function () {
       return loadTripArchive();
     }),
-    _useState180 = _slicedToArray(_useState179, 2),
-    archives = _useState180[0],
-    setArchives = _useState180[1];
-  var _useState181 = useState(function () {
+    _useState186 = _slicedToArray(_useState185, 2),
+    archives = _useState186[0],
+    setArchives = _useState186[1];
+  var _useState187 = useState(function () {
       try {
         return localStorage.getItem(VOICE_ASSISTANT_SETUP_KEY) !== "1";
       } catch (_) {
         return true;
       }
     }),
-    _useState182 = _slicedToArray(_useState181, 2),
-    showVoiceSetup = _useState182[0],
-    setShowVoiceSetup = _useState182[1];
+    _useState188 = _slicedToArray(_useState187, 2),
+    showVoiceSetup = _useState188[0],
+    setShowVoiceSetup = _useState188[1];
   var TRIP_ENGINE_UI_LANGUAGE_KEY = "tripengine_ui_language";
   var TRIP_ENGINE_THEME_KEY = "tripengine_theme";
-  var _useState183 = useState(function () {
+  var _useState189 = useState(function () {
       return getInitialPrimaryAppLanguage();
     }),
-    _useState184 = _slicedToArray(_useState183, 2),
-    uiLanguage = _useState184[0],
-    setUiLanguageState = _useState184[1];
-  var _useState185 = useState(function () {
+    _useState190 = _slicedToArray(_useState189, 2),
+    uiLanguage = _useState190[0],
+    setUiLanguageState = _useState190[1];
+  var _useState191 = useState(function () {
       return localStorage.getItem(TRIP_ENGINE_THEME_KEY) || localStorage.getItem("tripitaly_theme") || "classic";
     }),
-    _useState186 = _slicedToArray(_useState185, 2),
-    theme = _useState186[0],
-    setThemeState = _useState186[1];
+    _useState192 = _slicedToArray(_useState191, 2),
+    theme = _useState192[0],
+    setThemeState = _useState192[1];
   var setUiLanguage = function setUiLanguage(lang) {
     setUiLanguageState(lang);
     try {
@@ -23628,28 +25202,28 @@ function App() {
     });
   }, [step]);
   var startNewTrip = function () {
-    var _ref106 = _asyncToGenerator(_regenerator().m(function _callee29() {
+    var _ref109 = _asyncToGenerator(_regenerator().m(function _callee33() {
       var ok, currentUI, archived;
-      return _regenerator().w(function (_context29) {
-        while (1) switch (_context29.n) {
+      return _regenerator().w(function (_context33) {
+        while (1) switch (_context33.n) {
           case 0:
-            _context29.n = 1;
+            _context33.n = 1;
             return appConfirm(translateGlobalUiString("Start a new trip? Your current trip will be archived first, including its Travel Wallet documents, so you can restore it later.", getVoiceAssistantLanguage()));
           case 1:
-            ok = _context29.v;
+            ok = _context33.v;
             if (ok) {
-              _context29.n = 2;
+              _context33.n = 2;
               break;
             }
-            return _context29.a(2);
+            return _context33.a(2);
           case 2:
             currentUI = loadSavedUI();
             archived = archiveTripSnapshot(data, currentUI);
             if (!archived) {
-              _context29.n = 4;
+              _context33.n = 4;
               break;
             }
-            _context29.n = 3;
+            _context33.n = 3;
             return archiveActiveTravelDocuments(archived.archiveId);
           case 3:
             setArchives(loadTripArchive());
@@ -23677,53 +25251,53 @@ function App() {
             });
             setStep(0);
           case 5:
-            return _context29.a(2);
+            return _context33.a(2);
         }
-      }, _callee29);
+      }, _callee33);
     }));
     return function startNewTrip() {
-      return _ref106.apply(this, arguments);
+      return _ref109.apply(this, arguments);
     };
   }();
   var restoreArchivedTrip = function () {
-    var _ref107 = _asyncToGenerator(_regenerator().m(function _callee30(archiveId) {
+    var _ref110 = _asyncToGenerator(_regenerator().m(function _callee34(archiveId) {
       var list, item, ok, currentArchived, remainingArchive, restoredData;
-      return _regenerator().w(function (_context30) {
-        while (1) switch (_context30.n) {
+      return _regenerator().w(function (_context34) {
+        while (1) switch (_context34.n) {
           case 0:
             list = loadTripArchive();
             item = list.find(function (x) {
               return x.archiveId === archiveId;
             });
             if (item) {
-              _context30.n = 1;
+              _context34.n = 1;
               break;
             }
-            return _context30.a(2);
+            return _context34.a(2);
           case 1:
-            _context30.n = 2;
+            _context34.n = 2;
             return appConfirm(translateGlobalUiString("Restore this trip? Your current trip will be archived first if it contains data.", getVoiceAssistantLanguage()));
           case 2:
-            ok = _context30.v;
+            ok = _context34.v;
             if (ok) {
-              _context30.n = 3;
+              _context34.n = 3;
               break;
             }
-            return _context30.a(2);
+            return _context34.a(2);
           case 3:
             if (!(data !== null && data !== void 0 && data.budget)) {
-              _context30.n = 4;
+              _context34.n = 4;
               break;
             }
             currentArchived = archiveTripSnapshot(data, loadSavedUI());
             if (!currentArchived) {
-              _context30.n = 4;
+              _context34.n = 4;
               break;
             }
-            _context30.n = 4;
+            _context34.n = 4;
             return archiveActiveTravelDocuments(currentArchived.archiveId);
           case 4:
-            _context30.n = 5;
+            _context34.n = 5;
             return restoreArchivedTravelDocuments(archiveId);
           case 5:
             remainingArchive = loadTripArchive().filter(function (x) {
@@ -23743,31 +25317,31 @@ function App() {
             setStep(9);
             window.location.reload();
           case 6:
-            return _context30.a(2);
+            return _context34.a(2);
         }
-      }, _callee30);
+      }, _callee34);
     }));
-    return function restoreArchivedTrip(_x35) {
-      return _ref107.apply(this, arguments);
+    return function restoreArchivedTrip(_x40) {
+      return _ref110.apply(this, arguments);
     };
   }();
   var deleteArchivedTrip = function () {
-    var _ref108 = _asyncToGenerator(_regenerator().m(function _callee31(archiveId) {
+    var _ref111 = _asyncToGenerator(_regenerator().m(function _callee35(archiveId) {
       var ok, next;
-      return _regenerator().w(function (_context31) {
-        while (1) switch (_context31.n) {
+      return _regenerator().w(function (_context35) {
+        while (1) switch (_context35.n) {
           case 0:
-            _context31.n = 1;
+            _context35.n = 1;
             return appConfirm(translateGlobalUiString("Permanently delete this archived trip and its saved Wallet documents? This cannot be undone.", getVoiceAssistantLanguage()));
           case 1:
-            ok = _context31.v;
+            ok = _context35.v;
             if (ok) {
-              _context31.n = 2;
+              _context35.n = 2;
               break;
             }
-            return _context31.a(2);
+            return _context35.a(2);
           case 2:
-            _context31.n = 3;
+            _context35.n = 3;
             return deleteArchivedTravelDocuments(archiveId);
           case 3:
             next = loadTripArchive().filter(function (x) {
@@ -23776,12 +25350,12 @@ function App() {
             saveTripArchive(next);
             setArchives(next);
           case 4:
-            return _context31.a(2);
+            return _context35.a(2);
         }
-      }, _callee31);
+      }, _callee35);
     }));
-    return function deleteArchivedTrip(_x36) {
-      return _ref108.apply(this, arguments);
+    return function deleteArchivedTrip(_x41) {
+      return _ref111.apply(this, arguments);
     };
   }();
   var setupLabels = setupStepLabels(uiLanguage, data.mode === "onsite");
@@ -23943,11 +25517,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(
   if ("serviceWorker" in navigator) {
     let reloadingForNewSW = false;
 
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (reloadingForNewSW) return;
-      reloadingForNewSW = true;
-      window.location.reload();
-    });
+    // V1.14.12: no automatic reload when a new Service Worker takes control
+    // (a reload during app start could leave a white screen on Android).
 
     window.addEventListener("load", async () => {
       try {
