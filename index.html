@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.13 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.13_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.22 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.22_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
 <script id="gate-687">
@@ -1351,6 +1351,18 @@
     max-width:280px;
     margin:0 auto;
   }
+  /* V1.14.14 free maps */
+  .free-map{ position:relative; width:100%; background:#e9eef2; overflow:hidden; }
+  .free-map .maplibregl-canvas{ outline:none; }
+  .free-map, .free-map .maplibregl-canvas-container, .free-map .maplibregl-canvas{ touch-action:none; }
+  .free-map .maplibregl-ctrl-attrib{ font-size:9px; }
+  .free-map .maplibregl-ctrl-attrib a{ pointer-events:none; color:inherit; text-decoration:none; }
+  .nearby-map-link{ display:block; position:relative; color:inherit; text-decoration:none; }
+  .nearby-map-link .map-tap-hint{ top:auto; right:auto; bottom:10px; left:10px; }
+  a.map-tap-hint{ text-decoration:none; cursor:pointer; pointer-events:auto; }
+  .free-map-loading{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#5b6b75; font-size:12px; font-weight:600; }
+  .free-map-dot{ border-radius:50%; border:2.5px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.35); }
+  .map-you-badge, .map-tap-hint, .nearby-map-badge{ z-index:3; }
   .map-frame-wrap{
     position:relative;
     border-radius:14px;
@@ -3214,6 +3226,7 @@ var AIRPORTS = [{
   lng: 15.6516
 }];
 var PROXY_URL = "https://tripitaly-proxy.potrocag.workers.dev";
+var NEARBY_PROXY_URL = typeof location !== "undefined" && String(location.hostname || "").indexOf("687italy-test.") === 0 ? "https://tripitaly-proxy-test.potrocag.workers.dev" : PROXY_URL;
 var TRIP_DEVICE_ID_KEY = "tripengine_device_id_v1";
 function getTripDeviceId() {
   try {
@@ -3368,7 +3381,7 @@ function _fetchLitAirports() {
           _context37.p = 1;
           _context37.n = 2;
           return Promise.all(AIRPORTS.map(function () {
-            var _ref112 = _asyncToGenerator(_regenerator().m(function _callee36(airport) {
+            var _ref113 = _asyncToGenerator(_regenerator().m(function _callee36(airport) {
               var url, res, json, hasData;
               return _regenerator().w(function (_context36) {
                 while (1) switch (_context36.n) {
@@ -3392,7 +3405,7 @@ function _fetchLitAirports() {
               }, _callee36);
             }));
             return function (_x42) {
-              return _ref112.apply(this, arguments);
+              return _ref113.apply(this, arguments);
             };
           }()));
         case 2:
@@ -8579,14 +8592,19 @@ function DailyStatusDonut(_ref22) {
     }, s.spent > 0 ? formatHomeMoney(data, s.spent) : "—"));
   })));
 }
+var LIVE_FEATURES_WORLDWIDE = true;
+function liveFeaturesAllowed(loc) {
+  return LIVE_FEATURES_WORLDWIDE || String((loc === null || loc === void 0 ? void 0 : loc.countryCode) || "").toUpperCase() === "IT";
+}
 function detectCurrentCountry() {
   return _detectCurrentCountry.apply(this, arguments);
 }
 function _detectCurrentCountry() {
   _detectCurrentCountry = _asyncToGenerator(_regenerator().m(function _callee39() {
-    var pos, lat, lng, url, res, json, a, countryCode, locality;
+    var _json;
+    var pos, lat, lng, url, json, res, a, countryCode, locality, _t31;
     return _regenerator().w(function (_context39) {
-      while (1) switch (_context39.n) {
+      while (1) switch (_context39.p = _context39.n) {
         case 0:
           if ("geolocation" in navigator) {
             _context39.n = 1;
@@ -8607,25 +8625,32 @@ function _detectCurrentCountry() {
           lat = pos.coords.latitude;
           lng = pos.coords.longitude;
           url = "https://nominatim.openstreetmap.org/reverse?lat=".concat(encodeURIComponent(lat), "&lon=").concat(encodeURIComponent(lng), "&format=json&zoom=10&addressdetails=1");
-          _context39.n = 3;
+          json = null;
+          _context39.p = 3;
+          _context39.n = 4;
           return fetch(url, {
             headers: {
               "Accept-Language": "en"
             }
           });
-        case 3:
+        case 4:
           res = _context39.v;
-          if (res.ok) {
-            _context39.n = 4;
+          if (!res.ok) {
+            _context39.n = 6;
             break;
           }
-          throw new Error("Location verification is temporarily unavailable.");
-        case 4:
           _context39.n = 5;
           return res.json();
         case 5:
           json = _context39.v;
-          a = (json === null || json === void 0 ? void 0 : json.address) || {};
+        case 6:
+          _context39.n = 8;
+          break;
+        case 7:
+          _context39.p = 7;
+          _t31 = _context39.v;
+        case 8:
+          a = ((_json = json) === null || _json === void 0 ? void 0 : _json.address) || {};
           countryCode = String(a.country_code || "").toUpperCase();
           locality = a.city || a.town || a.village || a.municipality || a.county || "";
           return _context39.a(2, {
@@ -8636,7 +8661,7 @@ function _detectCurrentCountry() {
             locality: locality
           });
       }
-    }, _callee39);
+    }, _callee39, null, [[3, 7]]);
   }));
   return _detectCurrentCountry.apply(this, arguments);
 }
@@ -8867,7 +8892,7 @@ function loadTravelDocuments() {
 }
 function _loadTravelDocuments() {
   _loadTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee41() {
-    var db, _t31;
+    var db, _t32;
     return _regenerator().w(function (_context41) {
       while (1) switch (_context41.p = _context41.n) {
         case 0:
@@ -8894,7 +8919,7 @@ function _loadTravelDocuments() {
           return _context41.a(2, _context41.v);
         case 3:
           _context41.p = 3;
-          _t31 = _context41.v;
+          _t32 = _context41.v;
           return _context41.a(2, []);
       }
     }, _callee41, null, [[0, 3]]);
@@ -8906,7 +8931,7 @@ function deleteTravelDocument(_x7) {
 }
 function _deleteTravelDocument() {
   _deleteTravelDocument = _asyncToGenerator(_regenerator().m(function _callee42(id) {
-    var db, _t32;
+    var db, _t33;
     return _regenerator().w(function (_context42) {
       while (1) switch (_context42.p = _context42.n) {
         case 0:
@@ -8930,7 +8955,7 @@ function _deleteTravelDocument() {
           break;
         case 3:
           _context42.p = 3;
-          _t32 = _context42.v;
+          _t33 = _context42.v;
         case 4:
           return _context42.a(2);
       }
@@ -8943,7 +8968,7 @@ function archiveActiveTravelDocuments(_x8) {
 }
 function _archiveActiveTravelDocuments() {
   _archiveActiveTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee43(archiveId) {
-    var db, _t33;
+    var db, _t34;
     return _regenerator().w(function (_context43) {
       while (1) switch (_context43.p = _context43.n) {
         case 0:
@@ -8986,7 +9011,7 @@ function _archiveActiveTravelDocuments() {
           break;
         case 4:
           _context43.p = 4;
-          _t33 = _context43.v;
+          _t34 = _context43.v;
         case 5:
           return _context43.a(2);
       }
@@ -8999,7 +9024,7 @@ function restoreArchivedTravelDocuments(_x9) {
 }
 function _restoreArchivedTravelDocuments() {
   _restoreArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee44(archiveId) {
-    var db, _t34;
+    var db, _t35;
     return _regenerator().w(function (_context44) {
       while (1) switch (_context44.p = _context44.n) {
         case 0:
@@ -9042,7 +9067,7 @@ function _restoreArchivedTravelDocuments() {
           break;
         case 4:
           _context44.p = 4;
-          _t34 = _context44.v;
+          _t35 = _context44.v;
         case 5:
           return _context44.a(2);
       }
@@ -9055,7 +9080,7 @@ function deleteArchivedTravelDocuments(_x0) {
 }
 function _deleteArchivedTravelDocuments() {
   _deleteArchivedTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee45(archiveId) {
-    var db, _t35;
+    var db, _t36;
     return _regenerator().w(function (_context45) {
       while (1) switch (_context45.p = _context45.n) {
         case 0:
@@ -9094,7 +9119,7 @@ function _deleteArchivedTravelDocuments() {
           break;
         case 4:
           _context45.p = 4;
-          _t35 = _context45.v;
+          _t36 = _context45.v;
         case 5:
           return _context45.a(2);
       }
@@ -9107,7 +9132,7 @@ function clearTravelDocuments() {
 }
 function _clearTravelDocuments() {
   _clearTravelDocuments = _asyncToGenerator(_regenerator().m(function _callee46() {
-    var db, _t36;
+    var db, _t37;
     return _regenerator().w(function (_context46) {
       while (1) switch (_context46.p = _context46.n) {
         case 0:
@@ -9131,7 +9156,7 @@ function _clearTravelDocuments() {
           break;
         case 3:
           _context46.p = 3;
-          _t36 = _context46.v;
+          _t37 = _context46.v;
         case 4:
           return _context46.a(2);
       }
@@ -9144,7 +9169,7 @@ function openSavedTravelDocument(_x1) {
 }
 function _openSavedTravelDocument() {
   _openSavedTravelDocument = _asyncToGenerator(_regenerator().m(function _callee47(id) {
-    var db, record, url, a, _t37;
+    var db, record, url, a, _t38;
     return _regenerator().w(function (_context47) {
       while (1) switch (_context47.p = _context47.n) {
         case 0:
@@ -9190,7 +9215,7 @@ function _openSavedTravelDocument() {
           break;
         case 4:
           _context47.p = 4;
-          _t37 = _context47.v;
+          _t38 = _context47.v;
         case 5:
           return _context47.a(2);
       }
@@ -9578,7 +9603,7 @@ function geocodeAddress(_x11) {
 }
 function _geocodeAddress() {
   _geocodeAddress = _asyncToGenerator(_regenerator().m(function _callee48(query) {
-    var url, res, json, _t38;
+    var url, res, json, _t39;
     return _regenerator().w(function (_context48) {
       while (1) switch (_context48.p = _context48.n) {
         case 0:
@@ -9609,7 +9634,7 @@ function _geocodeAddress() {
           break;
         case 4:
           _context48.p = 4;
-          _t38 = _context48.v;
+          _t39 = _context48.v;
         case 5:
           return _context48.a(2, null);
       }
@@ -9617,9 +9642,258 @@ function _geocodeAddress() {
   }));
   return _geocodeAddress.apply(this, arguments);
 }
-function LiveLocationMap(_ref29) {
-  var data = _ref29.data,
-    compact = _ref29.compact;
+var FREE_MAP_STYLE = "https://tiles.openfreemap.org/styles/bright";
+var FREE_MAP_JS = "https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js";
+var FREE_MAP_CSS = "https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css";
+var __freeMapLoader = null;
+function loadFreeMapLib() {
+  if (window.maplibregl) return Promise.resolve(window.maplibregl);
+  if (__freeMapLoader) return __freeMapLoader;
+  __freeMapLoader = new Promise(function (resolve, reject) {
+    if (!document.querySelector('link[data-free-map]')) {
+      var css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = FREE_MAP_CSS;
+      css.setAttribute("data-free-map", "1");
+      document.head.appendChild(css);
+    }
+    var s = document.createElement("script");
+    s.src = FREE_MAP_JS;
+    s.async = true;
+    var timer = setTimeout(function () {
+      return reject(new Error("Map library timeout"));
+    }, 20000);
+    s.onload = function () {
+      clearTimeout(timer);
+      window.maplibregl ? resolve(window.maplibregl) : reject(new Error("Map library missing"));
+    };
+    s.onerror = function () {
+      clearTimeout(timer);
+      reject(new Error("Map library failed to load"));
+    };
+    document.head.appendChild(s);
+  })["catch"](function (e) {
+    __freeMapLoader = null;
+    throw e;
+  });
+  return __freeMapLoader;
+}
+function freeMapWebGLOk() {
+  try {
+    var c = document.createElement("canvas");
+    return !!(c.getContext("webgl2") || c.getContext("webgl"));
+  } catch (_) {
+    return false;
+  }
+}
+function FreeMap(_ref29) {
+  var center = _ref29.center,
+    zoom = _ref29.zoom,
+    height = _ref29.height,
+    markers = _ref29.markers,
+    line = _ref29.line,
+    className = _ref29.className,
+    style = _ref29.style,
+    onError = _ref29.onError,
+    failText = _ref29.failText,
+    fit = _ref29.fit;
+  var boxRef = React.useRef(null);
+  var _React$useState = React.useState(false),
+    _React$useState2 = _slicedToArray(_React$useState, 2),
+    failed = _React$useState2[0],
+    setFailed = _React$useState2[1];
+  var mapRef = React.useRef(null);
+  var markerObjs = React.useRef([]);
+  var _React$useState3 = React.useState(false),
+    _React$useState4 = _slicedToArray(_React$useState3, 2),
+    ready = _React$useState4[0],
+    setReady = _React$useState4[1];
+  var errRef = React.useRef(null);
+  errRef.current = function (e) {
+    setFailed(true);
+    if (onError) onError(e);
+  };
+  var lat = Number(center && center.lat),
+    lng = Number(center && center.lng);
+  var mlZoom = Math.max(0, Number(zoom || 13) - 1);
+  React.useEffect(function () {
+    var cancelled = false;
+    if (!freeMapWebGLOk()) {
+      if (errRef.current) errRef.current(new Error("WebGL not available"));
+      return;
+    }
+    loadFreeMapLib().then(function (ml) {
+      if (cancelled || !boxRef.current) return;
+      var map = new ml.Map({
+        container: boxRef.current,
+        style: FREE_MAP_STYLE,
+        center: [lng, lat],
+        zoom: mlZoom,
+        interactive: true,
+        cooperativeGestures: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        attributionControl: {
+          compact: true
+        },
+        fadeDuration: 0
+      });
+      mapRef.current = map;
+      try {
+        map.touchZoomRotate.disableRotation();
+      } catch (_) {}
+      var collapseCredits = function collapseCredits() {
+        try {
+          (boxRef.current ? boxRef.current.querySelectorAll(".maplibregl-ctrl-attrib.maplibregl-compact-show") : []).forEach(function (el) {
+            el.classList.remove("maplibregl-compact-show");
+            el.setAttribute("open", "");
+          });
+        } catch (_) {}
+      };
+      map.on("load", function () {
+        if (!cancelled) {
+          setReady(true);
+          collapseCredits();
+        }
+      });
+      map.once("idle", collapseCredits);
+      var failed = false;
+      var failTimer = setTimeout(function () {
+        if (!cancelled && !map.loaded() && !failed) {
+          failed = true;
+          if (errRef.current) errRef.current(new Error("Map timeout"));
+        }
+      }, 25000);
+      map.on("error", function (ev) {
+        if (!cancelled && !failed && !map.isStyleLoaded()) {
+          failed = true;
+          clearTimeout(failTimer);
+          if (errRef.current) errRef.current(ev && ev.error ? ev.error : new Error("Map error"));
+        }
+      });
+      map.once("load", function () {
+        return clearTimeout(failTimer);
+      });
+    })["catch"](function (e) {
+      if (!cancelled && errRef.current) errRef.current(e);
+    });
+    return function () {
+      cancelled = true;
+      markerObjs.current.forEach(function (m) {
+        try {
+          m.remove();
+        } catch (_) {}
+      });
+      markerObjs.current = [];
+      if (mapRef.current) {
+        try {
+          mapRef.current.remove();
+        } catch (_) {}
+        mapRef.current = null;
+      }
+    };
+  }, []);
+  var markerKey = JSON.stringify(markers || []);
+  var lineKey = JSON.stringify(line || []);
+  React.useEffect(function () {
+    var map = mapRef.current;
+    var ml = window.maplibregl;
+    if (!map || !ml || !ready) return;
+    try {
+      map.jumpTo({
+        center: [lng, lat],
+        zoom: mlZoom
+      });
+    } catch (_) {}
+    if (fit) {
+      try {
+        var all = (markers || []).filter(function (m) {
+          return Number.isFinite(Number(m.lat)) && Number.isFinite(Number(m.lng));
+        });
+        if (all.length > 1) {
+          var b = new ml.LngLatBounds();
+          all.forEach(function (m) {
+            return b.extend([Number(m.lng), Number(m.lat)]);
+          });
+          map.fitBounds(b, {
+            padding: 36,
+            maxZoom: mlZoom,
+            duration: 0
+          });
+        }
+      } catch (_) {}
+    }
+    markerObjs.current.forEach(function (m) {
+      try {
+        m.remove();
+      } catch (_) {}
+    });
+    markerObjs.current = [];
+    (markers || []).forEach(function (m) {
+      var mLat = Number(m.lat),
+        mLng = Number(m.lng);
+      if (!Number.isFinite(mLat) || !Number.isFinite(mLng)) return;
+      var el = document.createElement("div");
+      var size = Number(m.size) || 16;
+      el.className = "free-map-dot";
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+      el.style.background = m.color || "#BC002D";
+      markerObjs.current.push(new ml.Marker({
+        element: el
+      }).setLngLat([mLng, mLat]).addTo(map));
+    });
+    var pts = (line || []).filter(function (p) {
+      return Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng));
+    });
+    var data = {
+      type: "Feature",
+      properties: {},
+      geometry: {
+        type: "LineString",
+        coordinates: pts.map(function (p) {
+          return [Number(p.lng), Number(p.lat)];
+        })
+      }
+    };
+    try {
+      if (map.getSource("free-map-line")) {
+        map.getSource("free-map-line").setData(data);
+      } else {
+        map.addSource("free-map-line", {
+          type: "geojson",
+          data: data
+        });
+        map.addLayer({
+          id: "free-map-line",
+          type: "line",
+          source: "free-map-line",
+          paint: {
+            "line-color": "#BC002D",
+            "line-width": 3,
+            "line-dasharray": [1, 2]
+          },
+          layout: {
+            "line-cap": "round"
+          }
+        });
+      }
+    } catch (_) {}
+  }, [ready, markerKey, lineKey, lat, lng, mlZoom, fit]);
+  return React.createElement("div", {
+    ref: boxRef,
+    className: "free-map " + (className || ""),
+    style: _objectSpread({
+      height: height || 240
+    }, style || {})
+  }, !ready && React.createElement("div", {
+    className: "free-map-loading"
+  }, failed ? failText || "Map not available right now" : "🗺️ Loading map…"));
+}
+function LiveLocationMap(_ref30) {
+  var data = _ref30.data,
+    compact = _ref30.compact;
   var _useState79 = useState(null),
     _useState80 = _slicedToArray(_useState79, 2),
     coords = _useState80[0],
@@ -9645,7 +9919,7 @@ function LiveLocationMap(_ref29) {
     locationError = _useState90[0],
     setLocationError = _useState90[1];
   var locate = function () {
-    var _ref30 = _asyncToGenerator(_regenerator().m(function _callee6() {
+    var _ref31 = _asyncToGenerator(_regenerator().m(function _callee6() {
       var loc, _t4;
       return _regenerator().w(function (_context6) {
         while (1) switch (_context6.p = _context6.n) {
@@ -9666,7 +9940,7 @@ function LiveLocationMap(_ref29) {
             return detectCurrentCountry();
           case 3:
             loc = _context6.v;
-            if (String(loc.countryCode || "").toUpperCase() === "IT") {
+            if (liveFeaturesAllowed(loc)) {
               _context6.n = 4;
               break;
             }
@@ -9693,7 +9967,7 @@ function LiveLocationMap(_ref29) {
       }, _callee6, null, [[2, 5]]);
     }));
     return function locate() {
-      return _ref30.apply(this, arguments);
+      return _ref31.apply(this, arguments);
     };
   }();
   React.useEffect(function () {
@@ -9758,9 +10032,9 @@ function LiveLocationMap(_ref29) {
       className: "nearby-permission-icon"
     }, "\uD83D\uDDFA\uFE0F"), React.createElement("div", {
       className: "nearby-permission-title"
-    }, "Live map in Italy"), React.createElement("p", {
+    }, "Live map"), React.createElement("p", {
       className: "nearby-permission-text"
-    }, "The embedded live map uses your current location and is available when you are physically in Italy."), React.createElement("button", {
+    }, "The live map shows where you are, your hotel and your car pickup."), React.createElement("button", {
       className: "btn-primary",
       style: {
         marginTop: 12
@@ -9821,41 +10095,43 @@ function LiveLocationMap(_ref29) {
       onClick: locate
     }, "Try again"));
   }
-  var googleMarkers = ["color:red|".concat(coords.lat, ",").concat(coords.lng)];
-  if (hotelCoords) googleMarkers.push("color:blue|".concat(hotelCoords.lat, ",").concat(hotelCoords.lng));
-  if (carCoords) googleMarkers.push("color:green|".concat(carCoords.lat, ",").concat(carCoords.lng));
+  var freeMarkers = [];
+  if (hotelCoords) freeMarkers.push({
+    lat: hotelCoords.lat,
+    lng: hotelCoords.lng,
+    color: "#2255AA"
+  });
+  if (carCoords) freeMarkers.push({
+    lat: carCoords.lat,
+    lng: carCoords.lng,
+    color: "#E8A9BA"
+  });
+  freeMarkers.push({
+    lat: coords.lat,
+    lng: coords.lng,
+    color: "#BC002D",
+    size: 18
+  });
   var zoom = compact ? 15 : 13;
   var h = compact ? 160 : 240;
-  var mapParams = new URLSearchParams({
-    action: "staticmap",
-    center: "".concat(coords.lat, ",").concat(coords.lng),
-    zoom: String(zoom),
-    size: "440x".concat(h),
-    device_id: getTripDeviceId()
-  });
-  googleMarkers.forEach(function (m) {
-    return mapParams.append("markers", m);
-  });
-  var staticMapSrc = "".concat(PROXY_URL, "?").concat(mapParams.toString());
-  return React.createElement("div", null, React.createElement("a", {
-    href: "https://www.google.com/maps/search/?api=1&query=".concat(coords.lat, ",").concat(coords.lng),
-    target: "_blank",
-    rel: "noopener noreferrer",
+  return React.createElement("div", null, React.createElement("div", {
     className: "map-frame-wrap"
-  }, React.createElement("img", {
+  }, React.createElement(FreeMap, {
     className: "map-frame",
-    style: compact ? {
-      height: 160
-    } : {},
-    src: staticMapSrc,
+    center: coords,
+    zoom: zoom,
+    height: h,
+    markers: freeMarkers,
     onError: function onError() {
       return setImgError(true);
-    },
-    alt: "Map with your current location and trip points"
+    }
   }), React.createElement("div", {
     className: "map-you-badge"
-  }, "\uD83D\uDCCD You are here"), React.createElement("div", {
-    className: "map-tap-hint"
+  }, "\uD83D\uDCCD You are here"), React.createElement("a", {
+    className: "map-tap-hint",
+    href: "https://www.google.com/maps/search/?api=1&query=".concat(coords.lat, ",").concat(coords.lng),
+    target: "_blank",
+    rel: "noopener noreferrer"
   }, "Tap to open in Google Maps \u2197")), React.createElement("div", {
     className: "map-legend"
   }, React.createElement("div", {
@@ -9902,8 +10178,8 @@ function cityForDay(days, dayNum) {
   });
   return block ? block.city : null;
 }
-function CityMap(_ref31) {
-  var city = _ref31.city;
+function CityMap(_ref32) {
+  var city = _ref32.city;
   var _useState91 = useState(null),
     _useState92 = _slicedToArray(_useState91, 2),
     coords = _useState92[0],
@@ -9922,7 +10198,7 @@ function CityMap(_ref31) {
     setMessage("");
   }, [city]);
   var showMyCurrentLocation = function () {
-    var _ref32 = _asyncToGenerator(_regenerator().m(function _callee7() {
+    var _ref33 = _asyncToGenerator(_regenerator().m(function _callee7() {
       var loc, _t5;
       return _regenerator().w(function (_context7) {
         while (1) switch (_context7.p = _context7.n) {
@@ -9934,7 +10210,7 @@ function CityMap(_ref31) {
             return detectCurrentCountry();
           case 2:
             loc = _context7.v;
-            if (String(loc.countryCode || "").toUpperCase() === "IT") {
+            if (liveFeaturesAllowed(loc)) {
               _context7.n = 3;
               break;
             }
@@ -9962,7 +10238,7 @@ function CityMap(_ref31) {
       }, _callee7, null, [[1, 4]]);
     }));
     return function showMyCurrentLocation() {
-      return _ref32.apply(this, arguments);
+      return _ref33.apply(this, arguments);
     };
   }();
   React.useEffect(function () {
@@ -10008,7 +10284,7 @@ function CityMap(_ref31) {
       className: "nearby-permission-title"
     }, "Your current location"), React.createElement("p", {
       className: "nearby-permission-text"
-    }, "Use your phone's GPS to show where you are right now. The live map is available while you are physically in Italy."), React.createElement("button", {
+    }, "Use your phone's GPS to show where you are right now."), React.createElement("button", {
       className: "btn-secondary",
       style: {
         marginTop: 10
@@ -10058,30 +10334,26 @@ function CityMap(_ref31) {
       onClick: showMyCurrentLocation
     }, "Try again"));
   }
-  var src = "".concat(PROXY_URL, "?").concat(new URLSearchParams({
-    action: "staticmap",
-    center: "".concat(coords.lat, ",").concat(coords.lng),
-    zoom: "15",
-    size: "440x240",
-    markers: "color:red|".concat(coords.lat, ",").concat(coords.lng),
-    device_id: getTripDeviceId()
-  }).toString());
-  return React.createElement("a", {
-    href: "https://www.google.com/maps/search/?api=1&query=".concat(coords.lat, ",").concat(coords.lng),
-    target: "_blank",
-    rel: "noopener noreferrer",
+  return React.createElement("div", {
     className: "map-frame-wrap"
-  }, React.createElement("img", {
+  }, React.createElement(FreeMap, {
     className: "map-frame",
-    style: {
-      height: 240
-    },
-    src: src,
-    alt: "Your current location"
+    center: coords,
+    zoom: 15,
+    height: 240,
+    markers: [{
+      lat: coords.lat,
+      lng: coords.lng,
+      color: "#BC002D",
+      size: 18
+    }]
   }), React.createElement("div", {
     className: "map-you-badge"
-  }, "\uD83D\uDCCD You are here"), React.createElement("div", {
-    className: "map-tap-hint"
+  }, "\uD83D\uDCCD You are here"), React.createElement("a", {
+    className: "map-tap-hint",
+    href: "https://www.google.com/maps/search/?api=1&query=".concat(coords.lat, ",").concat(coords.lng),
+    target: "_blank",
+    rel: "noopener noreferrer"
   }, "Tap to open in Google Maps \u2197"));
 }
 function itineraryDaysFromData(data) {
@@ -10165,10 +10437,10 @@ function buildNavLinks(destination) {
     waze: "https://waze.com/ul?q=".concat(q, "&navigate=yes")
   };
 }
-function NavigateButton(_ref33) {
-  var destination = _ref33.destination,
-    label = _ref33.label,
-    className = _ref33.className;
+function NavigateButton(_ref34) {
+  var destination = _ref34.destination,
+    label = _ref34.label,
+    className = _ref34.className;
   var _useState97 = useState(false),
     _useState98 = _slicedToArray(_useState97, 2),
     open = _useState98[0],
@@ -10226,20 +10498,20 @@ function NavigateButton(_ref33) {
     }
   }, "To return after navigation, tap \u201C687 Italy\u201D at the top-left of your iPhone."))));
 }
-function DayDetailPanel(_ref34) {
-  var data = _ref34.data,
-    setData = _ref34.setData,
-    dayNum = _ref34.dayNum,
-    date = _ref34.date,
-    isToday = _ref34.isToday,
-    city = _ref34.city,
-    plannedStops = _ref34.plannedStops,
-    onAddStop = _ref34.onAddStop,
-    onRemoveStop = _ref34.onRemoveStop,
-    onCityChange = _ref34.onCityChange,
-    onGoTo = _ref34.onGoTo,
-    dailyAmount = _ref34.dailyAmount,
-    transfer = _ref34.transfer;
+function DayDetailPanel(_ref35) {
+  var data = _ref35.data,
+    setData = _ref35.setData,
+    dayNum = _ref35.dayNum,
+    date = _ref35.date,
+    isToday = _ref35.isToday,
+    city = _ref35.city,
+    plannedStops = _ref35.plannedStops,
+    onAddStop = _ref35.onAddStop,
+    onRemoveStop = _ref35.onRemoveStop,
+    onCityChange = _ref35.onCityChange,
+    onGoTo = _ref35.onGoTo,
+    dailyAmount = _ref35.dailyAmount,
+    transfer = _ref35.transfer;
   var dateLabel = date ? date.toLocaleDateString(appDateLocale(), {
     weekday: "long",
     month: "long",
@@ -10368,11 +10640,11 @@ function DayDetailPanel(_ref34) {
     className: "hotel-directions-btn"
   }));
 }
-function ItineraryPlanBlock(_ref35) {
-  var plannedStops = _ref35.plannedStops,
-    onAddStop = _ref35.onAddStop,
-    onRemoveStop = _ref35.onRemoveStop,
-    onGoTo = _ref35.onGoTo;
+function ItineraryPlanBlock(_ref36) {
+  var plannedStops = _ref36.plannedStops,
+    onAddStop = _ref36.onAddStop,
+    onRemoveStop = _ref36.onRemoveStop,
+    onGoTo = _ref36.onGoTo;
   var _useState103 = useState(""),
     _useState104 = _slicedToArray(_useState103, 2),
     stopInput = _useState104[0],
@@ -10460,14 +10732,14 @@ function ItineraryPlanBlock(_ref35) {
     className: "blb-h"
   }, "Find real places with Nearby"), React.createElement("span", {
     className: "blb-d"
-  }, "Live search around you when your GPS confirms you are in Italy \u2192"))));
+  }, "Live search around you \u2192"))));
 }
-function DashItinerary(_ref36) {
+function DashItinerary(_ref37) {
   var _AIRPORTS$find5, _days$activeBlockInde;
-  var data = _ref36.data,
-    setData = _ref36.setData,
-    onGoTo = _ref36.onGoTo,
-    dailyAmount = _ref36.dailyAmount;
+  var data = _ref37.data,
+    setData = _ref37.setData,
+    onGoTo = _ref37.onGoTo,
+    dailyAmount = _ref37.dailyAmount;
   var days = data.routeBlocks && data.routeBlocks.length ? data.routeBlocks : [{
     city: primaryCityName((_AIRPORTS$find5 = AIRPORTS.find(function (a) {
       return a.code === data.airport;
@@ -10701,9 +10973,9 @@ function DashItinerary(_ref36) {
   }));
 }
 function priceMoneyToNumber(money) {
-  var _ref37, _money$units, _money$nanos;
+  var _ref38, _money$units, _money$nanos;
   if (!money || _typeof(money) !== "object") return null;
-  var rawUnits = (_ref37 = (_money$units = money.units) !== null && _money$units !== void 0 ? _money$units : money.unit) !== null && _ref37 !== void 0 ? _ref37 : money.value;
+  var rawUnits = (_ref38 = (_money$units = money.units) !== null && _money$units !== void 0 ? _money$units : money.unit) !== null && _ref38 !== void 0 ? _ref38 : money.value;
   if (rawUnits == null || rawUnits === "") return null;
   var units = Number(rawUnits);
   var nanos = Number((_money$nanos = money.nanos) !== null && _money$nanos !== void 0 ? _money$nanos : 0);
@@ -10781,7 +11053,7 @@ function placePriceLevelLabel(place) {
   return map[key] || "";
 }
 function formatVerifiedItalyPrice(place) {
-  var _ref38, _p$max;
+  var _ref39, _p$max;
   var homeCurrency = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "EUR";
   var eurToHome = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
   var p = verifiedPlacePrice(place);
@@ -10803,7 +11075,7 @@ function formatVerifiedItalyPrice(place) {
     source: p.source
   };
   var lo = Number(p.min || 0);
-  var hi = Number((_ref38 = (_p$max = p.max) !== null && _p$max !== void 0 ? _p$max : p.min) !== null && _ref38 !== void 0 ? _ref38 : 0);
+  var hi = Number((_ref39 = (_p$max = p.max) !== null && _p$max !== void 0 ? _p$max : p.min) !== null && _ref39 !== void 0 ? _ref39 : 0);
   var text = lo === hi ? formatCurrencyAmount(p.currency, lo, 0) : "".concat(formatCurrencyAmount(p.currency, lo, 0), "\u2013").concat(formatCurrencyAmount(p.currency, hi, 0));
   var target = String(homeCurrency || "EUR").toUpperCase();
   var approxText = "";
@@ -10835,32 +11107,32 @@ function haversineKm(lat1, lon1, lat2, lon2) {
 }
 var NEARBY_FILTERS = [{
   id: "food",
-  label: "🍜 Food",
-  desc: "🍜 Restaurants · ☕ Cafés · 🍣 Sushi · 🍱 Local food"
+  label: "🍝 Food",
+  desc: "🍝 Restaurants · 🍕 Pizzerias · ☕ Cafés & bars"
 }, {
   id: "toilets",
   label: "🚻 Toilets",
   desc: "🚻 Verified public toilets near you"
 }, {
   id: "culture",
-  label: "⛩️ Culture",
-  desc: "⛩️ Shrines · 🛕 Temples · 🏯 Castles · 🏛️ Museums"
+  label: "🏛️ Culture",
+  desc: "🏛️ Museums · ⛪ Churches · 🏰 Castles · 🗿 Monuments"
 }, {
   id: "nature",
   label: "🌿 Nature",
-  desc: "🌿 Gardens · 🌸 Parks · 🗻 Viewpoints · 🏖️ Beaches"
+  desc: "🌳 Parks & gardens · 🌄 Viewpoints · 🏖️ Beaches"
 }, {
   id: "onsen",
-  label: "♨️ Onsen",
-  desc: "♨️ Onsen · Public baths · Wellness"
+  label: "♨️ Spa",
+  desc: "♨️ Thermal baths · Spa · Wellness"
 }, {
-  id: "anime",
-  label: "🎮 Anime",
-  desc: "🎮 Anime · Manga · Arcades · Electronics"
+  id: "gelato",
+  label: "🍦 Gelato",
+  desc: "🍦 Gelato · 🥐 Pastry shops & bakeries"
 }, {
   id: "shopping",
   label: "🛍️ Shopping",
-  desc: "🏬 Malls · 🛍️ Shopping streets · 🏪 Convenience stores"
+  desc: "🏬 Shopping centres · 🛒 Supermarkets · 🏪 Mini-markets"
 }, {
   id: "services",
   label: "🚉 Practical",
@@ -10869,23 +11141,30 @@ var NEARBY_FILTERS = [{
 var NEARBY_CATEGORY_TYPES = {
   food: ["restaurant", "cafe"],
   toilets: ["public_bathroom"],
-  culture: ["tourist_attraction", "museum", "place_of_worship"],
-  nature: ["park", "tourist_attraction"],
+  culture: ["museum", "tourist_attraction", "place_of_worship"],
+  nature: ["park", "viewpoint", "beach"],
   onsen: ["spa"],
+  gelato: ["ice_cream", "bakery"],
   anime: ["shopping_mall", "electronics_store", "tourist_attraction"],
-  shopping: ["shopping_mall", "convenience_store", "supermarket"],
-  services: ["train_station", "subway_station", "bus_station", "hospital", "pharmacy", "atm", "parking"]
+  shopping: ["shopping_mall", "supermarket", "convenience_store"],
+  services: ["train_station", "bus_station", "hospital", "pharmacy", "atm", "parking"]
 };
 var PLACE_TYPE_ICON = {
-  restaurant: "🍜",
+  restaurant: "🍝",
   cafe: "☕",
   public_bathroom: "🚻",
   public_bath: "🚻",
   tourist_attraction: "📍",
   museum: "🏛️",
-  place_of_worship: "⛩️",
+  place_of_worship: "⛪",
   park: "🌿",
   spa: "♨️",
+  viewpoint: "🌄",
+  beach: "🏖️",
+  ice_cream: "🍦",
+  bakery: "🥐",
+  attraction: "📍",
+  gas_station: "⛽",
   shopping_mall: "🏬",
   electronics_store: "🎮",
   convenience_store: "🏪",
@@ -10911,9 +11190,9 @@ function buildNearbyNavLinks(place) {
     waze: hasCoords ? "https://waze.com/ul?ll=".concat(encodeURIComponent(destination), "&navigate=yes") : "https://waze.com/ul?q=".concat(q, "&navigate=yes")
   };
 }
-function NearbyNavigateButton(_ref39) {
-  var place = _ref39.place,
-    mode = _ref39.mode;
+function NearbyNavigateButton(_ref40) {
+  var place = _ref40.place,
+    mode = _ref40.mode;
   var _useState107 = useState(false),
     _useState108 = _slicedToArray(_useState107, 2),
     open = _useState108[0],
@@ -10965,54 +11244,72 @@ function NearbyNavigateButton(_ref39) {
     }
   }, "\uD83D\uDE97 Waze"))));
 }
-function NearbyResultsMap(_ref40) {
-  var coords = _ref40.coords,
-    results = _ref40.results,
-    filter = _ref40.filter,
-    selectedPlace = _ref40.selectedPlace;
+function NearbyResultsMap(_ref41) {
+  var coords = _ref41.coords,
+    results = _ref41.results,
+    filter = _ref41.filter,
+    selectedPlace = _ref41.selectedPlace;
   if (!coords || !Array.isArray(results) || results.length === 0) return null;
-  var points = results.filter(function (p) {
+  var validPoints = results.filter(function (p) {
     return Number.isFinite(Number(p === null || p === void 0 ? void 0 : p.lat)) && Number.isFinite(Number(p === null || p === void 0 ? void 0 : p.lng));
-  }).slice(0, 10);
-  if (!points.length) return null;
-  var params = new URLSearchParams({
-    action: "staticmap",
-    center: "".concat(coords.lat, ",").concat(coords.lng),
-    zoom: "15",
-    size: "440x240",
-    device_id: getTripDeviceId()
   });
-  params.append("markers", "color:red|".concat(coords.lat, ",").concat(coords.lng));
-  var resultColor = filter === "toilets" ? "purple" : "blue";
-  points.forEach(function (p) {
-    var selected = selectedPlace && p.id === selectedPlace.id;
-    params.append("markers", "".concat(selected ? "color:green" : "color:".concat(resultColor), "|").concat(Number(p.lat), ",").concat(Number(p.lng)));
-  });
-  if (selectedPlace && Number.isFinite(Number(selectedPlace.lat)) && Number.isFinite(Number(selectedPlace.lng))) {
-    var endLat = Number(selectedPlace.lat);
-    var endLng = Number(selectedPlace.lng);
-    var dots = 9;
-    for (var i = 1; i < dots; i++) {
-      var t = i / dots;
-      var lat = Number(coords.lat) + (endLat - Number(coords.lat)) * t;
-      var lng = Number(coords.lng) + (endLng - Number(coords.lng)) * t;
-      params.append("markers", "size:tiny|color:0xBC002D|".concat(lat.toFixed(6), ",").concat(lng.toFixed(6)));
-    }
+  var points = validPoints.slice(0, 10);
+  if (selectedPlace && !points.some(function (p) {
+    return p.id === selectedPlace.id;
+  })) {
+    var sel = validPoints.find(function (p) {
+      return p.id === selectedPlace.id;
+    });
+    if (sel) points.push(sel);
   }
-  var src = "".concat(PROXY_URL, "?").concat(params.toString());
+  if (!points.length) return null;
+  var resultColor = filter === "toilets" ? "#7B3FA1" : "#2255AA";
+  var freeMarkers = points.map(function (p) {
+    var selected = selectedPlace && p.id === selectedPlace.id;
+    return {
+      lat: Number(p.lat),
+      lng: Number(p.lng),
+      color: selected ? "#2f8f46" : resultColor,
+      size: selected ? 18 : 14
+    };
+  });
+  freeMarkers.push({
+    lat: Number(coords.lat),
+    lng: Number(coords.lng),
+    color: "#BC002D",
+    size: 18
+  });
+  var freeLine = selectedPlace && Number.isFinite(Number(selectedPlace.lat)) && Number.isFinite(Number(selectedPlace.lng)) ? [{
+    lat: Number(coords.lat),
+    lng: Number(coords.lng)
+  }, {
+    lat: Number(selectedPlace.lat),
+    lng: Number(selectedPlace.lng)
+  }] : [];
   return React.createElement("div", {
     className: "nearby-map-block"
   }, React.createElement("div", {
     className: "nearby-map-title"
   }, "Nearby map"), React.createElement("div", {
     className: "nearby-map-wrap"
-  }, React.createElement("img", {
+  }, React.createElement("div", {
+    className: "nearby-map-link"
+  }, React.createElement(FreeMap, {
     className: "nearby-map-img",
-    src: src,
-    alt: "Map view of nearby results"
-  }), React.createElement("div", {
+    center: coords,
+    zoom: 15,
+    height: 240,
+    markers: freeMarkers,
+    line: freeLine,
+    fit: true
+  }), React.createElement("a", {
+    className: "map-tap-hint",
+    href: selectedPlace && Number.isFinite(Number(selectedPlace.lat)) && Number.isFinite(Number(selectedPlace.lng)) ? "https://www.google.com/maps/dir/?api=1&destination=".concat(Number(selectedPlace.lat), ",").concat(Number(selectedPlace.lng)) : "https://www.google.com/maps/search/?api=1&query=".concat(Number(coords.lat), ",").concat(Number(coords.lng)),
+    target: "_blank",
+    rel: "noopener noreferrer"
+  }, "Tap to open in Google Maps \u2197")), React.createElement("div", {
     className: "nearby-map-badge"
-  }, selectedPlace ? "\uD83E\uDDED Route preview \xB7 ".concat(selectedPlace.name) : "\uD83D\uDCCD You + ".concat(points.length, " nearby"))), React.createElement("div", {
+  }, selectedPlace ? "\uD83E\uDDED Route preview \xB7 ".concat(selectedPlace.name) : "\uD83D\uDCCD You + ".concat(Math.min(10, validPoints.length), " nearby"))), React.createElement("div", {
     className: "nearby-map-legend"
   }, React.createElement("span", null, React.createElement("span", {
     className: "nearby-map-dot",
@@ -11036,10 +11333,10 @@ function NearbyResultsMap(_ref40) {
     }
   }, "Dotted line is a lightweight direction preview. Tap GO for real turn-by-turn navigation."));
 }
-function DashNearby(_ref41) {
+function DashNearby(_ref42) {
   var _NEARBY_FILTERS$find;
-  var data = _ref41.data,
-    setData = _ref41.setData;
+  var data = _ref42.data,
+    setData = _ref42.setData;
   var homeCurrency = getHomeCurrency(data);
   var eurToHome = italyNowUseEurToCurrencyRate(homeCurrency);
   var _useState109 = useState(function () {
@@ -11109,7 +11406,7 @@ function DashNearby(_ref41) {
     });
   };
   var locate = function () {
-    var _ref42 = _asyncToGenerator(_regenerator().m(function _callee8() {
+    var _ref43 = _asyncToGenerator(_regenerator().m(function _callee8() {
       var loc, _t6;
       return _regenerator().w(function (_context8) {
         while (1) switch (_context8.p = _context8.n) {
@@ -11131,7 +11428,7 @@ function DashNearby(_ref41) {
             return detectCurrentCountry();
           case 3:
             loc = _context8.v;
-            if (!(String(loc.countryCode || "").toUpperCase() !== "IT")) {
+            if (liveFeaturesAllowed(loc)) {
               _context8.n = 4;
               break;
             }
@@ -11158,7 +11455,7 @@ function DashNearby(_ref41) {
       }, _callee8, null, [[2, 5]]);
     }));
     return function locate() {
-      return _ref42.apply(this, arguments);
+      return _ref43.apply(this, arguments);
     };
   }();
   var voiceRequestedFilterRef = React.useRef("");
@@ -11166,7 +11463,7 @@ function DashNearby(_ref41) {
   React.useEffect(function () {
     var cancelled = false;
     var runVoiceNearbySearch = function () {
-      var _ref43 = _asyncToGenerator(_regenerator().m(function _callee9(rawRequested, rawMode) {
+      var _ref44 = _asyncToGenerator(_regenerator().m(function _callee9(rawRequested, rawMode) {
         var requested, validRequested, requestedMode, validMode, loc, _t7;
         return _regenerator().w(function (_context9) {
           while (1) switch (_context9.p = _context9.n) {
@@ -11208,7 +11505,7 @@ function DashNearby(_ref41) {
               }
               return _context9.a(2);
             case 4:
-              if (!(String(loc.countryCode || "").toUpperCase() !== "IT")) {
+              if (liveFeaturesAllowed(loc)) {
                 _context9.n = 5;
                 break;
               }
@@ -11253,7 +11550,7 @@ function DashNearby(_ref41) {
         }, _callee9, null, [[2, 6]]);
       }));
       return function runVoiceNearbySearch(_x12, _x13) {
-        return _ref43.apply(this, arguments);
+        return _ref44.apply(this, arguments);
       };
     }();
     var requestedFilter = "";
@@ -11355,8 +11652,8 @@ function DashNearby(_ref41) {
     setLoading(true);
     setError("");
     recordApiUsage("places", 1);
-    fetch("".concat(PROXY_URL, "?").concat(params.toString())).then(function () {
-      var _ref44 = _asyncToGenerator(_regenerator().m(function _callee0(r) {
+    fetch("".concat(NEARBY_PROXY_URL, "?").concat(params.toString())).then(function () {
+      var _ref45 = _asyncToGenerator(_regenerator().m(function _callee0(r) {
         var json;
         return _regenerator().w(function (_context0) {
           while (1) switch (_context0.n) {
@@ -11381,7 +11678,7 @@ function DashNearby(_ref41) {
         }, _callee0);
       }));
       return function (_x14) {
-        return _ref44.apply(this, arguments);
+        return _ref45.apply(this, arguments);
       };
     }()).then(function (response) {
       if (response._rateLimited) {
@@ -11436,9 +11733,9 @@ function DashNearby(_ref41) {
       className: "nearby-permission-icon"
     }, "\uD83D\uDCCD"), React.createElement("div", {
       className: "nearby-permission-title"
-    }, "Live Nearby in Italy"), React.createElement("p", {
+    }, "Live Nearby"), React.createElement("p", {
       className: "nearby-permission-text"
-    }, "Nearby live search is available when you are physically in Italy. Tap below to verify your real GPS location. Planning, bookings, itinerary, wallet, packing and translation remain available everywhere."), React.createElement("button", {
+    }, "Find restaurants, sights, pharmacies, parking and more around you. Tap below to use your GPS location."), React.createElement("button", {
       className: "btn-primary",
       style: {
         marginTop: 14
@@ -11561,9 +11858,19 @@ function DashNearby(_ref41) {
       key: p.id,
       className: "nearby-result-card" + ((selectedPlace === null || selectedPlace === void 0 ? void 0 : selectedPlace.id) === p.id ? " selected" : ""),
       onClick: function onClick() {
-        return setSelectedPlace(function (prev) {
+        var selecting = (selectedPlace === null || selectedPlace === void 0 ? void 0 : selectedPlace.id) !== p.id;
+        setSelectedPlace(function (prev) {
           return (prev === null || prev === void 0 ? void 0 : prev.id) === p.id ? null : p;
         });
+        if (selecting) window.setTimeout(function () {
+          try {
+            var node = document.querySelector('.nearby-map-block');
+            if (node && node.scrollIntoView) node.scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+          } catch (_) {}
+        }, 60);
       },
       style: {
         cursor: "pointer"
@@ -11845,7 +12152,7 @@ function LiveTranslator() {
     }
   };
   var translate = function () {
-    var _ref45 = _asyncToGenerator(_regenerator().m(function _callee1(textOverride) {
+    var _ref46 = _asyncToGenerator(_regenerator().m(function _callee1(textOverride) {
       var text, params, guard, res, json, retry, mins, _t8;
       return _regenerator().w(function (_context1) {
         while (1) switch (_context1.p = _context1.n) {
@@ -11910,7 +12217,7 @@ function LiveTranslator() {
       }, _callee1, null, [[2, 6]]);
     }));
     return function translate(_x15) {
-      return _ref45.apply(this, arguments);
+      return _ref46.apply(this, arguments);
     };
   }();
   var playMicStartBeep = function playMicStartBeep() {
@@ -12102,10 +12409,10 @@ function LiveTranslator() {
       gap: 6,
       flexWrap: "wrap"
     }
-  }, [["Excuse me", "Mi scusi"], ["Thank you", "Grazie"], ["Where is the station?", "Dov’è la stazione?"], ["I need help", "Ho bisogno di aiuto"], ["Does this train go to…?", "Questo treno va a…?"], ["No meat, please", "Senza carne, per favore"], ["How much is it?", "Quanto costa?"], ["Where is the toilet?", "Dov’è il bagno?"]].map(function (_ref46) {
-    var _ref47 = _slicedToArray(_ref46, 2),
-      en = _ref47[0],
-      it = _ref47[1];
+  }, [["Excuse me", "Mi scusi"], ["Thank you", "Grazie"], ["Where is the station?", "Dov’è la stazione?"], ["I need help", "Ho bisogno di aiuto"], ["Does this train go to…?", "Questo treno va a…?"], ["No meat, please", "Senza carne, per favore"], ["How much is it?", "Quanto costa?"], ["Where is the toilet?", "Dov’è il bagno?"]].map(function (_ref47) {
+    var _ref48 = _slicedToArray(_ref47, 2),
+      en = _ref48[0],
+      it = _ref48[1];
     return React.createElement("button", {
       type: "button",
       key: en,
@@ -12206,9 +12513,9 @@ var DEFAULT_PACKING_ITEMS = [{
   label: "Notify bank of travel",
   checked: false
 }];
-function DashPacking(_ref48) {
-  var data = _ref48.data,
-    setData = _ref48.setData;
+function DashPacking(_ref49) {
+  var data = _ref49.data,
+    setData = _ref49.setData;
   var items = data.packingList || DEFAULT_PACKING_ITEMS;
   var _useState143 = useState(""),
     _useState144 = _slicedToArray(_useState143, 2),
@@ -12291,8 +12598,8 @@ function DashPacking(_ref48) {
     onClick: addItem
   }, "+ Add"))));
 }
-function DashWeather(_ref49) {
-  var data = _ref49.data;
+function DashWeather(_ref50) {
+  var data = _ref50.data;
   var _useState145 = useState(null),
     _useState146 = _slicedToArray(_useState145, 2),
     weather = _useState146[0],
@@ -12486,8 +12793,8 @@ function DashWeather(_ref49) {
     }, Math.round(weather.daily.temperature_2m_max[i + 1]), "\xB0 / ", Math.round(weather.daily.temperature_2m_min[i + 1]), "\xB0"));
   })));
 }
-function DashCurrency(_ref50) {
-  var data = _ref50.data;
+function DashCurrency(_ref51) {
+  var data = _ref51.data;
   var _useState157 = useState(function () {
       return getHomeCurrency(data);
     }),
@@ -12610,17 +12917,17 @@ function DashCurrency(_ref50) {
     }
   }, "Reference conversion only. Card issuers, banks and cash exchanges may use different rates or fees."));
 }
-function DashWallet(_ref51) {
-  var data = _ref51.data,
-    setData = _ref51.setData,
-    documents = _ref51.documents,
-    _onAddDoc = _ref51.onAddDoc,
-    _onRemoveDoc = _ref51.onRemoveDoc,
-    flightTotal = _ref51.flightTotal,
-    hotelTotal = _ref51.hotelTotal,
-    carTotal = _ref51.carTotal,
-    nights = _ref51.nights,
-    onGoTo = _ref51.onGoTo;
+function DashWallet(_ref52) {
+  var data = _ref52.data,
+    setData = _ref52.setData,
+    documents = _ref52.documents,
+    _onAddDoc = _ref52.onAddDoc,
+    _onRemoveDoc = _ref52.onRemoveDoc,
+    flightTotal = _ref52.flightTotal,
+    hotelTotal = _ref52.hotelTotal,
+    carTotal = _ref52.carTotal,
+    nights = _ref52.nights,
+    onGoTo = _ref52.onGoTo;
   var savedTab = loadSavedUI().walletTab;
   var _useState165 = useState(savedTab || "tickets"),
     _useState166 = _slicedToArray(_useState165, 2),
@@ -12700,9 +13007,9 @@ function DashWallet(_ref51) {
     }
   }));
 }
-function DashDrive(_ref52) {
-  var data = _ref52.data,
-    setData = _ref52.setData;
+function DashDrive(_ref53) {
+  var data = _ref53.data,
+    setData = _ref53.setData;
   var blocks = data.routeBlocks && data.routeBlocks.length ? data.routeBlocks : [];
   var driveLegs = [];
   for (var i = 1; i < blocks.length; i++) {
@@ -12815,9 +13122,9 @@ function DashDrive(_ref52) {
     className: "d"
   }, "Check road signs and route conditions before entering city centres or toll roads.")))));
 }
-function DashOffline(_ref53) {
+function DashOffline(_ref54) {
   var _data$departureParkin;
-  var data = _ref53.data;
+  var data = _ref54.data;
   var airport = AIRPORTS.find(function (a) {
     return a.code === data.airport;
   });
@@ -12929,8 +13236,8 @@ function formatZoneClock(date, timeZone) {
     return "--:--";
   }
 }
-function HomeItalyTime(_ref54) {
-  var data = _ref54.data;
+function HomeItalyTime(_ref55) {
+  var data = _ref55.data;
   var _useState167 = useState(new Date()),
     _useState168 = _slicedToArray(_useState167, 2),
     now = _useState168[0],
@@ -13093,7 +13400,7 @@ function itCreateBackup(_x16) {
 }
 function _itCreateBackup() {
   _itCreateBackup = _asyncToGenerator(_regenerator().m(function _callee49(includeDocs) {
-    var storage, documents, all, _iterator4, _step4, _d, blob, meta, item, payload, file, d, pad, name, url, a, _t39;
+    var storage, documents, all, _iterator4, _step4, _d, blob, meta, item, payload, file, d, pad, name, url, a, _t40;
     return _regenerator().w(function (_context49) {
       while (1) switch (_context49.p = _context49.n) {
         case 0:
@@ -13141,8 +13448,8 @@ function _itCreateBackup() {
           break;
         case 8:
           _context49.p = 8;
-          _t39 = _context49.v;
-          _iterator4.e(_t39);
+          _t40 = _context49.v;
+          _iterator4.e(_t40);
         case 9:
           _context49.p = 9;
           _iterator4.f();
@@ -13310,7 +13617,7 @@ function ItalyBackupField() {
     setMsg = _useState174[1];
   var inputRef = React.useRef(null);
   var save = function () {
-    var _ref55 = _asyncToGenerator(_regenerator().m(function _callee10() {
+    var _ref56 = _asyncToGenerator(_regenerator().m(function _callee10() {
       var _t9;
       return _regenerator().w(function (_context10) {
         while (1) switch (_context10.p = _context10.n) {
@@ -13336,11 +13643,11 @@ function ItalyBackupField() {
       }, _callee10, null, [[1, 3]]);
     }));
     return function save() {
-      return _ref55.apply(this, arguments);
+      return _ref56.apply(this, arguments);
     };
   }();
   var onFile = function () {
-    var _ref56 = _asyncToGenerator(_regenerator().m(function _callee11(e) {
+    var _ref57 = _asyncToGenerator(_regenerator().m(function _callee11(e) {
       var file, _t0;
       return _regenerator().w(function (_context11) {
         while (1) switch (_context11.p = _context11.n) {
@@ -13373,7 +13680,7 @@ function ItalyBackupField() {
       }, _callee11, null, [[2, 4]]);
     }));
     return function onFile(_x19) {
-      return _ref56.apply(this, arguments);
+      return _ref57.apply(this, arguments);
     };
   }();
   return React.createElement("div", {
@@ -13661,9 +13968,9 @@ function ItalyRestoreLink() {
     }()
   }));
 }
-function DashTools(_ref58) {
-  var data = _ref58.data,
-    onDeleteLocalData = _ref58.onDeleteLocalData;
+function DashTools(_ref59) {
+  var data = _ref59.data,
+    onDeleteLocalData = _ref59.onDeleteLocalData;
   return React.createElement("div", null, React.createElement(DashWeather, {
     data: data
   }), React.createElement(DashCurrency, {
@@ -13972,12 +14279,12 @@ function italyNowReadCachedEurRate(currency) {
 }
 function italyNowUseEurToCurrencyRate(currency) {
   var target = String(currency || "EUR").toUpperCase();
-  var _React$useState = React.useState(function () {
+  var _React$useState5 = React.useState(function () {
       return target === "EUR" ? 1 : italyNowReadCachedEurRate(target);
     }),
-    _React$useState2 = _slicedToArray(_React$useState, 2),
-    rate = _React$useState2[0],
-    setRate = _React$useState2[1];
+    _React$useState6 = _slicedToArray(_React$useState5, 2),
+    rate = _React$useState6[0],
+    setRate = _React$useState6[1];
   React.useEffect(function () {
     var alive = true;
     if (target === "EUR") {
@@ -14037,7 +14344,7 @@ function italyNowConvertVerifiedPrice(price, homeCurrency, eurToHome) {
   return null;
 }
 function italyNowPriceAffordability(place, budgetLeft, homeCurrency, eurToHome) {
-  var _ref59, _converted$budgetMax, _converted$budgetMin;
+  var _ref60, _converted$budgetMax, _converted$budgetMin;
   var raw = verifiedPlacePrice(place),
     converted = italyNowConvertVerifiedPrice(raw, homeCurrency, eurToHome);
   if (!raw.known) return {
@@ -14055,7 +14362,7 @@ function italyNowPriceAffordability(place, budgetLeft, homeCurrency, eurToHome) 
     raw: raw,
     converted: converted
   };
-  var hi = Number((_ref59 = (_converted$budgetMax = converted.budgetMax) !== null && _converted$budgetMax !== void 0 ? _converted$budgetMax : converted.budgetMin) !== null && _ref59 !== void 0 ? _ref59 : 0),
+  var hi = Number((_ref60 = (_converted$budgetMax = converted.budgetMax) !== null && _converted$budgetMax !== void 0 ? _converted$budgetMax : converted.budgetMin) !== null && _ref60 !== void 0 ? _ref60 : 0),
     lo = Number((_converted$budgetMin = converted.budgetMin) !== null && _converted$budgetMin !== void 0 ? _converted$budgetMin : hi);
   if (lo > Number(budgetLeft)) return {
     status: "over",
@@ -14074,7 +14381,7 @@ function italyNowPriceAffordability(place, budgetLeft, homeCurrency, eurToHome) 
   };
 }
 function italyNowFormatVerifiedPrice(place, homeCurrency, eurToHome) {
-  var _ref60, _p$max2;
+  var _ref61, _p$max2;
   var p = verifiedPlacePrice(place);
   if (!p.known) {
     var level = placePriceLevelLabel(place);
@@ -14097,7 +14404,7 @@ function italyNowFormatVerifiedPrice(place, homeCurrency, eurToHome) {
     approxText: ""
   };
   var lo = Number(p.min || 0),
-    hi = Number((_ref60 = (_p$max2 = p.max) !== null && _p$max2 !== void 0 ? _p$max2 : p.min) !== null && _ref60 !== void 0 ? _ref60 : 0);
+    hi = Number((_ref61 = (_p$max2 = p.max) !== null && _p$max2 !== void 0 ? _p$max2 : p.min) !== null && _ref61 !== void 0 ? _ref61 : 0);
   var text = lo === hi ? formatCurrencyAmount(p.currency, lo, 0) : "".concat(formatCurrencyAmount(p.currency, lo, 0), "\u2013").concat(formatCurrencyAmount(p.currency, hi, 0));
   var approxText = "",
     target = String(homeCurrency || "EUR").toUpperCase();
@@ -14121,7 +14428,7 @@ function italyNowSummarizeVerifiedRouteCost(route, homeCurrency, eurToHome) {
     missing = 0,
     unconverted = 0;
   stops.forEach(function (stop) {
-    var _ref61, _converted$budgetMax2;
+    var _ref62, _converted$budgetMax2;
     var raw = verifiedPlacePrice(stop);
     if (!raw.known) {
       missing++;
@@ -14133,7 +14440,7 @@ function italyNowSummarizeVerifiedRouteCost(route, homeCurrency, eurToHome) {
       return;
     }
     min += Number(converted.budgetMin || 0);
-    max += Number((_ref61 = (_converted$budgetMax2 = converted.budgetMax) !== null && _converted$budgetMax2 !== void 0 ? _converted$budgetMax2 : converted.budgetMin) !== null && _ref61 !== void 0 ? _ref61 : 0);
+    max += Number((_ref62 = (_converted$budgetMax2 = converted.budgetMax) !== null && _converted$budgetMax2 !== void 0 ? _converted$budgetMax2 : converted.budgetMin) !== null && _ref62 !== void 0 ? _ref62 : 0);
     known++;
   });
   return {
@@ -14207,7 +14514,7 @@ function italyNowBuildSmartRoute(candidates) {
   var remaining = availableMinutes == null ? null : Math.max(0, Number(availableMinutes)),
     moneyRemaining = budgetLeft == null ? null : Math.max(0, Number(budgetLeft));
   for (var step = 0; step < maxStops; step++) {
-    var _ref62, _pick$place$priceLeve, _ref63, _pick$place$verifiedP, _ref64, _pick$place$verifiedP2;
+    var _ref63, _pick$place$priceLeve, _ref64, _pick$place$verifiedP, _ref65, _pick$place$verifiedP2;
     var ranked = pool.filter(function (p) {
       return !chosen.some(function (c) {
         return c.name === p.name;
@@ -14255,9 +14562,9 @@ function italyNowBuildSmartRoute(candidates) {
       end: italyNowMinutesToClock(finish),
       matchedType: pick.place.matchedType || "",
       priceRange: pick.place.priceRange || pick.place.price_range || null,
-      priceLevel: (_ref62 = (_pick$place$priceLeve = pick.place.priceLevel) !== null && _pick$place$priceLeve !== void 0 ? _pick$place$priceLeve : pick.place.price_level) !== null && _ref62 !== void 0 ? _ref62 : null,
-      verifiedPriceMin: (_ref63 = (_pick$place$verifiedP = pick.place.verifiedPriceMin) !== null && _pick$place$verifiedP !== void 0 ? _pick$place$verifiedP : pick.place.priceMin) !== null && _ref63 !== void 0 ? _ref63 : null,
-      verifiedPriceMax: (_ref64 = (_pick$place$verifiedP2 = pick.place.verifiedPriceMax) !== null && _pick$place$verifiedP2 !== void 0 ? _pick$place$verifiedP2 : pick.place.priceMax) !== null && _ref64 !== void 0 ? _ref64 : null,
+      priceLevel: (_ref63 = (_pick$place$priceLeve = pick.place.priceLevel) !== null && _pick$place$priceLeve !== void 0 ? _pick$place$priceLeve : pick.place.price_level) !== null && _ref63 !== void 0 ? _ref63 : null,
+      verifiedPriceMin: (_ref64 = (_pick$place$verifiedP = pick.place.verifiedPriceMin) !== null && _pick$place$verifiedP !== void 0 ? _pick$place$verifiedP : pick.place.priceMin) !== null && _ref64 !== void 0 ? _ref64 : null,
+      verifiedPriceMax: (_ref65 = (_pick$place$verifiedP2 = pick.place.verifiedPriceMax) !== null && _pick$place$verifiedP2 !== void 0 ? _pick$place$verifiedP2 : pick.place.priceMax) !== null && _ref65 !== void 0 ? _ref65 : null,
       verifiedPriceCurrency: pick.place.verifiedPriceCurrency || pick.place.priceCurrency || pick.place.currency || "",
       verifiedPriceSource: pick.place.verifiedPriceSource || pick.place.priceSource || ""
     });
@@ -14277,53 +14584,53 @@ function italyNowBuildSmartRoute(candidates) {
   }
   return chosen;
 }
-function ItalyDashNow(_ref65) {
-  var data = _ref65.data,
-    setData = _ref65.setData,
-    onGoTo = _ref65.onGoTo,
-    dailyAmount = _ref65.dailyAmount;
+function ItalyDashNow(_ref66) {
+  var data = _ref66.data,
+    setData = _ref66.setData,
+    onGoTo = _ref66.onGoTo,
+    dailyAmount = _ref66.dailyAmount;
   var deviceTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Rome";
-  var _React$useState3 = React.useState(deviceTimeZone),
-    _React$useState4 = _slicedToArray(_React$useState3, 2),
-    liveTimeZone = _React$useState4[0],
-    setLiveTimeZone = _React$useState4[1];
-  var clock = italyNowClockParts(liveTimeZone);
-  var _React$useState5 = React.useState(""),
-    _React$useState6 = _slicedToArray(_React$useState5, 2),
-    currentLocationName = _React$useState6[0],
-    setCurrentLocationName = _React$useState6[1];
-  var _React$useState7 = React.useState("idle"),
+  var _React$useState7 = React.useState(deviceTimeZone),
     _React$useState8 = _slicedToArray(_React$useState7, 2),
-    gpsState = _React$useState8[0],
-    setGpsState = _React$useState8[1];
-  var _React$useState9 = React.useState(null),
+    liveTimeZone = _React$useState8[0],
+    setLiveTimeZone = _React$useState8[1];
+  var clock = italyNowClockParts(liveTimeZone);
+  var _React$useState9 = React.useState(""),
     _React$useState0 = _slicedToArray(_React$useState9, 2),
-    weather = _React$useState0[0],
-    setWeather = _React$useState0[1];
-  var _React$useState1 = React.useState([]),
+    currentLocationName = _React$useState0[0],
+    setCurrentLocationName = _React$useState0[1];
+  var _React$useState1 = React.useState("idle"),
     _React$useState10 = _slicedToArray(_React$useState1, 2),
-    livePlaces = _React$useState10[0],
-    setLivePlaces = _React$useState10[1];
-  var _React$useState11 = React.useState(false),
+    gpsState = _React$useState10[0],
+    setGpsState = _React$useState10[1];
+  var _React$useState11 = React.useState(null),
     _React$useState12 = _slicedToArray(_React$useState11, 2),
-    liveLoading = _React$useState12[0],
-    setLiveLoading = _React$useState12[1];
-  var _React$useState13 = React.useState(""),
+    weather = _React$useState12[0],
+    setWeather = _React$useState12[1];
+  var _React$useState13 = React.useState([]),
     _React$useState14 = _slicedToArray(_React$useState13, 2),
-    liveError = _React$useState14[0],
-    setLiveError = _React$useState14[1];
-  var _React$useState15 = React.useState(""),
+    livePlaces = _React$useState14[0],
+    setLivePlaces = _React$useState14[1];
+  var _React$useState15 = React.useState(false),
     _React$useState16 = _slicedToArray(_React$useState15, 2),
-    smartDayMessage = _React$useState16[0],
-    setSmartDayMessage = _React$useState16[1];
-  var _React$useState17 = React.useState(null),
+    liveLoading = _React$useState16[0],
+    setLiveLoading = _React$useState16[1];
+  var _React$useState17 = React.useState(""),
     _React$useState18 = _slicedToArray(_React$useState17, 2),
-    liveCoords = _React$useState18[0],
-    setLiveCoords = _React$useState18[1];
+    liveError = _React$useState18[0],
+    setLiveError = _React$useState18[1];
   var _React$useState19 = React.useState(""),
     _React$useState20 = _slicedToArray(_React$useState19, 2),
-    navChoiceStop = _React$useState20[0],
-    setNavChoiceStop = _React$useState20[1];
+    smartDayMessage = _React$useState20[0],
+    setSmartDayMessage = _React$useState20[1];
+  var _React$useState21 = React.useState(null),
+    _React$useState22 = _slicedToArray(_React$useState21, 2),
+    liveCoords = _React$useState22[0],
+    setLiveCoords = _React$useState22[1];
+  var _React$useState23 = React.useState(""),
+    _React$useState24 = _slicedToArray(_React$useState23, 2),
+    navChoiceStop = _React$useState24[0],
+    setNavChoiceStop = _React$useState24[1];
   var homeCurrency = getHomeCurrency(data);
   var eurToHome = italyNowUseEurToCurrencyRate(homeCurrency);
   var workingDay = italyIntelligentWorkingDay(data);
@@ -14361,7 +14668,7 @@ function ItalyDashNow(_ref65) {
     });
   };
   var syncLocation = function () {
-    var _ref66 = _asyncToGenerator(_regenerator().m(function _callee14() {
+    var _ref67 = _asyncToGenerator(_regenerator().m(function _callee14() {
       var loc, u, r, j, _t11, _t12;
       return _regenerator().w(function (_context14) {
         while (1) switch (_context14.p = _context14.n) {
@@ -14376,7 +14683,7 @@ function ItalyDashNow(_ref65) {
               lat: Number(loc.lat),
               lng: Number(loc.lng)
             });
-            setGpsState(loc.countryCode === "IT" ? "inside" : "outside");
+            setGpsState(liveFeaturesAllowed(loc) ? "inside" : "outside");
             _context14.p = 2;
             u = "https://api.open-meteo.com/v1/forecast?latitude=".concat(loc.lat, "&longitude=").concat(loc.lng, "&current=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1");
             _context14.n = 3;
@@ -14405,14 +14712,14 @@ function ItalyDashNow(_ref65) {
       }, _callee14, null, [[2, 5], [0, 7]]);
     }));
     return function syncLocation() {
-      return _ref66.apply(this, arguments);
+      return _ref67.apply(this, arguments);
     };
   }();
   React.useEffect(function () {
     syncLocation();
   }, []);
   var refreshLiveContext = function () {
-    var _ref67 = _asyncToGenerator(_regenerator().m(function _callee15() {
+    var _ref68 = _asyncToGenerator(_regenerator().m(function _callee15() {
       var loc, currentWeather, u, r, j, wInfo, types, params, guard, pr, pj, raw, normalizedPlans, enriched, _t13, _t14;
       return _regenerator().w(function (_context15) {
         while (1) switch (_context15.p = _context15.n) {
@@ -14424,7 +14731,7 @@ function ItalyDashNow(_ref65) {
             return syncLocation();
           case 2:
             loc = _context15.v;
-            if (!(!loc || loc.countryCode !== "IT")) {
+            if (!(!loc || !liveFeaturesAllowed(loc))) {
               _context15.n = 3;
               break;
             }
@@ -14477,7 +14784,7 @@ function ItalyDashNow(_ref65) {
           case 9:
             recordApiUsage("places", 1);
             _context15.n = 10;
-            return fetch("".concat(PROXY_URL, "?").concat(params.toString()));
+            return fetch("".concat(NEARBY_PROXY_URL, "?").concat(params.toString()));
           case 10:
             pr = _context15.v;
             _context15.n = 11;
@@ -14533,7 +14840,7 @@ function ItalyDashNow(_ref65) {
       }, _callee15, null, [[4, 7], [1, 12]]);
     }));
     return function refreshLiveContext() {
-      return _ref67.apply(this, arguments);
+      return _ref68.apply(this, arguments);
     };
   }();
   var addPlaceToToday = function addPlaceToToday(place) {
@@ -14613,7 +14920,7 @@ function ItalyDashNow(_ref65) {
     }, 160);
   };
   var replaceSmartStop = function replaceSmartStop(stop) {
-    var _ref68, _p$priceLevel, _ref69, _p$verifiedPriceMin, _ref70, _p$verifiedPriceMax;
+    var _ref69, _p$priceLevel, _ref70, _p$verifiedPriceMin, _ref71, _p$verifiedPriceMax;
     if (!livePlaces.length) {
       setSmartDayMessage("Tap Show suggestions first to find a live replacement.");
       return;
@@ -14678,9 +14985,9 @@ function ItalyDashNow(_ref65) {
       visitMin: pick.visit,
       matchedType: p.matchedType || "",
       priceRange: p.priceRange || p.price_range || null,
-      priceLevel: (_ref68 = (_p$priceLevel = p.priceLevel) !== null && _p$priceLevel !== void 0 ? _p$priceLevel : p.price_level) !== null && _ref68 !== void 0 ? _ref68 : null,
-      verifiedPriceMin: (_ref69 = (_p$verifiedPriceMin = p.verifiedPriceMin) !== null && _p$verifiedPriceMin !== void 0 ? _p$verifiedPriceMin : p.priceMin) !== null && _ref69 !== void 0 ? _ref69 : null,
-      verifiedPriceMax: (_ref70 = (_p$verifiedPriceMax = p.verifiedPriceMax) !== null && _p$verifiedPriceMax !== void 0 ? _p$verifiedPriceMax : p.priceMax) !== null && _ref70 !== void 0 ? _ref70 : null,
+      priceLevel: (_ref69 = (_p$priceLevel = p.priceLevel) !== null && _p$priceLevel !== void 0 ? _p$priceLevel : p.price_level) !== null && _ref69 !== void 0 ? _ref69 : null,
+      verifiedPriceMin: (_ref70 = (_p$verifiedPriceMin = p.verifiedPriceMin) !== null && _p$verifiedPriceMin !== void 0 ? _p$verifiedPriceMin : p.priceMin) !== null && _ref70 !== void 0 ? _ref70 : null,
+      verifiedPriceMax: (_ref71 = (_p$verifiedPriceMax = p.verifiedPriceMax) !== null && _p$verifiedPriceMax !== void 0 ? _p$verifiedPriceMax : p.priceMax) !== null && _ref71 !== void 0 ? _ref71 : null,
       verifiedPriceCurrency: p.verifiedPriceCurrency || p.priceCurrency || p.currency || "",
       verifiedPriceSource: p.verifiedPriceSource || p.priceSource || ""
     });
@@ -14977,22 +15284,22 @@ function italyIntelligentWorkingDay(data) {
   return 1;
 }
 function ItalyIntelligentDayLocationClock() {
-  var _React$useState21 = React.useState(""),
-    _React$useState22 = _slicedToArray(_React$useState21, 2),
-    place = _React$useState22[0],
-    setPlace = _React$useState22[1];
-  var _React$useState23 = React.useState(TRIP_ENGINE_APP.destinationTimeZone || "Europe/Rome"),
-    _React$useState24 = _slicedToArray(_React$useState23, 2),
-    timeZone = _React$useState24[0],
-    setTimeZone = _React$useState24[1];
   var _React$useState25 = React.useState(""),
     _React$useState26 = _slicedToArray(_React$useState25, 2),
-    clock = _React$useState26[0],
-    setClock = _React$useState26[1];
-  var _React$useState27 = React.useState("loading"),
+    place = _React$useState26[0],
+    setPlace = _React$useState26[1];
+  var _React$useState27 = React.useState(TRIP_ENGINE_APP.destinationTimeZone || "Europe/Rome"),
     _React$useState28 = _slicedToArray(_React$useState27, 2),
-    status = _React$useState28[0],
-    setStatus = _React$useState28[1];
+    timeZone = _React$useState28[0],
+    setTimeZone = _React$useState28[1];
+  var _React$useState29 = React.useState(""),
+    _React$useState30 = _slicedToArray(_React$useState29, 2),
+    clock = _React$useState30[0],
+    setClock = _React$useState30[1];
+  var _React$useState31 = React.useState("loading"),
+    _React$useState32 = _slicedToArray(_React$useState31, 2),
+    status = _React$useState32[0],
+    setStatus = _React$useState32[1];
   React.useEffect(function () {
     var alive = true;
     _asyncToGenerator(_regenerator().m(function _callee16() {
@@ -15089,19 +15396,19 @@ function ItalyIntelligentDayLocationClock() {
     className: "iday-location-time"
   }, clock || "--:--"));
 }
-function ItalyIntelligentToday(_ref72) {
-  var data = _ref72.data,
-    setData = _ref72.setData,
-    dailyAmount = _ref72.dailyAmount,
-    onGoTo = _ref72.onGoTo;
+function ItalyIntelligentToday(_ref73) {
+  var data = _ref73.data,
+    setData = _ref73.setData,
+    dailyAmount = _ref73.dailyAmount,
+    onGoTo = _ref73.onGoTo;
   var workingDay = italyIntelligentWorkingDay(data);
   var totalDays = tripLengthDays(data);
   var currentPlans = (data.dayPlans || {})[workingDay] || [];
   var completedMap = data.completedStops || {};
-  var _React$useState29 = React.useState(""),
-    _React$useState30 = _slicedToArray(_React$useState29, 2),
-    navChoiceStop = _React$useState30[0],
-    setNavChoiceStop = _React$useState30[1];
+  var _React$useState33 = React.useState(""),
+    _React$useState34 = _slicedToArray(_React$useState33, 2),
+    navChoiceStop = _React$useState34[0],
+    setNavChoiceStop = _React$useState34[1];
   var isStopDone = function isStopDone(stop) {
     return !!completedMap["".concat(workingDay, "|").concat(String(stop || "").trim())];
   };
@@ -15388,7 +15695,7 @@ function guardianEnsureServiceWorker() {
 }
 function _guardianEnsureServiceWorker() {
   _guardianEnsureServiceWorker = _asyncToGenerator(_regenerator().m(function _callee52() {
-    var registration, ready, _t40;
+    var registration, ready, _t41;
     return _regenerator().w(function (_context52) {
       while (1) switch (_context52.p = _context52.n) {
         case 0:
@@ -15413,7 +15720,7 @@ function _guardianEnsureServiceWorker() {
           break;
         case 5:
           _context52.p = 5;
-          _t40 = _context52.v;
+          _t41 = _context52.v;
         case 6:
           _context52.n = 7;
           return navigator.serviceWorker.ready;
@@ -15664,12 +15971,12 @@ function pulseReportSignal(_x26) {
   return _pulseReportSignal.apply(this, arguments);
 }
 function _pulseReportSignal() {
-  _pulseReportSignal = _asyncToGenerator(_regenerator().m(function _callee56(_ref73) {
+  _pulseReportSignal = _asyncToGenerator(_regenerator().m(function _callee56(_ref74) {
     var type, lat, lng, locality, r, j;
     return _regenerator().w(function (_context56) {
       while (1) switch (_context56.n) {
         case 0:
-          type = _ref73.type, lat = _ref73.lat, lng = _ref73.lng, locality = _ref73.locality;
+          type = _ref74.type, lat = _ref74.lat, lng = _ref74.lng, locality = _ref74.locality;
           _context56.n = 1;
           return fetch("".concat(PULSE_API_BASE, "/v1/signals/report"), {
             method: "POST",
@@ -15747,28 +16054,28 @@ function _pulseVoteSignal() {
   }));
   return _pulseVoteSignal.apply(this, arguments);
 }
-function ItalyIntelligentDayGuardian(_ref74) {
-  var data = _ref74.data;
-  var _React$useState31 = React.useState(loadGuardianSettings),
-    _React$useState32 = _slicedToArray(_React$useState31, 2),
-    settings = _React$useState32[0],
-    setSettings = _React$useState32[1];
-  var _React$useState33 = React.useState(function () {
+function ItalyIntelligentDayGuardian(_ref75) {
+  var data = _ref75.data;
+  var _React$useState35 = React.useState(loadGuardianSettings),
+    _React$useState36 = _slicedToArray(_React$useState35, 2),
+    settings = _React$useState36[0],
+    setSettings = _React$useState36[1];
+  var _React$useState37 = React.useState(function () {
       return typeof Notification !== "undefined" ? Notification.permission : "unsupported";
     }),
-    _React$useState34 = _slicedToArray(_React$useState33, 2),
-    permission = _React$useState34[0],
-    setPermission = _React$useState34[1];
-  var _React$useState35 = React.useState(""),
-    _React$useState36 = _slicedToArray(_React$useState35, 2),
-    msg = _React$useState36[0],
-    setMsg = _React$useState36[1];
+    _React$useState38 = _slicedToArray(_React$useState37, 2),
+    permission = _React$useState38[0],
+    setPermission = _React$useState38[1];
+  var _React$useState39 = React.useState(""),
+    _React$useState40 = _slicedToArray(_React$useState39, 2),
+    msg = _React$useState40[0],
+    setMsg = _React$useState40[1];
   var supported = typeof Notification !== "undefined";
   React.useEffect(function () {
     if (!settings.enabled || permission !== "granted") return;
     var alive = true;
     var sync = function () {
-      var _ref75 = _asyncToGenerator(_regenerator().m(function _callee17() {
+      var _ref76 = _asyncToGenerator(_regenerator().m(function _callee17() {
         var _t17;
         return _regenerator().w(function (_context17) {
           while (1) switch (_context17.p = _context17.n) {
@@ -15797,7 +16104,7 @@ function ItalyIntelligentDayGuardian(_ref74) {
         }, _callee17, null, [[0, 3]]);
       }));
       return function sync() {
-        return _ref75.apply(this, arguments);
+        return _ref76.apply(this, arguments);
       };
     }();
     sync();
@@ -15808,7 +16115,7 @@ function ItalyIntelligentDayGuardian(_ref74) {
     };
   }, [settings.enabled, settings.weather, settings.leaveTime, settings.route, settings.signals, permission, data]);
   var toggleGuardian = function () {
-    var _ref76 = _asyncToGenerator(_regenerator().m(function _callee18(key, label) {
+    var _ref77 = _asyncToGenerator(_regenerator().m(function _callee18(key, label) {
       var next, _t18;
       return _regenerator().w(function (_context18) {
         while (1) switch (_context18.p = _context18.n) {
@@ -15848,11 +16155,11 @@ function ItalyIntelligentDayGuardian(_ref74) {
       }, _callee18, null, [[1, 4]]);
     }));
     return function toggleGuardian(_x29, _x30) {
-      return _ref76.apply(this, arguments);
+      return _ref77.apply(this, arguments);
     };
   }();
   var enable = function () {
-    var _ref77 = _asyncToGenerator(_regenerator().m(function _callee19() {
+    var _ref78 = _asyncToGenerator(_regenerator().m(function _callee19() {
       var p, next, _next2, _t19;
       return _regenerator().w(function (_context19) {
         while (1) switch (_context19.p = _context19.n) {
@@ -15910,11 +16217,11 @@ function ItalyIntelligentDayGuardian(_ref74) {
       }, _callee19, null, [[1, 7]]);
     }));
     return function enable() {
-      return _ref77.apply(this, arguments);
+      return _ref78.apply(this, arguments);
     };
   }();
   var disable = function () {
-    var _ref78 = _asyncToGenerator(_regenerator().m(function _callee20() {
+    var _ref79 = _asyncToGenerator(_regenerator().m(function _callee20() {
       var next, _t20;
       return _regenerator().w(function (_context20) {
         while (1) switch (_context20.p = _context20.n) {
@@ -15941,11 +16248,11 @@ function ItalyIntelligentDayGuardian(_ref74) {
       }, _callee20, null, [[1, 3]]);
     }));
     return function disable() {
-      return _ref78.apply(this, arguments);
+      return _ref79.apply(this, arguments);
     };
   }();
   var testNotification = function () {
-    var _ref79 = _asyncToGenerator(_regenerator().m(function _callee21() {
+    var _ref80 = _asyncToGenerator(_regenerator().m(function _callee21() {
       var reg, n, _t21;
       return _regenerator().w(function (_context21) {
         while (1) switch (_context21.p = _context21.n) {
@@ -16013,18 +16320,18 @@ function ItalyIntelligentDayGuardian(_ref74) {
       }, _callee21, null, [[2, 6]]);
     }));
     return function testNotification() {
-      return _ref79.apply(this, arguments);
+      return _ref80.apply(this, arguments);
     };
   }();
   var testBackendPush = function () {
-    var _ref80 = _asyncToGenerator(_regenerator().m(function _callee23() {
+    var _ref81 = _asyncToGenerator(_regenerator().m(function _callee23() {
       var runTest, _j, _j2, _j3, _yield$runTest, r, j, _yield$runTest2, _t22;
       return _regenerator().w(function (_context23) {
         while (1) switch (_context23.p = _context23.n) {
           case 0:
             setMsg("Sending backend push test…");
             runTest = function () {
-              var _ref81 = _asyncToGenerator(_regenerator().m(function _callee22() {
+              var _ref82 = _asyncToGenerator(_regenerator().m(function _callee22() {
                 var r, j;
                 return _regenerator().w(function (_context22) {
                   while (1) switch (_context22.n) {
@@ -16057,7 +16364,7 @@ function ItalyIntelligentDayGuardian(_ref74) {
                 }, _callee22);
               }));
               return function runTest() {
-                return _ref81.apply(this, arguments);
+                return _ref82.apply(this, arguments);
               };
             }();
             _context23.p = 1;
@@ -16103,7 +16410,7 @@ function ItalyIntelligentDayGuardian(_ref74) {
       }, _callee23, null, [[1, 7]]);
     }));
     return function testBackendPush() {
-      return _ref80.apply(this, arguments);
+      return _ref81.apply(this, arguments);
     };
   }();
   var statusText = !supported ? "Not supported here" : permission === "denied" ? "Blocked by device/browser" : settings.enabled && permission === "granted" ? "Guardian armed" : "Guardian paused";
@@ -16182,8 +16489,8 @@ function ItalyIntelligentDayGuardian(_ref74) {
     className: "iday-guardian-note"
   }, "Guardian keeps the current day context synced to 687 Pulse while armed. The backend can alert for severe weather, leave-time, route problems and important Signals. Closed-app automatic checks also require the Pulse backend's scheduled monitoring to be enabled."));
 }
-function ItalyIntelligentDaySignals(_ref82) {
-  var data = _ref82.data;
+function ItalyIntelligentDaySignals(_ref83) {
+  var data = _ref83.data;
   var key = "tripitaly_live_signals_v1";
   var statsKey = "tripitaly_signal_contribution_stats_v1";
   var ownIdsKey = "tripitaly_signal_own_ids_v1";
@@ -16212,30 +16519,30 @@ function ItalyIntelligentDaySignals(_ref82) {
       };
     }
   };
-  var _React$useState37 = React.useState([]),
-    _React$useState38 = _slicedToArray(_React$useState37, 2),
-    items = _React$useState38[0],
-    setItems = _React$useState38[1];
-  var _React$useState39 = React.useState(""),
-    _React$useState40 = _slicedToArray(_React$useState39, 2),
-    msg = _React$useState40[0],
-    setMsg = _React$useState40[1];
-  var _React$useState41 = React.useState("good"),
+  var _React$useState41 = React.useState([]),
     _React$useState42 = _slicedToArray(_React$useState41, 2),
-    msgKind = _React$useState42[0],
-    setMsgKind = _React$useState42[1];
-  var _React$useState43 = React.useState(null),
+    items = _React$useState42[0],
+    setItems = _React$useState42[1];
+  var _React$useState43 = React.useState(""),
     _React$useState44 = _slicedToArray(_React$useState43, 2),
-    target = _React$useState44[0],
-    setTarget = _React$useState44[1];
-  var _React$useState45 = React.useState("loading"),
+    msg = _React$useState44[0],
+    setMsg = _React$useState44[1];
+  var _React$useState45 = React.useState("good"),
     _React$useState46 = _slicedToArray(_React$useState45, 2),
-    pulseState = _React$useState46[0],
-    setPulseState = _React$useState46[1];
-  var _React$useState47 = React.useState(loadStats),
+    msgKind = _React$useState46[0],
+    setMsgKind = _React$useState46[1];
+  var _React$useState47 = React.useState(null),
     _React$useState48 = _slicedToArray(_React$useState47, 2),
-    stats = _React$useState48[0],
-    setStats = _React$useState48[1];
+    target = _React$useState48[0],
+    setTarget = _React$useState48[1];
+  var _React$useState49 = React.useState("loading"),
+    _React$useState50 = _slicedToArray(_React$useState49, 2),
+    pulseState = _React$useState50[0],
+    setPulseState = _React$useState50[1];
+  var _React$useState51 = React.useState(loadStats),
+    _React$useState52 = _slicedToArray(_React$useState51, 2),
+    stats = _React$useState52[0],
+    setStats = _React$useState52[1];
   var msgTimerRef = React.useRef(null);
   var flashMsg = function flashMsg(text) {
     var kind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "good";
@@ -16374,7 +16681,7 @@ function ItalyIntelligentDaySignals(_ref82) {
       return;
     }
     navigator.geolocation.getCurrentPosition(function () {
-      var _ref83 = _asyncToGenerator(_regenerator().m(function _callee24(pos) {
+      var _ref84 = _asyncToGenerator(_regenerator().m(function _callee24(pos) {
         var remote, merged, helpedDelta, localByServer, _t23;
         return _regenerator().w(function (_context24) {
           while (1) switch (_context24.p = _context24.n) {
@@ -16419,7 +16726,7 @@ function ItalyIntelligentDaySignals(_ref82) {
         }, _callee24, null, [[0, 2]]);
       }));
       return function (_x31) {
-        return _ref83.apply(this, arguments);
+        return _ref84.apply(this, arguments);
       };
     }(), function () {
       setItems(local);
@@ -16462,7 +16769,7 @@ function ItalyIntelligentDaySignals(_ref82) {
     setMsgKind("good");
     setMsg("Sending signal…");
     navigator.geolocation.getCurrentPosition(function () {
-      var _ref84 = _asyncToGenerator(_regenerator().m(function _callee25(pos) {
+      var _ref85 = _asyncToGenerator(_regenerator().m(function _callee25(pos) {
         var meta, now, localItem, local, res, s, _t24;
         return _regenerator().w(function (_context25) {
           while (1) switch (_context25.p = _context25.n) {
@@ -16533,7 +16840,7 @@ function ItalyIntelligentDaySignals(_ref82) {
         }, _callee25, null, [[1, 3]]);
       }));
       return function (_x32) {
-        return _ref84.apply(this, arguments);
+        return _ref85.apply(this, arguments);
       };
     }(), function () {
       setMsgKind("error");
@@ -16545,7 +16852,7 @@ function ItalyIntelligentDaySignals(_ref82) {
     });
   };
   var confirm = function () {
-    var _ref85 = _asyncToGenerator(_regenerator().m(function _callee26(item) {
+    var _ref86 = _asyncToGenerator(_regenerator().m(function _callee26(item) {
       var _res$signal, res, n, _t25;
       return _regenerator().w(function (_context26) {
         while (1) switch (_context26.p = _context26.n) {
@@ -16607,11 +16914,11 @@ function ItalyIntelligentDaySignals(_ref82) {
       }, _callee26, null, [[3, 5]]);
     }));
     return function confirm(_x33) {
-      return _ref85.apply(this, arguments);
+      return _ref86.apply(this, arguments);
     };
   }();
   var gone = function () {
-    var _ref86 = _asyncToGenerator(_regenerator().m(function _callee27(item) {
+    var _ref87 = _asyncToGenerator(_regenerator().m(function _callee27(item) {
       var next, _t26;
       return _regenerator().w(function (_context27) {
         while (1) switch (_context27.p = _context27.n) {
@@ -16660,7 +16967,7 @@ function ItalyIntelligentDaySignals(_ref82) {
       }, _callee27, null, [[1, 3]]);
     }));
     return function gone(_x34) {
-      return _ref86.apply(this, arguments);
+      return _ref87.apply(this, arguments);
     };
   }();
   var relevant = items.filter(function (x) {
@@ -16817,10 +17124,10 @@ function ItalyIntelligentDaySignals(_ref82) {
     }
   }, "687 Pulse is now connected. Reports are shared anonymously when the backend is reachable; local storage remains only as a safety fallback."));
 }
-function ItalyIntelligentDayPrevent(_ref87) {
-  var data = _ref87.data,
-    onOpenNow = _ref87.onOpenNow;
-  var _React$useState49 = React.useState({
+function ItalyIntelligentDayPrevent(_ref88) {
+  var data = _ref88.data,
+    onOpenNow = _ref88.onOpenNow;
+  var _React$useState53 = React.useState({
       loading: true,
       status: "good",
       title: "Checking today…",
@@ -16829,9 +17136,9 @@ function ItalyIntelligentDayPrevent(_ref87) {
       hourly: [],
       updatedAt: ""
     }),
-    _React$useState50 = _slicedToArray(_React$useState49, 2),
-    state = _React$useState50[0],
-    setState = _React$useState50[1];
+    _React$useState54 = _slicedToArray(_React$useState53, 2),
+    state = _React$useState54[0],
+    setState = _React$useState54[1];
   var workingDay = italyIntelligentWorkingDay(data);
   var plans = (data.dayPlans || {})[workingDay] || [];
   var signalKey = "tripitaly_live_signals_v1";
@@ -16872,7 +17179,7 @@ function ItalyIntelligentDayPrevent(_ref87) {
       return;
     }
     navigator.geolocation.getCurrentPosition(function () {
-      var _ref88 = _asyncToGenerator(_regenerator().m(function _callee28(pos) {
+      var _ref89 = _asyncToGenerator(_regenerator().m(function _callee28(pos) {
         var lat, lng, _w$hourly, _w$current, _w$hourly2, _w$hourly3, _w$hourly4, _w$hourly5, _w$current2, url, r, w, times, startIndex, currentIso, found, endIndex, probs, gusts, codes, visibility, hourly, maxRain, maxGust, minVisibility, minVisibilityIndex, rel, minVisibilityTime, storm, hail, status, _details, visKm, when, _details2, _t27;
         return _regenerator().w(function (_context28) {
           while (1) switch (_context28.p = _context28.n) {
@@ -17004,7 +17311,7 @@ function ItalyIntelligentDayPrevent(_ref87) {
         }, _callee28, null, [[1, 5]]);
       }));
       return function (_x35) {
-        return _ref88.apply(this, arguments);
+        return _ref89.apply(this, arguments);
       };
     }(), function () {
       setState({
@@ -17103,12 +17410,12 @@ function ItalyIntelligentDayPrevent(_ref87) {
     onClick: onOpenNow
   }, "\u2728 Fix in NOW"))));
 }
-function ItalyIntelligentDayBudget(_ref89) {
-  var data = _ref89.data,
-    dailyAmount = _ref89.dailyAmount,
-    onOpenItinerary = _ref89.onOpenItinerary,
-    _ref89$compact = _ref89.compact,
-    compact = _ref89$compact === void 0 ? false : _ref89$compact;
+function ItalyIntelligentDayBudget(_ref90) {
+  var data = _ref90.data,
+    dailyAmount = _ref90.dailyAmount,
+    onOpenItinerary = _ref90.onOpenItinerary,
+    _ref90$compact = _ref90.compact,
+    compact = _ref90$compact === void 0 ? false : _ref90$compact;
   var ic = IDAY_LOCALIZED[getVoiceAssistantLanguage()] || IDAY_LOCALIZED.en;
   var workingDay = italyIntelligentWorkingDay(data);
   var totalDays = tripLengthDays(data);
@@ -17260,22 +17567,22 @@ function ItalyIntelligentDayBudget(_ref89) {
     onClick: onOpenItinerary
   }, ic.edit)));
 }
-function ItalyIntelligentDayRescue(_ref90) {
-  var data = _ref90.data,
-    onGoTo = _ref90.onGoTo,
-    onOpenNow = _ref90.onOpenNow;
-  var _React$useState51 = React.useState("train"),
-    _React$useState52 = _slicedToArray(_React$useState51, 2),
-    kind = _React$useState52[0],
-    setKind = _React$useState52[1];
-  var _React$useState53 = React.useState(""),
-    _React$useState54 = _slicedToArray(_React$useState53, 2),
-    msg = _React$useState54[0],
-    setMsg = _React$useState54[1];
-  var _React$useState55 = React.useState(null),
+function ItalyIntelligentDayRescue(_ref91) {
+  var data = _ref91.data,
+    onGoTo = _ref91.onGoTo,
+    onOpenNow = _ref91.onOpenNow;
+  var _React$useState55 = React.useState("train"),
     _React$useState56 = _slicedToArray(_React$useState55, 2),
-    coords = _React$useState56[0],
-    setCoords = _React$useState56[1];
+    kind = _React$useState56[0],
+    setKind = _React$useState56[1];
+  var _React$useState57 = React.useState(""),
+    _React$useState58 = _slicedToArray(_React$useState57, 2),
+    msg = _React$useState58[0],
+    setMsg = _React$useState58[1];
+  var _React$useState59 = React.useState(null),
+    _React$useState60 = _slicedToArray(_React$useState59, 2),
+    coords = _React$useState60[0],
+    setCoords = _React$useState60[1];
   React.useEffect(function () {
     detectCurrentCountry().then(function (loc) {
       if (Number.isFinite(Number(loc === null || loc === void 0 ? void 0 : loc.lat)) && Number.isFinite(Number(loc === null || loc === void 0 ? void 0 : loc.lng))) {
@@ -17333,7 +17640,7 @@ function ItalyIntelligentDayRescue(_ref90) {
     }
   };
   var copyPhrase = function () {
-    var _ref91 = _asyncToGenerator(_regenerator().m(function _callee29() {
+    var _ref92 = _asyncToGenerator(_regenerator().m(function _callee29() {
       var text, _t28;
       return _regenerator().w(function (_context29) {
         while (1) switch (_context29.p = _context29.n) {
@@ -17356,7 +17663,7 @@ function ItalyIntelligentDayRescue(_ref90) {
       }, _callee29, null, [[1, 3]]);
     }));
     return function copyPhrase() {
-      return _ref91.apply(this, arguments);
+      return _ref92.apply(this, arguments);
     };
   }();
   var actions = {
@@ -17481,10 +17788,10 @@ function ItalyIntelligentDayRescue(_ref90) {
     }
   }, current.text), React.createElement("div", {
     className: "rescue-actions"
-  }, (actions[kind] || []).map(function (_ref92) {
-    var _ref93 = _slicedToArray(_ref92, 2),
-      id = _ref93[0],
-      label = _ref93[1];
+  }, (actions[kind] || []).map(function (_ref93) {
+    var _ref94 = _slicedToArray(_ref93, 2),
+      id = _ref94[0],
+      label = _ref94[1];
     return React.createElement("button", {
       key: id,
       className: "rescue-action" + (id === "112" ? " emergency" : ""),
@@ -17498,16 +17805,16 @@ function ItalyIntelligentDayRescue(_ref90) {
     className: "rescue-note"
   }, "112 is the European emergency number used in Italy. Rescue opens maps, translation, Wallet, Nearby or NOW; it does not replace emergency services.")));
 }
-function IntelligentDayMenuShell(_ref94) {
-  var onGoTo = _ref94.onGoTo,
-    data = _ref94.data,
-    setData = _ref94.setData,
-    dailyAmount = _ref94.dailyAmount;
+function IntelligentDayMenuShell(_ref95) {
+  var onGoTo = _ref95.onGoTo,
+    data = _ref95.data,
+    setData = _ref95.setData,
+    dailyAmount = _ref95.dailyAmount;
   var ic = IDAY_LOCALIZED[getVoiceAssistantLanguage()] || IDAY_LOCALIZED.en;
-  var _React$useState57 = React.useState("today"),
-    _React$useState58 = _slicedToArray(_React$useState57, 2),
-    active = _React$useState58[0],
-    setActive = _React$useState58[1];
+  var _React$useState61 = React.useState("today"),
+    _React$useState62 = _slicedToArray(_React$useState61, 2),
+    active = _React$useState62[0],
+    setActive = _React$useState62[1];
   React.useEffect(function () {
     var handler = function handler(e) {
       var target = String((e === null || e === void 0 ? void 0 : e.detail) || "").toLowerCase();
@@ -17670,36 +17977,36 @@ function IntelligentDayMenuShell(_ref94) {
     }
   }, ic.shared))));
 }
-function DashboardVoiceAssistant(_ref95) {
-  var onGoTo = _ref95.onGoTo,
-    data = _ref95.data,
-    currentSection = _ref95.currentSection;
-  var _React$useState59 = React.useState(false),
-    _React$useState60 = _slicedToArray(_React$useState59, 2),
-    listening = _React$useState60[0],
-    setListening = _React$useState60[1];
-  var _React$useState61 = React.useState(false),
-    _React$useState62 = _slicedToArray(_React$useState61, 2),
-    panelOpen = _React$useState62[0],
-    setPanelOpen = _React$useState62[1];
+function DashboardVoiceAssistant(_ref96) {
+  var onGoTo = _ref96.onGoTo,
+    data = _ref96.data,
+    currentSection = _ref96.currentSection;
   var _React$useState63 = React.useState(false),
     _React$useState64 = _slicedToArray(_React$useState63, 2),
-    quickMenuOpen = _React$useState64[0],
-    setQuickMenuOpen = _React$useState64[1];
-  var _React$useState65 = React.useState(""),
+    listening = _React$useState64[0],
+    setListening = _React$useState64[1];
+  var _React$useState65 = React.useState(false),
     _React$useState66 = _slicedToArray(_React$useState65, 2),
-    heard = _React$useState66[0],
-    setHeard = _React$useState66[1];
+    panelOpen = _React$useState66[0],
+    setPanelOpen = _React$useState66[1];
   var _React$useState67 = React.useState(false),
     _React$useState68 = _slicedToArray(_React$useState67, 2),
-    showUnrecognizedTranscript = _React$useState68[0],
-    setShowUnrecognizedTranscript = _React$useState68[1];
+    quickMenuOpen = _React$useState68[0],
+    setQuickMenuOpen = _React$useState68[1];
+  var _React$useState69 = React.useState(""),
+    _React$useState70 = _slicedToArray(_React$useState69, 2),
+    heard = _React$useState70[0],
+    setHeard = _React$useState70[1];
+  var _React$useState71 = React.useState(false),
+    _React$useState72 = _slicedToArray(_React$useState71, 2),
+    showUnrecognizedTranscript = _React$useState72[0],
+    setShowUnrecognizedTranscript = _React$useState72[1];
   var panelCloseTimerRef = React.useRef(null);
   var dockRef = React.useRef(null);
   var dockDragRef = React.useRef(null);
   var dockDragMovedRef = React.useRef(false);
   var DOCK_POSITION_KEY = "tripitaly_voice_dock_position_v1";
-  var _React$useState69 = React.useState(function () {
+  var _React$useState73 = React.useState(function () {
       try {
         var saved = JSON.parse(localStorage.getItem(DOCK_POSITION_KEY) || "null");
         if (saved && (saved.side === "left" || saved.side === "right") && Number.isFinite(saved.top)) return saved;
@@ -17709,17 +18016,17 @@ function DashboardVoiceAssistant(_ref95) {
         top: null
       };
     }),
-    _React$useState70 = _slicedToArray(_React$useState69, 2),
-    dockPosition = _React$useState70[0],
-    setDockPosition = _React$useState70[1];
-  var _React$useState71 = React.useState(null),
-    _React$useState72 = _slicedToArray(_React$useState71, 2),
-    dockDragPosition = _React$useState72[0],
-    setDockDragPosition = _React$useState72[1];
-  var _React$useState73 = React.useState(false),
     _React$useState74 = _slicedToArray(_React$useState73, 2),
-    dockDragging = _React$useState74[0],
-    setDockDragging = _React$useState74[1];
+    dockPosition = _React$useState74[0],
+    setDockPosition = _React$useState74[1];
+  var _React$useState75 = React.useState(null),
+    _React$useState76 = _slicedToArray(_React$useState75, 2),
+    dockDragPosition = _React$useState76[0],
+    setDockDragPosition = _React$useState76[1];
+  var _React$useState77 = React.useState(false),
+    _React$useState78 = _slicedToArray(_React$useState77, 2),
+    dockDragging = _React$useState78[0],
+    setDockDragging = _React$useState78[1];
   var closePanelSoon = function closePanelSoon() {
     var delay = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1000;
     if (panelCloseTimerRef.current) window.clearTimeout(panelCloseTimerRef.current);
@@ -17755,12 +18062,12 @@ function DashboardVoiceAssistant(_ref95) {
       return window.removeEventListener("resize", onResize);
     };
   }, []);
-  var _React$useState75 = React.useState(function () {
+  var _React$useState79 = React.useState(function () {
       return getVoiceAssistantLanguage();
     }),
-    _React$useState76 = _slicedToArray(_React$useState75, 2),
-    voiceLanguage = _React$useState76[0],
-    setVoiceLanguageState = _React$useState76[1];
+    _React$useState80 = _slicedToArray(_React$useState79, 2),
+    voiceLanguage = _React$useState80[0],
+    setVoiceLanguageState = _React$useState80[1];
   var SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
   var micSupported = isIOSDevice() || !!SpeechRecognitionClass || hasNativeSpeechBridge();
   var COPY = {
@@ -17779,7 +18086,7 @@ function DashboardVoiceAssistant(_ref95) {
         shopping: "Opening shopping nearby.",
         culture: "Opening culture nearby.",
         nature: "Opening nature nearby.",
-        onsen: "Opening onsen nearby.",
+        onsen: "Opening thermal baths and spas nearby.",
         anime: "Opening anime and entertainment nearby.",
         itinerary: "Opening your itinerary.",
         translate: "Opening Translate.",
@@ -17816,7 +18123,7 @@ function DashboardVoiceAssistant(_ref95) {
         shopping: "Apro i negozi nelle vicinanze.",
         culture: "Apro cultura e attrazioni nelle vicinanze.",
         nature: "Apro natura nelle vicinanze.",
-        onsen: "Apro gli onsen nelle vicinanze.",
+        onsen: "Apro terme e spa nelle vicinanze.",
         anime: "Apro anime e intrattenimento nelle vicinanze.",
         itinerary: "Apro il tuo itinerario.",
         translate: "Apro Traduci.",
@@ -17890,7 +18197,7 @@ function DashboardVoiceAssistant(_ref95) {
         shopping: "Abriendo tiendas cercanas.",
         culture: "Abriendo cultura cercana.",
         nature: "Abriendo naturaleza cercana.",
-        onsen: "Abriendo onsen cercanos.",
+        onsen: "Abriendo termas y spas cercanos.",
         anime: "Abriendo anime y entretenimiento cercanos.",
         itinerary: "Abriendo tu itinerario.",
         translate: "Abriendo Traducir.",
@@ -17927,7 +18234,7 @@ function DashboardVoiceAssistant(_ref95) {
         shopping: "Öffne Einkaufsmöglichkeiten in der Nähe.",
         culture: "Öffne Kultur in der Nähe.",
         nature: "Öffne Natur in der Nähe.",
-        onsen: "Öffne Onsen in der Nähe.",
+        onsen: "Öffne Thermen und Spas in der Nähe.",
         anime: "Öffne Anime und Unterhaltung in der Nähe.",
         itinerary: "Öffne deinen Reiseplan.",
         translate: "Öffne Übersetzen.",
@@ -17964,7 +18271,7 @@ function DashboardVoiceAssistant(_ref95) {
         shopping: "J'ouvre les magasins à proximité.",
         culture: "J'ouvre les lieux culturels à proximité.",
         nature: "J'ouvre la nature à proximité.",
-        onsen: "J'ouvre les onsen à proximité.",
+        onsen: "J'ouvre les thermes et spas à proximité.",
         anime: "J'ouvre anime et divertissement à proximité.",
         itinerary: "J'ouvre votre itinéraire.",
         translate: "J'ouvre Traduire.",
@@ -18356,18 +18663,18 @@ function DashboardVoiceAssistant(_ref95) {
     speakReply(spoken);
     closePanelSoon();
   };
-  var _React$useState77 = React.useState(copy.ready),
-    _React$useState78 = _slicedToArray(_React$useState77, 2),
-    message = _React$useState78[0],
-    setMessage = _React$useState78[1];
-  var _React$useState79 = React.useState(false),
-    _React$useState80 = _slicedToArray(_React$useState79, 2),
-    helpOpen = _React$useState80[0],
-    setHelpOpen = _React$useState80[1];
-  var _React$useState81 = React.useState(false),
+  var _React$useState81 = React.useState(copy.ready),
     _React$useState82 = _slicedToArray(_React$useState81, 2),
-    awaitingHotelProvider = _React$useState82[0],
-    setAwaitingHotelProvider = _React$useState82[1];
+    message = _React$useState82[0],
+    setMessage = _React$useState82[1];
+  var _React$useState83 = React.useState(false),
+    _React$useState84 = _slicedToArray(_React$useState83, 2),
+    helpOpen = _React$useState84[0],
+    setHelpOpen = _React$useState84[1];
+  var _React$useState85 = React.useState(false),
+    _React$useState86 = _slicedToArray(_React$useState85, 2),
+    awaitingHotelProvider = _React$useState86[0],
+    setAwaitingHotelProvider = _React$useState86[1];
   React.useEffect(function () {
     setMessage((COPY[voiceLanguage] || COPY.en).ready);
     setHelpOpen(false);
@@ -18919,10 +19226,10 @@ function DashboardVoiceAssistant(_ref95) {
       opacity: .68,
       marginBottom: 9
     }
-  }, helpCopy.subtitle), helpCopy.groups.map(function (_ref96) {
-    var _ref97 = _slicedToArray(_ref96, 2),
-      group = _ref97[0],
-      examples = _ref97[1];
+  }, helpCopy.subtitle), helpCopy.groups.map(function (_ref97) {
+    var _ref98 = _slicedToArray(_ref97, 2),
+      group = _ref98[0],
+      examples = _ref98[1];
     return React.createElement("div", {
       key: group,
       style: {
@@ -19147,18 +19454,18 @@ function DashboardVoiceAssistant(_ref95) {
     }
   }, listening ? "•••" : "🎤")));
 }
-function ScreenDashboard(_ref99) {
-  var data = _ref99.data,
-    setData = _ref99.setData,
-    onStartNewTrip = _ref99.onStartNewTrip,
-    uiLanguage = _ref99.uiLanguage,
-    setUiLanguage = _ref99.setUiLanguage,
-    theme = _ref99.theme,
-    setTheme = _ref99.setTheme,
-    archives = _ref99.archives,
-    onRestoreTrip = _ref99.onRestoreTrip,
-    onDeleteArchive = _ref99.onDeleteArchive,
-    onSectionChange = _ref99.onSectionChange;
+function ScreenDashboard(_ref100) {
+  var data = _ref100.data,
+    setData = _ref100.setData,
+    onStartNewTrip = _ref100.onStartNewTrip,
+    uiLanguage = _ref100.uiLanguage,
+    setUiLanguage = _ref100.setUiLanguage,
+    theme = _ref100.theme,
+    setTheme = _ref100.setTheme,
+    archives = _ref100.archives,
+    onRestoreTrip = _ref100.onRestoreTrip,
+    onDeleteArchive = _ref100.onDeleteArchive,
+    onSectionChange = _ref100.onSectionChange;
   var savedDashboardSectionRaw = loadSavedUI().section;
   var savedDashboardSection = ["tickets", "car", "house", "phrasebook"].includes(savedDashboardSectionRaw) ? savedDashboardSectionRaw === "phrasebook" ? "translate" : "wallet" : savedDashboardSectionRaw;
   var _useState175 = useState(savedDashboardSection || "overview"),
@@ -19233,7 +19540,7 @@ function ScreenDashboard(_ref99) {
     });
   }, []);
   var addDoc = function () {
-    var _ref100 = _asyncToGenerator(_regenerator().m(function _callee31(sectionId, doc) {
+    var _ref101 = _asyncToGenerator(_regenerator().m(function _callee31(sectionId, doc) {
       var blob, meta;
       return _regenerator().w(function (_context31) {
         while (1) switch (_context31.n) {
@@ -19251,11 +19558,11 @@ function ScreenDashboard(_ref99) {
       }, _callee31);
     }));
     return function addDoc(_x36, _x37) {
-      return _ref100.apply(this, arguments);
+      return _ref101.apply(this, arguments);
     };
   }();
   var removeDoc = function () {
-    var _ref101 = _asyncToGenerator(_regenerator().m(function _callee32(sectionId, id) {
+    var _ref102 = _asyncToGenerator(_regenerator().m(function _callee32(sectionId, id) {
       return _regenerator().w(function (_context32) {
         while (1) switch (_context32.n) {
           case 0:
@@ -19273,7 +19580,7 @@ function ScreenDashboard(_ref99) {
       }, _callee32);
     }));
     return function removeDoc(_x38, _x39) {
-      return _ref101.apply(this, arguments);
+      return _ref102.apply(this, arguments);
     };
   }();
   var nights = tripLengthDays(data) - 1;
@@ -21980,6 +22287,62 @@ var GLOBAL_UI_TEXT = (_GLOBAL_UI_TEXT = {
   de: "Signale ist mit dem heutigen Plan verbunden. Wenn an einem Stopp oder unterwegs etwas passiert, melde es mit zwei Fingertipps. GPS und Zeit sind automatisch.",
   fr: "Signaux est connecté au programme d’Aujourd’hui. Si quelque chose se produit à une étape ou entre deux étapes, signalez-le en deux gestes. GPS et heure sont automatiques."
 }));
+Object.assign(GLOBAL_UI_TEXT, {
+  "Live map": {
+    it: "Mappa live",
+    ja: "ライブマップ",
+    es: "Mapa en vivo",
+    de: "Live-Karte",
+    fr: "Carte en direct",
+    zh: "实时地图",
+    ko: "실시간 지도"
+  },
+  "The live map shows where you are, your hotel and your car pickup.": {
+    it: "La mappa live mostra dove sei, il tuo hotel e il ritiro dell'auto.",
+    ja: "ライブマップに現在地、ホテル、レンタカーの受け取り場所を表示します。",
+    es: "El mapa en vivo muestra dónde estás, tu hotel y la recogida del coche.",
+    de: "Die Live-Karte zeigt deinen Standort, dein Hotel und die Mietwagen-Abholung.",
+    fr: "La carte en direct montre où vous êtes, votre hôtel et le retrait de la voiture.",
+    zh: "实时地图显示你的位置、酒店和取车地点。",
+    ko: "실시간 지도에 현재 위치, 호텔, 렌터카 픽업 장소가 표시됩니다."
+  },
+  "Use your phone's GPS to show where you are right now.": {
+    it: "Usa il GPS del telefono per vedere dove sei adesso.",
+    ja: "スマートフォンのGPSで現在地を表示します。",
+    es: "Usa el GPS del teléfono para ver dónde estás ahora.",
+    de: "Nutze das GPS deines Handys, um zu sehen, wo du gerade bist.",
+    fr: "Utilisez le GPS du téléphone pour voir où vous êtes maintenant.",
+    zh: "使用手机GPS显示你现在的位置。",
+    ko: "휴대폰 GPS로 지금 있는 위치를 표시합니다."
+  },
+  "Live search around you →": {
+    it: "Ricerca live intorno a te →",
+    ja: "周辺をライブ検索 →",
+    es: "Búsqueda en vivo a tu alrededor →",
+    de: "Live-Suche in deiner Nähe →",
+    fr: "Recherche en direct autour de vous →",
+    zh: "实时搜索你周围 →",
+    ko: "주변 실시간 검색 →"
+  },
+  "Live Nearby": {
+    it: "Nearby live",
+    ja: "ライブ周辺検索",
+    es: "Cerca de ti en vivo",
+    de: "Live in der Nähe",
+    fr: "À proximité en direct",
+    zh: "实时附近",
+    ko: "실시간 주변"
+  },
+  "Find restaurants, sights, pharmacies, parking and more around you. Tap below to use your GPS location.": {
+    it: "Trova ristoranti, luoghi da visitare, farmacie, parcheggi e altro intorno a te. Tocca qui sotto per usare la posizione GPS.",
+    ja: "周辺のレストラン、観光地、薬局、駐車場などを探せます。下をタップしてGPSの位置情報を使用してください。",
+    es: "Encuentra restaurantes, lugares de interés, farmacias, aparcamientos y más a tu alrededor. Toca abajo para usar tu ubicación GPS.",
+    de: "Finde Restaurants, Sehenswürdigkeiten, Apotheken, Parkplätze und mehr in deiner Nähe. Tippe unten, um deinen GPS-Standort zu nutzen.",
+    fr: "Trouvez restaurants, sites, pharmacies, parkings et plus autour de vous. Touchez ci-dessous pour utiliser votre position GPS.",
+    zh: "查找你周围的餐厅、景点、药店、停车场等。点击下方使用GPS位置。",
+    ko: "주변의 식당, 명소, 약국, 주차장 등을 찾아보세요. 아래를 눌러 GPS 위치를 사용하세요."
+  }
+});
 var GLOBAL_UI_ATTR = {
   "Type a phrase in your language...": {
     it: "Scrivi una frase nella tua lingua...",
@@ -22165,10 +22528,10 @@ var ASIAN_UI_TEXT = {
   "Local data": ["本地数据", "로컬 데이터"]
 };
 function applyAsianTranslations(table) {
-  Object.entries(ASIAN_UI_TEXT).forEach(function (_ref102) {
-    var _ref103 = _slicedToArray(_ref102, 2),
-      key = _ref103[0],
-      pair = _ref103[1];
+  Object.entries(ASIAN_UI_TEXT).forEach(function (_ref103) {
+    var _ref104 = _slicedToArray(_ref103, 2),
+      key = _ref104[0],
+      pair = _ref104[1];
     if (table[key]) {
       table[key].zh = pair[0];
       table[key].ko = pair[1];
@@ -24779,18 +25142,18 @@ var ASIAN_1144_ATTRIBUTES = {
     "ko": "예: 로마 호텔 이름 또는 이탈리아 전체 주소"
   }
 };
-Object.entries(ASIAN_1144_FIXED_UI).forEach(function (_ref104) {
-  var _ref105 = _slicedToArray(_ref104, 2),
-    english = _ref105[0],
-    translated = _ref105[1];
+Object.entries(ASIAN_1144_FIXED_UI).forEach(function (_ref105) {
+  var _ref106 = _slicedToArray(_ref105, 2),
+    english = _ref106[0],
+    translated = _ref106[1];
   if (PREMENU_TEXT[english]) Object.assign(PREMENU_TEXT[english], translated);
   if (!GLOBAL_UI_TEXT[english]) GLOBAL_UI_TEXT[english] = {};
   Object.assign(GLOBAL_UI_TEXT[english], translated);
 });
-Object.entries(ASIAN_1144_ATTRIBUTES).forEach(function (_ref106) {
-  var _ref107 = _slicedToArray(_ref106, 2),
-    english = _ref107[0],
-    translated = _ref107[1];
+Object.entries(ASIAN_1144_ATTRIBUTES).forEach(function (_ref107) {
+  var _ref108 = _slicedToArray(_ref107, 2),
+    english = _ref108[0],
+    translated = _ref108[1];
   var table = PREMENU_ATTR[english] ? PREMENU_ATTR : GLOBAL_UI_ATTR;
   if (!table[english]) table[english] = {};
   Object.assign(table[english], translated);
@@ -24834,15 +25197,15 @@ function translatePremenuString(value, lang) {
 function localizePremenuDOM(lang) {
   localizeFullAppDOM(lang);
 }
-function VoiceAssistantFirstRun(_ref108) {
-  var onDone = _ref108.onDone,
-    onLanguageChange = _ref108.onLanguageChange;
-  var _React$useState83 = React.useState(function () {
+function VoiceAssistantFirstRun(_ref109) {
+  var onDone = _ref109.onDone,
+    onLanguageChange = _ref109.onLanguageChange;
+  var _React$useState87 = React.useState(function () {
       return getInitialPrimaryAppLanguage();
     }),
-    _React$useState84 = _slicedToArray(_React$useState83, 2),
-    lang = _React$useState84[0],
-    setLang = _React$useState84[1];
+    _React$useState88 = _slicedToArray(_React$useState87, 2),
+    lang = _React$useState88[0],
+    setLang = _React$useState88[1];
   var c = FIRST_RUN_LANGUAGE_COPY[lang] || FIRST_RUN_LANGUAGE_COPY.en;
   return React.createElement("div", {
     style: {
@@ -25202,7 +25565,7 @@ function App() {
     });
   }, [step]);
   var startNewTrip = function () {
-    var _ref109 = _asyncToGenerator(_regenerator().m(function _callee33() {
+    var _ref110 = _asyncToGenerator(_regenerator().m(function _callee33() {
       var ok, currentUI, archived;
       return _regenerator().w(function (_context33) {
         while (1) switch (_context33.n) {
@@ -25256,11 +25619,11 @@ function App() {
       }, _callee33);
     }));
     return function startNewTrip() {
-      return _ref109.apply(this, arguments);
+      return _ref110.apply(this, arguments);
     };
   }();
   var restoreArchivedTrip = function () {
-    var _ref110 = _asyncToGenerator(_regenerator().m(function _callee34(archiveId) {
+    var _ref111 = _asyncToGenerator(_regenerator().m(function _callee34(archiveId) {
       var list, item, ok, currentArchived, remainingArchive, restoredData;
       return _regenerator().w(function (_context34) {
         while (1) switch (_context34.n) {
@@ -25322,11 +25685,11 @@ function App() {
       }, _callee34);
     }));
     return function restoreArchivedTrip(_x40) {
-      return _ref110.apply(this, arguments);
+      return _ref111.apply(this, arguments);
     };
   }();
   var deleteArchivedTrip = function () {
-    var _ref111 = _asyncToGenerator(_regenerator().m(function _callee35(archiveId) {
+    var _ref112 = _asyncToGenerator(_regenerator().m(function _callee35(archiveId) {
       var ok, next;
       return _regenerator().w(function (_context35) {
         while (1) switch (_context35.n) {
@@ -25355,7 +25718,7 @@ function App() {
       }, _callee35);
     }));
     return function deleteArchivedTrip(_x41) {
-      return _ref111.apply(this, arguments);
+      return _ref112.apply(this, arguments);
     };
   }();
   var setupLabels = setupStepLabels(uiLanguage, data.mode === "onsite");
