@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.27 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.27_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.28 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.28_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
 <script id="gate-687">
@@ -2941,6 +2941,7 @@ var _excluded = ["blob"],
   _excluded2 = ["blob"],
   _excluded3 = ["blob"],
   _excluded4 = ["data"];
+function _regeneratorValues(e) { if (null != e) { var t = e["function" == typeof Symbol && Symbol.iterator || "@@iterator"], r = 0; if (t) return t.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) return { next: function next() { return e && r >= e.length && (e = void 0), { value: e && e[r++], done: !e }; } }; } throw new TypeError(_typeof(e) + " is not iterable"); }
 function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
 function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
@@ -3432,7 +3433,7 @@ function _fetchLitAirports() {
                 }
               }, _callee38);
             }));
-            return function (_x57) {
+            return function (_x61) {
               return _ref121.apply(this, arguments);
             };
           }()));
@@ -11163,6 +11164,10 @@ var NEARBY_FILTERS = [{
   label: "🌿 Nature",
   desc: "🌳 Parks & gardens · 🌄 Viewpoints · 🏖️ Beaches"
 }, {
+  id: "beaches",
+  label: "🏖️ Beaches",
+  desc: "🏖️ Beaches · ⛱️ Lidos (stabilimenti balneari)"
+}, {
   id: "onsen",
   label: "♨️ Spa",
   desc: "♨️ Thermal baths · Spa · Wellness"
@@ -11190,6 +11195,7 @@ var NEARBY_CATEGORY_TYPES = {
   savings: ["supermarket"],
   culture: ["museum", "tourist_attraction", "place_of_worship"],
   nature: ["park", "viewpoint", "beach"],
+  beaches: ["beach", "beach_resort"],
   onsen: ["spa"],
   gelato: ["ice_cream", "bakery"],
   anime: ["shopping_mall", "electronics_store", "tourist_attraction"],
@@ -11224,7 +11230,8 @@ var PLACE_TYPE_ICON = {
   subway_station: "🚇",
   bus_station: "🚌",
   drinking_water: "💧",
-  variety_store: "💯"
+  variety_store: "💯",
+  beach_resort: "⛱️"
 };
 function buildNearbyNavLinks(place) {
   var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "walk";
@@ -11955,42 +11962,259 @@ function _nearbyFetchRetry() {
   }));
   return _nearbyFetchRetry.apply(this, arguments);
 }
-function nearbyFetchWithFallback(_x22, _x23, _x24, _x25, _x26) {
+var BROWSER_NOMINATIM_AMENITY = {
+  public_bathroom: "toilets",
+  drinking_water: "drinking_water"
+};
+var BROWSER_NOMINATIM_WORDS = {
+  public_bathroom: "toilets",
+  drinking_water: "drinking water"
+};
+function browserNominatimPlaces(_x22, _x23, _x24, _x25) {
+  return _browserNominatimPlaces.apply(this, arguments);
+}
+function _browserNominatimPlaces() {
+  _browserNominatimPlaces = _asyncToGenerator(_regenerator().m(function _callee56(lat, lng, types, radiusM) {
+    var km, dLat, dLng, viewbox, lang, ask, out, _iterator4, _step4, _loop, _t48;
+    return _regenerator().w(function (_context57) {
+      while (1) switch (_context57.p = _context57.n) {
+        case 0:
+          lat = Number(lat);
+          lng = Number(lng);
+          km = Math.min(Number(radiusM) || 1800, 5000) / 1000;
+          dLat = km / 111, dLng = km / (111 * Math.max(0.2, Math.cos(lat * Math.PI / 180)));
+          viewbox = [lng - dLng, lat + dLat, lng + dLng, lat - dLat].map(function (v) {
+            return v.toFixed(5);
+          }).join(",");
+          lang = TRIP_EXTRAS_CFG.lang === "ja" ? "en" : TRIP_EXTRAS_CFG.lang;
+          ask = function () {
+            var _ref126 = _asyncToGenerator(_regenerator().m(function _callee55(query) {
+              var ctrl, timer, res, arr;
+              return _regenerator().w(function (_context55) {
+                while (1) switch (_context55.p = _context55.n) {
+                  case 0:
+                    ctrl = new AbortController();
+                    timer = setTimeout(function () {
+                      return ctrl.abort();
+                    }, 9000);
+                    _context55.p = 1;
+                    _context55.n = 2;
+                    return fetch("https://nominatim.openstreetmap.org/search?".concat(query, "&viewbox=").concat(viewbox, "&bounded=1&format=jsonv2&limit=40&accept-language=").concat(lang), {
+                      signal: ctrl.signal,
+                      headers: {
+                        "Accept": "application/json"
+                      }
+                    });
+                  case 2:
+                    res = _context55.v;
+                    if (res.ok) {
+                      _context55.n = 3;
+                      break;
+                    }
+                    throw new Error("HTTP " + res.status);
+                  case 3:
+                    _context55.n = 4;
+                    return res.json();
+                  case 4:
+                    arr = _context55.v;
+                    return _context55.a(2, Array.isArray(arr) ? arr : []);
+                  case 5:
+                    _context55.p = 5;
+                    clearTimeout(timer);
+                    return _context55.f(5);
+                  case 6:
+                    return _context55.a(2);
+                }
+              }, _callee55, null, [[1,, 5, 6]]);
+            }));
+            return function ask(_x62) {
+              return _ref126.apply(this, arguments);
+            };
+          }();
+          out = [];
+          _iterator4 = _createForOfIteratorHelper(types);
+          _context57.p = 1;
+          _loop = _regenerator().m(function _loop() {
+            var t, arr, _t46, _t47;
+            return _regenerator().w(function (_context56) {
+              while (1) switch (_context56.p = _context56.n) {
+                case 0:
+                  t = _step4.value;
+                  if (BROWSER_NOMINATIM_AMENITY[t]) {
+                    _context56.n = 1;
+                    break;
+                  }
+                  return _context56.a(2, 1);
+                case 1:
+                  arr = [];
+                  _context56.p = 2;
+                  _context56.n = 3;
+                  return ask("amenity=" + BROWSER_NOMINATIM_AMENITY[t]);
+                case 3:
+                  arr = _context56.v;
+                  _context56.n = 5;
+                  break;
+                case 4:
+                  _context56.p = 4;
+                  _t46 = _context56.v;
+                case 5:
+                  if (arr.length) {
+                    _context56.n = 9;
+                    break;
+                  }
+                  _context56.p = 6;
+                  _context56.n = 7;
+                  return ask("q=" + encodeURIComponent(BROWSER_NOMINATIM_WORDS[t]));
+                case 7:
+                  arr = _context56.v;
+                  _context56.n = 9;
+                  break;
+                case 8:
+                  _context56.p = 8;
+                  _t47 = _context56.v;
+                case 9:
+                  arr.forEach(function (p) {
+                    var pLat = Number(p.lat),
+                      pLng = Number(p.lon);
+                    if (!Number.isFinite(pLat) || !Number.isFinite(pLng)) return;
+                    if (p.category && p.category !== "amenity") return;
+                    out.push({
+                      id: "osm-".concat(p.osm_type, "-").concat(p.osm_id),
+                      name: p.name || BROWSER_OVERPASS_LABEL[t],
+                      address: "",
+                      lat: pLat,
+                      lng: pLng,
+                      rating: null,
+                      ratingCount: 0,
+                      priceLevel: null,
+                      priceRange: null,
+                      openNow: null,
+                      openingHours: "",
+                      phone: "",
+                      website: "",
+                      types: [t],
+                      primaryType: t,
+                      matchedType: t,
+                      _km: browserOverpassKm(lat, lng, pLat, pLng)
+                    });
+                  });
+                case 10:
+                  return _context56.a(2);
+              }
+            }, _loop, null, [[6, 8], [2, 4]]);
+          });
+          _iterator4.s();
+        case 2:
+          if ((_step4 = _iterator4.n()).done) {
+            _context57.n = 5;
+            break;
+          }
+          return _context57.d(_regeneratorValues(_loop()), 3);
+        case 3:
+          if (!_context57.v) {
+            _context57.n = 4;
+            break;
+          }
+          return _context57.a(3, 4);
+        case 4:
+          _context57.n = 2;
+          break;
+        case 5:
+          _context57.n = 7;
+          break;
+        case 6:
+          _context57.p = 6;
+          _t48 = _context57.v;
+          _iterator4.e(_t48);
+        case 7:
+          _context57.p = 7;
+          _iterator4.f();
+          return _context57.f(7);
+        case 8:
+          if (out.length) {
+            _context57.n = 9;
+            break;
+          }
+          throw new Error("nominatim: nothing");
+        case 9:
+          out.sort(function (a, b) {
+            return a._km - b._km;
+          });
+          return _context57.a(2, out.slice(0, 20).map(function (p) {
+            delete p._km;
+            return p;
+          }));
+      }
+    }, _callee56, null, [[1, 6, 7, 8]]);
+  }));
+  return _browserNominatimPlaces.apply(this, arguments);
+}
+function nearbyFetchWithFallback(_x26, _x27, _x28, _x29, _x30) {
   return _nearbyFetchWithFallback.apply(this, arguments);
 }
 function _nearbyFetchWithFallback() {
-  _nearbyFetchWithFallback = _asyncToGenerator(_regenerator().m(function _callee55(url, filter, coords, types, radius) {
-    var data, _t46;
-    return _regenerator().w(function (_context55) {
-      while (1) switch (_context55.p = _context55.n) {
+  _nearbyFetchWithFallback = _asyncToGenerator(_regenerator().m(function _callee57(url, filter, coords, types, radius) {
+    var ok, overpassDone, overpass, nominatim, winner, _t49;
+    return _regenerator().w(function (_context58) {
+      while (1) switch (_context58.p = _context58.n) {
         case 0:
           if (!(filter !== "toilets" && filter !== "water")) {
-            _context55.n = 1;
+            _context58.n = 1;
             break;
           }
-          return _context55.a(2, nearbyFetchRetry(url));
+          return _context58.a(2, nearbyFetchRetry(url));
         case 1:
-          _context55.p = 1;
-          _context55.n = 2;
-          return browserOverpassPlaces(coords.lat, coords.lng, types, radius);
-        case 2:
-          data = _context55.v;
-          return _context55.a(2, new Response(JSON.stringify({
-            success: true,
-            data: data,
-            source: "phone_overpass"
-          }), {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json"
-            }
-          }));
+          ok = function ok(data, source) {
+            return new Response(JSON.stringify({
+              success: true,
+              data: data,
+              source: source
+            }), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json"
+              }
+            });
+          };
+          overpassDone = false;
+          overpass = browserOverpassPlaces(coords.lat, coords.lng, types, radius).then(function (d) {
+            overpassDone = true;
+            return d;
+          });
+          nominatim = new Promise(function (resolve, reject) {
+            var started = false;
+            var go = function go() {
+              if (started) return;
+              started = true;
+              browserNominatimPlaces(coords.lat, coords.lng, types, radius).then(resolve, reject);
+            };
+            setTimeout(function () {
+              if (!overpassDone) go();else reject(new Error("not needed"));
+            }, 5000);
+            overpass["catch"](go);
+          });
+          _context58.p = 2;
+          _context58.n = 3;
+          return Promise.any([overpass.then(function (d) {
+            return {
+              d: d,
+              s: "phone_overpass"
+            };
+          }), nominatim.then(function (d) {
+            return {
+              d: d,
+              s: "phone_nominatim"
+            };
+          })]);
         case 3:
-          _context55.p = 3;
-          _t46 = _context55.v;
-          return _context55.a(2, nearbyFetchRetry(url));
+          winner = _context58.v;
+          return _context58.a(2, ok(winner.d, winner.s));
+        case 4:
+          _context58.p = 4;
+          _t49 = _context58.v;
+          return _context58.a(2, nearbyFetchRetry(url));
       }
-    }, _callee55, null, [[1, 3]]);
+    }, _callee57, null, [[2, 4]]);
   }));
   return _nearbyFetchWithFallback.apply(this, arguments);
 }
@@ -12353,7 +12577,7 @@ function DashNearby(_ref50) {
           }
         }, _callee1, null, [[2, 6]]);
       }));
-      return function runVoiceNearbySearch(_x27, _x28) {
+      return function runVoiceNearbySearch(_x31, _x32) {
         return _ref52.apply(this, arguments);
       };
     }();
@@ -12423,7 +12647,7 @@ function DashNearby(_ref50) {
     voiceRequestedFilterRef.current = "";
     voiceRequestedModeRef.current = "";
     var types = NEARBY_CATEGORY_TYPES[effectiveFilter] || ["restaurant"];
-    var searchRadius = effectiveFilter === "toilets" || effectiveFilter === "water" ? effectiveMode === "car" ? "5000" : "1800" : effectiveMode === "car" ? ["culture", "nature"].includes(effectiveFilter) ? "30000" : "8000" : "2000";
+    var searchRadius = effectiveFilter === "toilets" || effectiveFilter === "water" ? effectiveMode === "car" ? "5000" : "1800" : effectiveMode === "car" ? ["culture", "nature", "beaches"].includes(effectiveFilter) ? "30000" : "8000" : effectiveFilter === "beaches" ? "8000" : "2000";
     var CACHE_TTL = 10 * 60 * 1000;
     var __slowCat = effectiveFilter === "toilets" || effectiveFilter === "water";
     var latBucket = Number(coords.lat).toFixed(__slowCat ? 2 : 3);
@@ -12489,7 +12713,7 @@ function DashNearby(_ref50) {
           }
         }, _callee10);
       }));
-      return function (_x29) {
+      return function (_x33) {
         return _ref53.apply(this, arguments);
       };
     }()).then(function (response) {
@@ -13050,7 +13274,7 @@ function LiveTranslator() {
         }
       }, _callee11, null, [[2, 6]]);
     }));
-    return function translate(_x30) {
+    return function translate(_x34) {
       return _ref54.apply(this, arguments);
     };
   }();
@@ -14229,14 +14453,14 @@ function itBackupKeys() {
   } catch (_) {}
   return keys;
 }
-function itCreateBackup(_x31) {
+function itCreateBackup(_x35) {
   return _itCreateBackup.apply(this, arguments);
 }
 function _itCreateBackup() {
-  _itCreateBackup = _asyncToGenerator(_regenerator().m(function _callee56(includeDocs) {
-    var storage, documents, all, _iterator4, _step4, _d, blob, meta, item, payload, file, d, pad, name, url, a, _t47;
-    return _regenerator().w(function (_context56) {
-      while (1) switch (_context56.p = _context56.n) {
+  _itCreateBackup = _asyncToGenerator(_regenerator().m(function _callee58(includeDocs) {
+    var storage, documents, all, _iterator5, _step5, _d, blob, meta, item, payload, file, d, pad, name, url, a, _t50;
+    return _regenerator().w(function (_context59) {
+      while (1) switch (_context59.p = _context59.n) {
         case 0:
           storage = {};
           itBackupKeys().forEach(function (k) {
@@ -14246,48 +14470,48 @@ function _itCreateBackup() {
           });
           documents = [];
           if (!includeDocs) {
-            _context56.n = 10;
+            _context59.n = 10;
             break;
           }
-          _context56.n = 1;
+          _context59.n = 1;
           return loadTravelDocuments();
         case 1:
-          all = _context56.v;
-          _iterator4 = _createForOfIteratorHelper(all);
-          _context56.p = 2;
-          _iterator4.s();
+          all = _context59.v;
+          _iterator5 = _createForOfIteratorHelper(all);
+          _context59.p = 2;
+          _iterator5.s();
         case 3:
-          if ((_step4 = _iterator4.n()).done) {
-            _context56.n = 7;
+          if ((_step5 = _iterator5.n()).done) {
+            _context59.n = 7;
             break;
           }
-          _d = _step4.value;
+          _d = _step5.value;
           blob = _d.blob, meta = _objectWithoutProperties(_d, _excluded3);
           item = _objectSpread({}, meta);
           if (!blob) {
-            _context56.n = 5;
+            _context59.n = 5;
             break;
           }
-          _context56.n = 4;
+          _context59.n = 4;
           return itBlobToDataUrl(blob);
         case 4:
-          item.data = _context56.v;
+          item.data = _context59.v;
         case 5:
           documents.push(item);
         case 6:
-          _context56.n = 3;
+          _context59.n = 3;
           break;
         case 7:
-          _context56.n = 9;
+          _context59.n = 9;
           break;
         case 8:
-          _context56.p = 8;
-          _t47 = _context56.v;
-          _iterator4.e(_t47);
+          _context59.p = 8;
+          _t50 = _context59.v;
+          _iterator5.e(_t50);
         case 9:
-          _context56.p = 9;
-          _iterator4.f();
-          return _context56.f(9);
+          _context59.p = 9;
+          _iterator5.f();
+          return _context59.f(9);
         case 10:
           payload = {
             app: "687 Italy",
@@ -14319,26 +14543,26 @@ function _itCreateBackup() {
               a.remove();
             } catch (_) {}
           }, 4000);
-          return _context56.a(2, name);
+          return _context59.a(2, name);
       }
-    }, _callee56, null, [[2, 8, 9, 10]]);
+    }, _callee58, null, [[2, 8, 9, 10]]);
   }));
   return _itCreateBackup.apply(this, arguments);
 }
-function itReplaceDocuments(_x32) {
+function itReplaceDocuments(_x36) {
   return _itReplaceDocuments.apply(this, arguments);
 }
 function _itReplaceDocuments() {
-  _itReplaceDocuments = _asyncToGenerator(_regenerator().m(function _callee57(docs) {
+  _itReplaceDocuments = _asyncToGenerator(_regenerator().m(function _callee59(docs) {
     var db;
-    return _regenerator().w(function (_context57) {
-      while (1) switch (_context57.n) {
+    return _regenerator().w(function (_context60) {
+      while (1) switch (_context60.n) {
         case 0:
-          _context57.n = 1;
+          _context60.n = 1;
           return openTravelDocDB();
         case 1:
-          db = _context57.v;
-          _context57.n = 2;
+          db = _context60.v;
+          _context60.n = 2;
           return new Promise(function (resolve, reject) {
             var tx = db.transaction(TRIPITALY_DOC_STORE, "readwrite");
             var store = tx.objectStore(TRIPITALY_DOC_STORE);
@@ -14360,47 +14584,47 @@ function _itReplaceDocuments() {
             };
           });
         case 2:
-          return _context57.a(2);
+          return _context60.a(2);
       }
-    }, _callee57);
+    }, _callee59);
   }));
   return _itReplaceDocuments.apply(this, arguments);
 }
-function itRestoreBackup(_x33) {
+function itRestoreBackup(_x37) {
   return _itRestoreBackup.apply(this, arguments);
 }
 function _itRestoreBackup() {
-  _itRestoreBackup = _asyncToGenerator(_regenerator().m(function _callee58(file) {
+  _itRestoreBackup = _asyncToGenerator(_regenerator().m(function _callee60(file) {
     var text, payload, ok;
-    return _regenerator().w(function (_context58) {
-      while (1) switch (_context58.n) {
+    return _regenerator().w(function (_context61) {
+      while (1) switch (_context61.n) {
         case 0:
-          _context58.n = 1;
+          _context61.n = 1;
           return file.text();
         case 1:
-          text = _context58.v;
+          text = _context61.v;
           payload = null;
           try {
             payload = JSON.parse(text);
           } catch (_) {}
           if (!(!payload || payload.app !== "687 Italy" || _typeof(payload.localStorage) !== "object")) {
-            _context58.n = 3;
+            _context61.n = 3;
             break;
           }
-          _context58.n = 2;
+          _context61.n = 2;
           return appAlert(itBackupText("invalid"));
         case 2:
-          return _context58.a(2, false);
+          return _context61.a(2, false);
         case 3:
-          _context58.n = 4;
+          _context61.n = 4;
           return appConfirm(itBackupText("confirm"));
         case 4:
-          ok = _context58.v;
+          ok = _context61.v;
           if (ok) {
-            _context58.n = 5;
+            _context61.n = 5;
             break;
           }
-          return _context58.a(2, false);
+          return _context61.a(2, false);
         case 5:
           itBackupKeys().forEach(function (k) {
             try {
@@ -14419,20 +14643,20 @@ function _itRestoreBackup() {
             }
           });
           if (!(payload.documentsIncluded && Array.isArray(payload.documents))) {
-            _context58.n = 6;
+            _context61.n = 6;
             break;
           }
-          _context58.n = 6;
+          _context61.n = 6;
           return itReplaceDocuments(payload.documents);
         case 6:
           itMarkBackedUp();
-          _context58.n = 7;
+          _context61.n = 7;
           return appAlert(itBackupText("restored"));
         case 7:
           window.location.reload();
-          return _context58.a(2, true);
+          return _context61.a(2, true);
       }
-    }, _callee58);
+    }, _callee60);
   }));
   return _itRestoreBackup.apply(this, arguments);
 }
@@ -14513,7 +14737,7 @@ function ItalyBackupField() {
         }
       }, _callee13, null, [[2, 4]]);
     }));
-    return function onFile(_x34) {
+    return function onFile(_x38) {
       return _ref65.apply(this, arguments);
     };
   }();
@@ -14795,7 +15019,7 @@ function ItalyRestoreLink() {
           }
         }, _callee15, null, [[1, 3]]);
       }));
-      function onChange(_x35) {
+      function onChange(_x39) {
         return _onChange3.apply(this, arguments);
       }
       return onChange;
@@ -16528,86 +16752,86 @@ function guardianEnsureServiceWorker() {
   return _guardianEnsureServiceWorker.apply(this, arguments);
 }
 function _guardianEnsureServiceWorker() {
-  _guardianEnsureServiceWorker = _asyncToGenerator(_regenerator().m(function _callee59() {
-    var registration, ready, _t48;
-    return _regenerator().w(function (_context59) {
-      while (1) switch (_context59.p = _context59.n) {
+  _guardianEnsureServiceWorker = _asyncToGenerator(_regenerator().m(function _callee61() {
+    var registration, ready, _t51;
+    return _regenerator().w(function (_context62) {
+      while (1) switch (_context62.p = _context62.n) {
         case 0:
           if ("serviceWorker" in navigator) {
-            _context59.n = 1;
+            _context62.n = 1;
             break;
           }
           throw new Error("Service Worker unavailable");
         case 1:
-          _context59.n = 2;
+          _context62.n = 2;
           return navigator.serviceWorker.register("/service-worker.js?v=1136f", {
             scope: "/",
             updateViaCache: "none"
           });
         case 2:
-          registration = _context59.v;
-          _context59.p = 3;
-          _context59.n = 4;
+          registration = _context62.v;
+          _context62.p = 3;
+          _context62.n = 4;
           return registration.update();
         case 4:
-          _context59.n = 6;
+          _context62.n = 6;
           break;
         case 5:
-          _context59.p = 5;
-          _t48 = _context59.v;
+          _context62.p = 5;
+          _t51 = _context62.v;
         case 6:
-          _context59.n = 7;
+          _context62.n = 7;
           return navigator.serviceWorker.ready;
         case 7:
-          ready = _context59.v;
-          return _context59.a(2, ready || registration);
+          ready = _context62.v;
+          return _context62.a(2, ready || registration);
       }
-    }, _callee59, null, [[3, 5]]);
+    }, _callee61, null, [[3, 5]]);
   }));
   return _guardianEnsureServiceWorker.apply(this, arguments);
 }
-function pulseGuardianSubscribe(_x36) {
+function pulseGuardianSubscribe(_x40) {
   return _pulseGuardianSubscribe.apply(this, arguments);
 }
 function _pulseGuardianSubscribe() {
-  _pulseGuardianSubscribe = _asyncToGenerator(_regenerator().m(function _callee60(preferences) {
+  _pulseGuardianSubscribe = _asyncToGenerator(_regenerator().m(function _callee62(preferences) {
     var reg, subscription, r, j;
-    return _regenerator().w(function (_context60) {
-      while (1) switch (_context60.n) {
+    return _regenerator().w(function (_context63) {
+      while (1) switch (_context63.n) {
         case 0:
           if ("serviceWorker" in navigator) {
-            _context60.n = 1;
+            _context63.n = 1;
             break;
           }
           throw new Error("Service Worker unavailable");
         case 1:
           if ("PushManager" in window) {
-            _context60.n = 2;
+            _context63.n = 2;
             break;
           }
           throw new Error("Push notifications are not supported on this device");
         case 2:
-          _context60.n = 3;
+          _context63.n = 3;
           return guardianEnsureServiceWorker();
         case 3:
-          reg = _context60.v;
-          _context60.n = 4;
+          reg = _context63.v;
+          _context63.n = 4;
           return reg.pushManager.getSubscription();
         case 4:
-          subscription = _context60.v;
+          subscription = _context63.v;
           if (subscription) {
-            _context60.n = 6;
+            _context63.n = 6;
             break;
           }
-          _context60.n = 5;
+          _context63.n = 5;
           return reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: guardianUrlBase64ToUint8Array(GUARDIAN_VAPID_PUBLIC_KEY)
           });
         case 5:
-          subscription = _context60.v;
+          subscription = _context63.v;
         case 6:
-          _context60.n = 7;
+          _context63.n = 7;
           return fetch("".concat(PULSE_API_BASE, "/v1/push/subscribe"), {
             method: "POST",
             headers: {
@@ -16628,42 +16852,42 @@ function _pulseGuardianSubscribe() {
             })
           });
         case 7:
-          r = _context60.v;
-          _context60.n = 8;
+          r = _context63.v;
+          _context63.n = 8;
           return r.json()["catch"](function () {
             return null;
           });
         case 8:
-          j = _context60.v;
+          j = _context63.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context60.n = 9;
+            _context63.n = 9;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 9:
-          return _context60.a(2, {
+          return _context63.a(2, {
             subscription: subscription,
             pulse: j
           });
       }
-    }, _callee60);
+    }, _callee62);
   }));
   return _pulseGuardianSubscribe.apply(this, arguments);
 }
-function pulseGuardianSyncContext(_x37, _x38) {
+function pulseGuardianSyncContext(_x41, _x42) {
   return _pulseGuardianSyncContext.apply(this, arguments);
 }
 function _pulseGuardianSyncContext() {
-  _pulseGuardianSyncContext = _asyncToGenerator(_regenerator().m(function _callee61(data, settings) {
+  _pulseGuardianSyncContext = _asyncToGenerator(_regenerator().m(function _callee63(data, settings) {
     var workingDay, plans, completed, nextStop, commitment, commitmentAt, tz, cp, mins, loc, r, j;
-    return _regenerator().w(function (_context61) {
-      while (1) switch (_context61.n) {
+    return _regenerator().w(function (_context64) {
+      while (1) switch (_context64.n) {
         case 0:
           if (settings !== null && settings !== void 0 && settings.enabled) {
-            _context61.n = 1;
+            _context64.n = 1;
             break;
           }
-          return _context61.a(2, {
+          return _context64.a(2, {
             ok: false,
             skipped: "paused"
           });
@@ -16689,11 +16913,11 @@ function _pulseGuardianSyncContext() {
               }
             }
           } catch (_) {}
-          _context61.n = 2;
+          _context64.n = 2;
           return detectCurrentCountry();
         case 2:
-          loc = _context61.v;
-          _context61.n = 3;
+          loc = _context64.v;
+          _context64.n = 3;
           return fetch("".concat(PULSE_API_BASE, "/v1/guardian/context"), {
             method: "POST",
             headers: {
@@ -16714,22 +16938,22 @@ function _pulseGuardianSyncContext() {
             })
           });
         case 3:
-          r = _context61.v;
-          _context61.n = 4;
+          r = _context64.v;
+          _context64.n = 4;
           return r.json()["catch"](function () {
             return null;
           });
         case 4:
-          j = _context61.v;
+          j = _context64.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context61.n = 5;
+            _context64.n = 5;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 5:
-          return _context61.a(2, j);
+          return _context64.a(2, j);
       }
-    }, _callee61);
+    }, _callee63);
   }));
   return _pulseGuardianSyncContext.apply(this, arguments);
 }
@@ -16762,56 +16986,56 @@ function localMetaForPulseType(type) {
     return pulseTypeForLocal(x[0]) === type;
   }) || [localType, "📡", String(type || "Signal"), 45];
 }
-function pulseFetchNearby(_x39, _x40) {
+function pulseFetchNearby(_x43, _x44) {
   return _pulseFetchNearby.apply(this, arguments);
 }
 function _pulseFetchNearby() {
-  _pulseFetchNearby = _asyncToGenerator(_regenerator().m(function _callee62(lat, lng) {
+  _pulseFetchNearby = _asyncToGenerator(_regenerator().m(function _callee64(lat, lng) {
     var radius,
       url,
       r,
       j,
-      _args62 = arguments;
-    return _regenerator().w(function (_context62) {
-      while (1) switch (_context62.n) {
+      _args65 = arguments;
+    return _regenerator().w(function (_context65) {
+      while (1) switch (_context65.n) {
         case 0:
-          radius = _args62.length > 2 && _args62[2] !== undefined ? _args62[2] : 4000;
+          radius = _args65.length > 2 && _args65[2] !== undefined ? _args65[2] : 4000;
           url = "".concat(PULSE_API_BASE, "/v1/signals/nearby?lat=").concat(encodeURIComponent(lat), "&lng=").concat(encodeURIComponent(lng), "&country_code=IT&radius_m=").concat(encodeURIComponent(radius));
-          _context62.n = 1;
+          _context65.n = 1;
           return fetch(url, {
             cache: "no-store"
           });
         case 1:
-          r = _context62.v;
-          _context62.n = 2;
+          r = _context65.v;
+          _context65.n = 2;
           return r.json()["catch"](function () {
             return null;
           });
         case 2:
-          j = _context62.v;
+          j = _context65.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context62.n = 3;
+            _context65.n = 3;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 3:
-          return _context62.a(2, Array.isArray(j.signals) ? j.signals : []);
+          return _context65.a(2, Array.isArray(j.signals) ? j.signals : []);
       }
-    }, _callee62);
+    }, _callee64);
   }));
   return _pulseFetchNearby.apply(this, arguments);
 }
-function pulseReportSignal(_x41) {
+function pulseReportSignal(_x45) {
   return _pulseReportSignal.apply(this, arguments);
 }
 function _pulseReportSignal() {
-  _pulseReportSignal = _asyncToGenerator(_regenerator().m(function _callee63(_ref82) {
+  _pulseReportSignal = _asyncToGenerator(_regenerator().m(function _callee65(_ref82) {
     var type, lat, lng, locality, r, j;
-    return _regenerator().w(function (_context63) {
-      while (1) switch (_context63.n) {
+    return _regenerator().w(function (_context66) {
+      while (1) switch (_context66.n) {
         case 0:
           type = _ref82.type, lat = _ref82.lat, lng = _ref82.lng, locality = _ref82.locality;
-          _context63.n = 1;
+          _context66.n = 1;
           return fetch("".concat(PULSE_API_BASE, "/v1/signals/report"), {
             method: "POST",
             headers: {
@@ -16828,35 +17052,35 @@ function _pulseReportSignal() {
             })
           });
         case 1:
-          r = _context63.v;
-          _context63.n = 2;
+          r = _context66.v;
+          _context66.n = 2;
           return r.json()["catch"](function () {
             return null;
           });
         case 2:
-          j = _context63.v;
+          j = _context66.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context63.n = 3;
+            _context66.n = 3;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 3:
-          return _context63.a(2, j);
+          return _context66.a(2, j);
       }
-    }, _callee63);
+    }, _callee65);
   }));
   return _pulseReportSignal.apply(this, arguments);
 }
-function pulseVoteSignal(_x42, _x43) {
+function pulseVoteSignal(_x46, _x47) {
   return _pulseVoteSignal.apply(this, arguments);
 }
 function _pulseVoteSignal() {
-  _pulseVoteSignal = _asyncToGenerator(_regenerator().m(function _callee64(signalId, vote) {
+  _pulseVoteSignal = _asyncToGenerator(_regenerator().m(function _callee66(signalId, vote) {
     var r, j;
-    return _regenerator().w(function (_context64) {
-      while (1) switch (_context64.n) {
+    return _regenerator().w(function (_context67) {
+      while (1) switch (_context67.n) {
         case 0:
-          _context64.n = 1;
+          _context67.n = 1;
           return fetch("".concat(PULSE_API_BASE, "/v1/signals/vote"), {
             method: "POST",
             headers: {
@@ -16869,22 +17093,22 @@ function _pulseVoteSignal() {
             })
           });
         case 1:
-          r = _context64.v;
-          _context64.n = 2;
+          r = _context67.v;
+          _context67.n = 2;
           return r.json()["catch"](function () {
             return null;
           });
         case 2:
-          j = _context64.v;
+          j = _context67.v;
           if (!(!r.ok || !(j !== null && j !== void 0 && j.ok))) {
-            _context64.n = 3;
+            _context67.n = 3;
             break;
           }
           throw new Error((j === null || j === void 0 ? void 0 : j.error) || "Pulse ".concat(r.status));
         case 3:
-          return _context64.a(2, j);
+          return _context67.a(2, j);
       }
-    }, _callee64);
+    }, _callee66);
   }));
   return _pulseVoteSignal.apply(this, arguments);
 }
@@ -16988,7 +17212,7 @@ function ItalyIntelligentDayGuardian(_ref83) {
         }
       }, _callee20, null, [[1, 4]]);
     }));
-    return function toggleGuardian(_x44, _x45) {
+    return function toggleGuardian(_x48, _x49) {
       return _ref85.apply(this, arguments);
     };
   }();
@@ -17559,7 +17783,7 @@ function ItalyIntelligentDaySignals(_ref91) {
           }
         }, _callee26, null, [[0, 2]]);
       }));
-      return function (_x46) {
+      return function (_x50) {
         return _ref92.apply(this, arguments);
       };
     }(), function () {
@@ -17673,7 +17897,7 @@ function ItalyIntelligentDaySignals(_ref91) {
           }
         }, _callee27, null, [[1, 3]]);
       }));
-      return function (_x47) {
+      return function (_x51) {
         return _ref93.apply(this, arguments);
       };
     }(), function () {
@@ -17747,7 +17971,7 @@ function ItalyIntelligentDaySignals(_ref91) {
         }
       }, _callee28, null, [[3, 5]]);
     }));
-    return function confirm(_x48) {
+    return function confirm(_x52) {
       return _ref94.apply(this, arguments);
     };
   }();
@@ -17800,7 +18024,7 @@ function ItalyIntelligentDaySignals(_ref91) {
         }
       }, _callee29, null, [[1, 3]]);
     }));
-    return function gone(_x49) {
+    return function gone(_x53) {
       return _ref95.apply(this, arguments);
     };
   }();
@@ -18144,7 +18368,7 @@ function ItalyIntelligentDayPrevent(_ref96) {
           }
         }, _callee30, null, [[1, 5]]);
       }));
-      return function (_x50) {
+      return function (_x54) {
         return _ref97.apply(this, arguments);
       };
     }(), function () {
@@ -20391,7 +20615,7 @@ function ScreenDashboard(_ref108) {
         }
       }, _callee33);
     }));
-    return function addDoc(_x51, _x52) {
+    return function addDoc(_x55, _x56) {
       return _ref109.apply(this, arguments);
     };
   }();
@@ -20413,7 +20637,7 @@ function ScreenDashboard(_ref108) {
         }
       }, _callee34);
     }));
-    return function removeDoc(_x53, _x54) {
+    return function removeDoc(_x57, _x58) {
       return _ref110.apply(this, arguments);
     };
   }();
@@ -24041,6 +24265,26 @@ Object.assign(GLOBAL_UI_TEXT, {
     "ko": "🧳 짐 보관소 찾기 · Radical Storage ↗"
   }
 });
+Object.assign(GLOBAL_UI_TEXT, {
+  "🏖️ Beaches": {
+    "it": "🏖️ Spiagge",
+    "ja": "🏖️ ビーチ",
+    "es": "🏖️ Playas",
+    "de": "🏖️ Strände",
+    "fr": "🏖️ Plages",
+    "zh": "🏖️ 海滩",
+    "ko": "🏖️ 해변"
+  },
+  "🏖️ Beaches · ⛱️ Lidos (stabilimenti balneari)": {
+    "it": "🏖️ Spiagge · ⛱️ Stabilimenti balneari",
+    "ja": "🏖️ ビーチ · ⛱️ 海水浴場（リド）",
+    "es": "🏖️ Playas · ⛱️ Balnearios",
+    "de": "🏖️ Strände · ⛱️ Strandbäder (Lidos)",
+    "fr": "🏖️ Plages · ⛱️ Plages privées (lidos)",
+    "zh": "🏖️ 海滩 · ⛱️ 海滨浴场",
+    "ko": "🏖️ 해변 · ⛱️ 해수욕장(리도)"
+  }
+});
 function translateGlobalUiString(value, lang) {
   var table = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : GLOBAL_UI_TEXT;
   if (!value) return value;
@@ -26916,7 +27160,7 @@ function App() {
         }
       }, _callee36);
     }));
-    return function restoreArchivedTrip(_x55) {
+    return function restoreArchivedTrip(_x59) {
       return _ref119.apply(this, arguments);
     };
   }();
@@ -26949,7 +27193,7 @@ function App() {
         }
       }, _callee37);
     }));
-    return function deleteArchivedTrip(_x56) {
+    return function deleteArchivedTrip(_x60) {
       return _ref120.apply(this, arguments);
     };
   }();
