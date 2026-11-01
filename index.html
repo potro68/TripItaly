@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.28 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.28_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.29 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.29_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
 <script id="gate-687">
@@ -12679,6 +12679,7 @@ function DashNearby(_ref50) {
       radius: searchRadius,
       device_id: getTripDeviceId()
     });
+    if (effectiveMode === "car") params.set("car", "1");
     var guard = checkApiRate("places");
     if (!guard.ok) {
       setError(apiRateMessage(guard));
@@ -12738,7 +12739,7 @@ function DashNearby(_ref50) {
         var primaryType = String((place === null || place === void 0 ? void 0 : place.primaryType) || (place === null || place === void 0 ? void 0 : place.primary_type) || "").toLowerCase();
         return placeTypes.includes("public_bathroom") || primaryType === "public_bathroom";
       }) : rawNearby;
-      var unique = strictNearby.map(function (place) {
+      var uniqueBase = strictNearby.map(function (place) {
         var distanceKm = haversineKm(coords.lat, coords.lng, place.lat, place.lng);
         return _objectSpread(_objectSpread({}, place), {}, {
           _type: place.matchedType || types[0] || "restaurant",
@@ -12752,6 +12753,14 @@ function DashNearby(_ref50) {
         var da = Number.isFinite(Number(a._distanceKm)) ? Number(a._distanceKm) : 999999;
         var db = Number.isFinite(Number(b._distanceKm)) ? Number(b._distanceKm) : 999999;
         return da - db;
+      });
+      var unique = uniqueBase.filter(function (p) {
+        return effectiveMode !== "car" || Number.isFinite(p._distanceKm) && p._distanceKm >= 0.5;
+      });
+      if (effectiveMode === "car" && !unique.length && uniqueBase.length) unique = uniqueBase.map(function (p) {
+        return _objectSpread(_objectSpread({}, p), {}, {
+          _veryClose: true
+        });
       });
       setResults(unique);
       if (unique.length === 0) {
@@ -12966,7 +12975,12 @@ function DashNearby(_ref50) {
     }(), React.createElement(NearbyBudgetBadge, {
       place: p,
       filter: filter
-    }), Number.isFinite(Number(p._distanceKm)) && React.createElement("div", {
+    }), p._veryClose && React.createElement("div", {
+      className: "nearby-distance",
+      style: {
+        opacity: 1
+      }
+    }, "\uD83D\uDEB6 Very close \u2014 better on foot"), Number.isFinite(Number(p._distanceKm)) && React.createElement("div", {
       className: "nearby-distance"
     }, "\uD83D\uDCCD ", Number(p._distanceKm) < 1 ? "".concat(Math.max(1, Math.round(Number(p._distanceKm) * 1000)), " m away") : "".concat(Number(p._distanceKm).toFixed(1), " km away")))), React.createElement(NearbyNavigateButton, {
       place: p,
@@ -24263,6 +24277,17 @@ Object.assign(GLOBAL_UI_TEXT, {
     "fr": "🧳 Trouver une consigne · Radical Storage ↗",
     "zh": "🧳 查找行李寄存 · Radical Storage ↗",
     "ko": "🧳 짐 보관소 찾기 · Radical Storage ↗"
+  }
+});
+Object.assign(GLOBAL_UI_TEXT, {
+  "🚶 Very close — better on foot": {
+    "it": "🚶 Molto vicino — meglio a piedi",
+    "ja": "🚶 とても近い — 徒歩がおすすめ",
+    "es": "🚶 Muy cerca — mejor a pie",
+    "de": "🚶 Sehr nah — besser zu Fuß",
+    "fr": "🚶 Très proche — mieux à pied",
+    "zh": "🚶 很近 — 建议步行",
+    "ko": "🚶 아주 가까움 — 걸어가세요"
   }
 });
 Object.assign(GLOBAL_UI_TEXT, {
