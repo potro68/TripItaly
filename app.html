@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.29 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.29_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.30 — BUILD (precompiled). 04/11: maps open by themselves + Intelligent Day look like Itinerary (patched in this build; the old SORGENTE does not have it). -->
 <html lang="en">
 <head>
 <script id="gate-687">
@@ -2925,6 +2925,85 @@
     background:rgba(14,59,82,0.88) !important;
     opacity:1 !important;
   }
+</style>
+<style id="look-04-11">
+/* 1.6 look: Intelligent Day (Today, NOW, Budget, Prevent, Guardian, Signals, Rescue)
+   uses the same look as Itinerary: navy side menu, light background, blue-grey cards, Italy colours only. */
+html body .iday-shell{background:#F7FBFD !important;}
+html body .iday-side{background:#0E3B52 !important;border-right:none !important;}
+html body .iday-side button.iday-nav{
+  background:transparent !important;border:none !important;border-radius:0 !important;box-shadow:none !important;
+  color:#F7FBFD !important;-webkit-text-fill-color:#F7FBFD !important;opacity:.62 !important;position:relative !important;
+}
+html body .iday-side button.iday-nav *{color:#F7FBFD !important;-webkit-text-fill-color:#F7FBFD !important;}
+html body .iday-side button.iday-nav.active{opacity:1 !important;background:rgba(244,200,74,.14) !important;}
+html body .iday-side button.iday-nav.active::before{content:"";position:absolute;left:-6px;top:8px;bottom:8px;width:3px;background:#F4C84A;border-radius:0 3px 3px 0;}
+html body .iday-shell .iday-card,
+html body .iday-shell .live-card,
+html body .iday-shell .live-hero,
+html body .iday-shell .iday-location-clock{
+  background:rgba(28,90,122,.06) !important;
+  border:1px solid #1C5A7A !important;
+  border-radius:14px !important;
+  box-shadow:none !important;
+}
+html body .iday-shell .iday-today-stop{
+  background:#E3EDF2 !important;
+  border:1px solid #1C5A7A !important;
+  border-radius:14px !important;
+  margin-top:10px !important;
+}
+html body .iday-shell .iday-nav-choice{background:transparent !important;border-top:1px solid rgba(28,90,122,.2) !important;}
+html body .iday-shell .live-status-chip,
+html body .iday-shell .day-budget-card,
+html body .iday-shell .dash-budget-card{background:#fff !important;border:1px solid rgba(28,90,122,.35) !important;}
+/* buttons: same shapes, Italy colours */
+html body .iday-shell .now-action-btn,
+html body .iday-shell .now-secondary-btn,
+html body .iday-shell .now-neutral-btn,
+html body .iday-shell .live-mini-btn,
+html body .iday-shell .iday-today-clear,
+html body .iday-shell .iday-today-actions button,
+html body .iday-shell .iday-nav-choice button,
+html body .iday-shell .iday-primary,
+html body .iday-shell button.iday-secondary,
+html body .iday-shell .iday-open-itinerary,
+html body .iday-shell .iday-signal-btn,
+html body .iday-shell .rescue-chip,
+html body .iday-shell .rescue-action{
+  border-radius:12px !important;box-shadow:none !important;
+}
+html body .iday-shell .now-action-btn,
+html body .iday-shell .iday-primary,
+html body .iday-shell .live-mini-btn.primary,
+html body .iday-shell .live-mini-btn.now-primary-btn,
+html body .iday-shell .rescue-chip.active,
+html body .iday-shell .iday-today-actions button.primary{
+  background:#1C5A7A !important;border:1px solid #1C5A7A !important;
+  color:#fff !important;-webkit-text-fill-color:#fff !important;
+}
+html body .iday-shell .now-action-btn *,
+html body .iday-shell .iday-primary *,
+html body .iday-shell .rescue-chip.active *,
+html body .iday-shell .iday-today-actions button.primary *{color:#fff !important;-webkit-text-fill-color:#fff !important;}
+html body .iday-shell .now-secondary-btn,
+html body .iday-shell button.iday-secondary,
+html body .iday-shell .live-mini-btn:not(.primary):not(.now-primary-btn),
+html body .iday-shell .iday-open-itinerary,
+html body .iday-shell .iday-signal-btn,
+html body .iday-shell .rescue-chip:not(.active),
+html body .iday-shell .rescue-action:not(.emergency),
+html body .iday-shell .iday-today-clear,
+html body .iday-shell .iday-today-actions button:not(.primary),
+html body .iday-shell .iday-nav-choice button{
+  background:#fff !important;border:1px solid #1C5A7A !important;
+  color:#1C5A7A !important;-webkit-text-fill-color:#1C5A7A !important;
+}
+html body .iday-shell .now-secondary-btn *,
+html body .iday-shell button.iday-secondary *,
+html body .iday-shell .rescue-chip:not(.active) *{color:#1C5A7A !important;-webkit-text-fill-color:#1C5A7A !important;}
+html body .iday-shell .now-action-btn:disabled,
+html body .iday-shell .iday-primary:disabled{background:#8FB0C2 !important;border-color:#8FB0C2 !important;opacity:1 !important;}
 </style>
 </head>
 <body>
@@ -10006,9 +10085,10 @@ function LiveLocationMap(_ref30) {
       if (shouldAutoLocate) sessionStorage.removeItem("tripitaly_voice_itinerary_autolocate");
     } catch (_) {}
     var timer = null;
-    if (shouldAutoLocate) timer = window.setTimeout(function () {
+    // 04/11: the live map opens by itself, without the "Live map" button card.
+    timer = window.setTimeout(function () {
       return locate();
-    }, 120);
+    }, shouldAutoLocate ? 120 : 60);
     var onVoiceShowMap = function onVoiceShowMap() {
       try {
         sessionStorage.removeItem("tripitaly_voice_itinerary_autolocate");
@@ -10225,6 +10305,9 @@ function CityMap(_ref32) {
     setCoords(null);
     setStatus("idle");
     setMessage("");
+    // 04/11: open the map by itself, without the "Your current location" button card.
+    var t = window.setTimeout(function () { showMyCurrentLocation(); }, 60);
+    return function () { window.clearTimeout(t); };
   }, [city]);
   var showMyCurrentLocation = function () {
     var _ref33 = _asyncToGenerator(_regenerator().m(function _callee7() {
@@ -12487,6 +12570,13 @@ function DashNearby(_ref50) {
     };
   }();
   var voiceRequestedFilterRef = React.useRef("");
+  // 04/11: Nearby starts by itself, without the "Live Nearby" button card.
+  var locStatusRef = React.useRef(locStatus);
+  locStatusRef.current = locStatus;
+  React.useEffect(function () {
+    var t = window.setTimeout(function () { if (locStatusRef.current === "idle") locate(); }, 150);
+    return function () { window.clearTimeout(t); };
+  }, []);
   var voiceRequestedModeRef = React.useRef("");
   React.useEffect(function () {
     var cancelled = false;
