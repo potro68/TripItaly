@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>687 Italy · User Guide</title>
+<!-- guide page v3.0 multilingual (8 languages) -->
+<meta name="description" content="Complete user guide of 687 Italy: plan your trip, trains and flights between cities, hotels, rental car, Nearby, Translate and Intelligent Day.">
+<style>
+:root{--navy:#0f2742;--navy2:#16365a;--gold:#e9b949;--ink:#14263a;--soft:#5d6f82;--bg:#eef3f8;--card:#fff;--line:#d7e1ec;--blue:#1c5a7a}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
+.bar{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--navy)}
+.back{flex:1;display:block;text-align:center;padding:13px 14px;border-radius:12px;background:#fff;color:var(--navy);font-weight:800;font-size:16px;text-decoration:none}
+.bar select{border:0;border-radius:10px;padding:12px 8px;font-size:14px;font-weight:700;background:var(--navy2);color:#fff}
+.hero{background:linear-gradient(180deg,var(--navy),var(--navy2));color:#fff;text-align:center;padding:34px 20px 30px}
+.hero img{width:96px;height:96px;border-radius:22px}
+.hero h1{margin:14px 0 2px;font-size:34px}
+.hero .sub{color:var(--gold);letter-spacing:.2em;font-size:12px;font-weight:800}
+.flag{display:flex;width:150px;height:6px;margin:16px auto;border-radius:3px;overflow:hidden}
+.flag i{flex:1}.flag i:nth-child(1){background:#009246}.flag i:nth-child(2){background:#fff}.flag i:nth-child(3){background:#ce2b37}
+.hero p{max-width:420px;margin:0 auto;color:#dfe8f2}
+.hero .ver{margin-top:16px;font-size:12px;color:#9fb3c8}
+main{max-width:620px;margin:0 auto;padding:16px 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;margin:0 0 14px}
+.toc h2{margin:0 0 8px;font-size:20px}
+.toc .part{margin:12px 0 4px;font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--blue)}
+.toc a{display:flex;justify-content:space-between;gap:10px;padding:7px 0;color:var(--ink);text-decoration:none;border-bottom:1px solid #eef2f6;font-size:15px}
+.toc a span:last-child{color:var(--soft);font-variant-numeric:tabular-nums}
+.part-title{margin:26px 4px 10px;font-size:13px;font-weight:900;letter-spacing:.16em;color:var(--blue)}
+.ch{scroll-margin-top:84px}
+.ch .top{display:flex;justify-content:space-between;align-items:center}
+.ch .kicker{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--soft)}
+.ch .num{font-size:13px;font-weight:900;color:var(--blue);background:#e5eef6;border-radius:8px;padding:2px 8px}
+.ch h3{margin:6px 0 8px;font-size:22px;line-height:1.25}
+.ch .intro{margin:0 0 10px}
+.ch ul{margin:0;padding:0;list-style:none}
+.ch li{position:relative;padding:8px 0 8px 22px;border-top:1px solid #eef2f6}
+.ch li:before{content:"";position:absolute;left:4px;top:16px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.shot{display:block;width:100%;max-width:300px;margin:14px auto 4px;border-radius:18px;border:6px solid #1b2a3a;box-shadow:0 8px 24px rgba(15,39,66,.18)}
+.tip{margin-top:12px;background:#fff8e6;border:1px solid #f1dfae;border-radius:12px;padding:10px 12px;font-size:14.5px}
+.tip b{display:block;font-size:11px;letter-spacing:.14em;color:#9a6b00}
+.more{display:block;margin-top:10px;padding:11px 12px;border-radius:12px;background:#e9f1f8;color:var(--blue);font-weight:700;text-decoration:none;font-size:14.5px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:9px 6px;border-top:1px solid #eef2f6;text-align:left;vertical-align:top}
+th{font-size:12px;letter-spacing:.1em;color:var(--soft);border-top:0}
+.sos{background:#ce2b37;color:#fff;border:0;font-weight:800;text-align:center;font-size:17px}
+.again{text-align:center;color:var(--soft);font-size:14px}
+</style>
+</head>
+<body>
+<div class="bar"><a class="back" id="back" href="/app.html">← Back to the app</a>
+<select id="lang" aria-label="Language">
+<option value="en">English</option><option value="it">Italiano</option><option value="ja">日本語</option><option value="es">Español</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="zh">中文</option><option value="ko">한국어</option>
+</select></div>
+<div id="root"></div>
+<script>
+(function(){
+  var AVAILABLE = ["en","it","ja","es","de","fr","zh","ko"]; // languages with a translated guide-xx.js
+  var q = new URLSearchParams(location.search);
+  var lang = q.get("lang");
+  var hm = location.hash.match(/^#(?:lang=)?([a-z]{2})$/); if (hm) lang = hm[1];
+  if (!lang) { try { lang = localStorage.getItem("tripengine_ui_language"); } catch(e) {} }
+  if (AVAILABLE.indexOf(lang) < 0) lang = "en";
+  var sel = document.getElementById("lang"); sel.value = lang;
+  sel.onchange = function(){ location.hash = sel.value; location.reload(); };
+  // Hide languages not translated yet
+  [].slice.call(sel.options).forEach(function(o){ if (AVAILABLE.indexOf(o.value) < 0) o.remove(); });
+  if (sel.options.length < 2) sel.style.display = "none";
+  var s = document.createElement("script"); s.src = "guide-files/guide-" + lang + ".js";
+  s.onload = function(){ render(window.GUIDE_TEXT[lang], lang); };
+  document.head.appendChild(s);
+  function esc(t){ return String(t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function render(G, lang){
+    document.documentElement.lang = lang;
+    document.getElementById("back").textContent = G.back;
+    var h = '<div class="hero"><img src="guide-files/logo.png" alt=""><h1>'+esc(G.title)+'</h1><div class="sub">'+esc(G.subtitle)+'</div><div class="flag"><i></i><i></i><i></i></div><p>'+esc(G.lead)+'</p><div class="ver">'+esc(G.version)+'</div></div><main>';
+    var n = 0, toc = '<div class="card toc"><h2>'+esc(G.contents)+'</h2>', body = '';
+    G.parts.forEach(function(p){
+      toc += '<div class="part">'+esc(p.name)+'</div>';
+      body += '<div class="part-title">'+esc(p.name)+'</div>';
+      p.chapters.forEach(function(c){
+        n++; var id = 'c'+n, num = (n<10?'0':'')+n;
+        toc += '<a href="#'+id+'"><span>'+esc(c.title)+'</span><span>'+num+'</span></a>';
+        body += '<section class="card ch" id="'+id+'"><div class="top"><span class="kicker">'+esc(c.kicker)+'</span><span class="num">'+num+'</span></div><h3>'+esc(c.title)+'</h3><p class="intro">'+esc(c.intro)+'</p>';
+        if (c.items) body += '<ul>'+c.items.map(function(i){return '<li>'+esc(i)+'</li>';}).join('')+'</ul>';
+        if (c.img) body += '<img class="shot" loading="lazy" src="guide-files/shots/'+c.img+'.jpg" alt="">';
+        if (c.tip) body += '<div class="tip"><b>'+esc(G.tipLabel)+'</b>'+esc(c.tip)+'</div>';
+        [c.link, c.link2].forEach(function(l){ if (l) body += '<a class="more" href="'+l.url+'">📘 '+esc(l.text)+' ↗</a>'; });
+        body += '</section>';
+      });
+    });
+    toc += '</div>';
+    var qr = '<div class="part-title">'+esc(G.quickTitle)+'</div><div class="card"><table><tr><th>'+esc(G.quickHead[0])+'</th><th>'+esc(G.quickHead[1])+'</th></tr>'+G.quick.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td><b>'+esc(r[1])+'</b></td></tr>';}).join('')+'</table></div>';
+    qr += '<div class="card sos">🆘 '+esc(G.emergency)+'</div><p class="again">'+esc(G.findAgain)+'</p>';
+    document.getElementById("root").innerHTML = h + toc + body + qr + '<a class="back" href="/app.html" style="margin-top:8px">'+esc(G.back)+'</a></main>';
+  }
+})();
+</script>
+</body>
+</html>
