@@ -70,7 +70,7 @@ window.GUIDE_TEXT.it = {
         tip: "L'Itinerario è sempre disponibile, anche prima di arrivare in Italia." },
       { kicker: "TRASFERIMENTI", title: "Treni, voli o auto", img: "flight",
         intro: "Ogni trasferimento tra due città ha il suo riquadro con percorso, data e numero di viaggiatori.",
-        items: ["🚆 Treno: Cerca treni su Italo (si apre con percorso e data già inseriti), Orari su Apple Maps o Google Maps, Confronta i prezzi su 12Go.",
+        items: ["🚆 Treno: Trenitalia, Italo e bus su 12Go (si apre con percorso, data e viaggiatori già inseriti), Cerca treni su Italo (anche questo compilato), Orari su Apple Maps o Google Maps.",
                 "✈️ Volo: l'app sceglie gli aeroporti per te. Se un paese non ha un aeroporto, si usa quello più vicino (es. Taormina → Catania, Amalfi → Napoli, Cinque Terre → Pisa).",
                 "Se due città usano lo stesso aeroporto (es. Firenze e Pisa), l'app ti dice che è meglio il treno o l'auto.",
                 "🚗 Auto: Avvia la navigazione apre la tua app di mappe verso la città successiva.",

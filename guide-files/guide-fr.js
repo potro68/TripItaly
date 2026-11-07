@@ -70,7 +70,7 @@ window.GUIDE_TEXT.fr = {
         tip: "L'Itinéraire est toujours disponible, même avant d'arriver en Italie." },
       { kicker: "TRAJETS", title: "Trains, vols ou voiture", img: "flight",
         intro: "Chaque trajet entre deux villes a son propre cadre avec le trajet, la date et le nombre de voyageurs.",
-        items: ["🚆 Train : Chercher des trains sur Italo (s'ouvre avec trajet et date), Horaires sur Apple Maps ou Google Maps, Comparer les prix sur 12Go.",
+        items: ["🚆 Train : Trenitalia, Italo et bus sur 12Go (s'ouvre avec trajet, date et voyageurs), Chercher des trains sur Italo (également rempli), Horaires sur Apple Maps ou Google Maps.",
                 "✈️ Vol : l'app choisit les aéroports pour vous. Si une ville n'a pas d'aéroport, le plus proche est utilisé (ex. Taormine → Catane, Amalfi → Naples, Cinque Terre → Pise).",
                 "Si deux villes utilisent le même aéroport (ex. Florence et Pise), l'app vous dit que le train ou la voiture est préférable.",
                 "🚗 Voiture : Démarrer la navigation ouvre votre app de cartes vers la ville suivante.",

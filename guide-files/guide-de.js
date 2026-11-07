@@ -70,7 +70,7 @@ window.GUIDE_TEXT.de = {
         tip: "Der Reiseplan ist immer verfügbar, auch schon vor der Ankunft in Italien." },
       { kicker: "TRANSFERS", title: "Züge, Flüge oder Auto", img: "flight",
         intro: "Jeder Transfer zwischen zwei Städten hat ein eigenes Feld mit Strecke, Datum und Anzahl der Reisenden.",
-        items: ["🚆 Zug: Züge suchen bei Italo (öffnet mit Strecke und Datum), Fahrpläne in Apple Maps oder Google Maps, Preise vergleichen bei 12Go.",
+        items: ["🚆 Zug: Trenitalia, Italo & Busse bei 12Go (öffnet mit Strecke, Datum und Reisenden), Züge suchen bei Italo (ebenfalls ausgefüllt), Fahrpläne in Apple Maps oder Google Maps.",
                 "✈️ Flug: Die App wählt die Flughäfen für dich. Hat ein Ort keinen eigenen Flughafen, wird der nächste verwendet (z. B. Taormina → Catania, Amalfi → Neapel, Cinque Terre → Pisa).",
                 "Nutzen zwei Städte denselben Flughafen (z. B. Florenz und Pisa), sagt dir die App, dass Zug oder Auto besser ist.",
                 "🚗 Auto: Navigation starten öffnet deine Karten-App zur nächsten Stadt.",
