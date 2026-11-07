@@ -70,7 +70,7 @@ window.GUIDE_TEXT.en = {
         tip: "Itinerary is always available, also before you arrive in Italy." },
       { kicker: "CITY TRANSFERS", title: "Trains, flights or driving", img: "flight",
         intro: "Every transfer between two cities has its own panel with the route, the date and the number of travelers.",
-        items: ["🚆 Train: Search trains on Trenitalia or Italo (Italo opens with route and date filled in), Timetables on Apple Maps or Google Maps, Compare prices on 12Go.",
+        items: ["🚆 Train: Search trains on Italo (opens with route and date filled in), Timetables on Apple Maps or Google Maps, Compare prices on 12Go.",
                 "✈️ Flight: the app picks the airports for you. If a town has no airport of its own, the nearest one is used (e.g. Taormina → Catania, Amalfi → Naples, Cinque Terre → Pisa).",
                 "If two cities use the same airport (e.g. Florence and Pisa), the app tells you that train or car is the better choice.",
                 "🚗 Drive: Start navigation opens your map app toward the next city.",

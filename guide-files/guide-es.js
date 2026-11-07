@@ -70,7 +70,7 @@ window.GUIDE_TEXT.es = {
         tip: "El Itinerario está siempre disponible, también antes de llegar a Italia." },
       { kicker: "TRASLADOS", title: "Trenes, vuelos o coche", img: "flight",
         intro: "Cada traslado entre dos ciudades tiene su propio panel con la ruta, la fecha y el número de viajeros.",
-        items: ["🚆 Tren: Buscar trenes en Trenitalia o Italo (Italo se abre con ruta y fecha incluidas), Horarios en Apple Maps o Google Maps, Comparar precios en 12Go.",
+        items: ["🚆 Tren: Buscar trenes en Italo (se abre con ruta y fecha incluidas), Horarios en Apple Maps o Google Maps, Comparar precios en 12Go.",
                 "✈️ Vuelo: la app elige los aeropuertos por ti. Si un pueblo no tiene aeropuerto, se usa el más cercano (p. ej. Taormina → Catania, Amalfi → Nápoles, Cinque Terre → Pisa).",
                 "Si dos ciudades usan el mismo aeropuerto (p. ej. Florencia y Pisa), la app te dice que es mejor el tren o el coche.",
                 "🚗 Coche: Iniciar navegación abre tu app de mapas hacia la siguiente ciudad.",

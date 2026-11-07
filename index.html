@@ -4346,12 +4346,7 @@ function ItalyTrainBookingPanel(_ref5) {
     className: "train-smart-meta"
   }, dateISO ? formatDateEN(dateISO) : "Choose travel date", " \xB7 ", travelers, " traveler", travelers === 1 ? "" : "s")), React.createElement("div", {
     className: "train-smart-actions"
-  }, React.createElement("a", {
-    href: TRENITALIA_URL,
-    target: "_blank",
-    rel: "noopener noreferrer",
-    className: "leg-transport-link"
-  }, "\uD83D\uDE86 Search trains \xB7 Trenitalia \u2192"), italoUrl && React.createElement("a", {
+  }, italoUrl && React.createElement("a", {
     href: italoUrl,
     target: "_blank",
     rel: "noopener noreferrer sponsored",
@@ -4368,9 +4363,9 @@ function ItalyTrainBookingPanel(_ref5) {
     className: "leg-transport-link leg-transport-link-alt"
   }, "\uD83C\uDFAB Compare prices \xB7 12Go \u2192"), React.createElement(ItalyCopyButton, {
     text: italyTripDetailsText(fromCity, toCity, dateISO, people, "Train")
-  })), React.createElement("div", {
+  })), !italoUrl && React.createElement("div", {
     className: "train-smart-footnote"
-  }, "Tap a button: the site opens with your trip. On Trenitalia, type the route and date shown above."));
+  }, "No direct Italo train between these two cities: check timetables and prices with the buttons above."));
 }
 function ItalyFlightBookingPanel(_ref6) {
   var fromCity = _ref6.fromCity,
@@ -22381,6 +22376,13 @@ var GLOBAL_UI_TEXT = (_GLOBAL_UI_TEXT = {
     de: "🎫 Preise vergleichen · 12Go →",
     fr: "🎫 Comparer les prix · 12Go →"
   },
+  "No direct Italo train between these two cities: check timetables and prices with the buttons above.": {
+    it: "Nessun treno Italo diretto tra queste due città: controlla orari e prezzi con i pulsanti sopra.",
+    ja: "この2都市間には Italo の直通列車がありません。上のボタンで時刻表と料金を確認してください。",
+    es: "No hay tren Italo directo entre estas dos ciudades: consulta horarios y precios con los botones de arriba.",
+    de: "Kein direkter Italo-Zug zwischen diesen beiden Städten: Fahrpläne und Preise mit den Tasten oben prüfen.",
+    fr: "Pas de train Italo direct entre ces deux villes : consultez horaires et prix avec les boutons ci-dessus."
+  },
   "📋 Copy trip details": {
     it: "📋 Copia i dettagli del viaggio",
     ja: "📋 旅行の詳細をコピー",
@@ -24232,6 +24234,7 @@ var ASIAN_UI_TEXT = (_ASIAN_UI_TEXT = {
   "🚆 Search trains · Trenitalia →": ["🚆 搜索火车 · Trenitalia →", "🚆 기차 검색 · Trenitalia →"],
   "🚄 Search trains · Italo →": ["🚄 搜索火车 · Italo →", "🚄 기차 검색 · Italo →"],
   "🎫 Compare prices · 12Go →": ["🎫 比较价格 · 12Go →", "🎫 가격 비교 · 12Go →"],
+  "No direct Italo train between these two cities: check timetables and prices with the buttons above.": ["这两座城市之间没有 Italo 直达列车：请用上方按钮查看时刻表和价格。", "두 도시 사이에는 Italo 직행 열차가 없습니다. 위 버튼으로 시간표와 가격을 확인하세요."],
   "📋 Copy trip details": ["📋 复制行程详情", "📋 여행 정보 복사"],
   "✓ Details copied": ["✓ 已复制", "✓ 복사됨"],
   "Choose travel date": ["选择出行日期", "여행 날짜 선택"],
