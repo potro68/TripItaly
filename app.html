@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.35 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.31_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.36 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.36_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
 <script id="gate-687">
@@ -4269,6 +4269,18 @@ function build12GoItalyLink(fromCity, toCity, dateISO, people) {
   params.set("z", TWELVEGO_AFFILIATE_ID);
   return "https://12go.asia/en/travel/".concat(from, "/").concat(to, "?").concat(params.toString());
 }
+var OMIO_IMPACT_BASE = "https://omio.sjv.io/c/8142882/409973/7385";
+function omioItalySlug(city) {
+  var n = normalizeItalyCity(city);
+  var en = ITALY_CITY_EN[n] || TWELVEGO_ITALY_SLUGS[n] || n;
+  return String(en).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+function buildOmioItalyLink(fromCity, toCity) {
+  var a = omioItalySlug(fromCity),
+    b = omioItalySlug(toCity);
+  var target = a && b && a !== b ? "https://www.omio.com/trains/".concat(a, "/").concat(b) : "https://www.omio.com/trains";
+  return "".concat(OMIO_IMPACT_BASE, "?subId1=italy-app&u=").concat(encodeURIComponent(target));
+}
 function buildItalyTransitMapsLink(fromCity, toCity) {
   var a = String(fromCity || "").trim(),
     b = String(toCity || "").trim();
@@ -4349,7 +4361,7 @@ function ItalyTrainBookingPanel(_ref5) {
     dateISO = _ref5.dateISO,
     people = _ref5.people;
   var travelers = Math.max(1, Number(people || 1));
-  var italoUrl = buildItaloLink(italoCityName(fromCity), italoCityName(toCity), dateISO, people);
+  var omioUrl = buildOmioItalyLink(fromCity, toCity);
   var mapsUrl = buildItalyTransitMapsLink(fromCity, toCity);
   var twelveGoUrl = build12GoItalyLink(fromCity, toCity, dateISO, people);
   return React.createElement("div", {
@@ -4362,26 +4374,26 @@ function ItalyTrainBookingPanel(_ref5) {
     className: "train-smart-meta"
   }, dateISO ? formatDateEN(dateISO) : "Choose travel date", " \xB7 ", travelers, " traveler", travelers === 1 ? "" : "s")), React.createElement("div", {
     className: "train-smart-actions"
-  }, twelveGoUrl && React.createElement("a", {
-    href: twelveGoUrl,
+  }, React.createElement("a", {
+    href: omioUrl,
     target: "_blank",
     rel: "noopener noreferrer sponsored",
     className: "leg-transport-link"
-  }, "\uD83C\uDFAB Trenitalia, Italo & buses \xB7 12Go \u2192"), italoUrl && React.createElement("a", {
-    href: italoUrl,
+  }, "\uD83D\uDE84 Trenitalia, Italo & buses \xB7 Omio \u2192"), twelveGoUrl && React.createElement("a", {
+    href: twelveGoUrl,
     target: "_blank",
     rel: "noopener noreferrer sponsored",
-    className: twelveGoUrl ? "leg-transport-link leg-transport-link-alt" : "leg-transport-link"
-  }, "\uD83D\uDE84 Search trains \xB7 Italo \u2192"), mapsUrl && React.createElement("a", {
+    className: "leg-transport-link leg-transport-link-alt"
+  }, "\uD83C\uDFAB Trenitalia, Italo & buses \xB7 12Go \u2192"), mapsUrl && React.createElement("a", {
     href: mapsUrl,
     target: "_blank",
     rel: "noopener noreferrer",
     className: "leg-transport-link leg-transport-link-alt"
   }, isIOSDevice() ? "🗺️ Timetables · Apple Maps →" : "🗺️ Timetables · Google Maps →"), React.createElement(ItalyCopyButton, {
     text: italyTripDetailsText(fromCity, toCity, dateISO, people, "Train")
-  })), !italoUrl && React.createElement("div", {
+  })), React.createElement("div", {
     className: "train-smart-footnote"
-  }, "No direct Italo train between these two cities: check trains and prices with the buttons above."));
+  }, "Omio and 12Go are booking agencies: they may add a service fee. Final prices are shown on the booking site."));
 }
 function ItalyFlightBookingPanel(_ref6) {
   var fromCity = _ref6.fromCity,
@@ -22360,6 +22372,20 @@ var PREMENU_TEXT = _defineProperty(_defineProperty(_defineProperty(_defineProper
   fr: "Terminer la configuration"
 });
 var GLOBAL_UI_TEXT = (_GLOBAL_UI_TEXT = {
+  "🚄 Trenitalia, Italo & buses · Omio →": {
+    it: "🚄 Trenitalia, Italo e bus · Omio →",
+    ja: "🚄 Trenitalia・Italo・バス · Omio →",
+    es: "🚄 Trenitalia, Italo y buses · Omio →",
+    de: "🚄 Trenitalia, Italo & Busse · Omio →",
+    fr: "🚄 Trenitalia, Italo et bus · Omio →"
+  },
+  "Omio and 12Go are booking agencies: they may add a service fee. Final prices are shown on the booking site.": {
+    it: "Omio e 12Go sono agenzie di prenotazione: possono aggiungere un costo di servizio. Il prezzo finale è indicato sul sito di prenotazione.",
+    ja: "Omioと12Goは予約代理店です。手数料がかかる場合があります。最終料金は予約サイトに表示されます。",
+    es: "Omio y 12Go son agencias de reservas: pueden añadir una tarifa de servicio. El precio final se muestra en el sitio de reserva.",
+    de: "Omio und 12Go sind Buchungsportale: Es kann eine Servicegebühr anfallen. Der Endpreis wird auf der Buchungsseite angezeigt.",
+    fr: "Omio et 12Go sont des agences de réservation : des frais de service peuvent s'ajouter. Le prix final est indiqué sur le site de réservation."
+  },
   "🎫 Trenitalia, Italo & buses · 12Go →": {
     it: "🎫 Trenitalia, Italo e bus · 12Go →",
     ja: "🎫 Trenitalia・Italo・バス · 12Go →",
@@ -24255,6 +24281,8 @@ var GLOBAL_UI_ATTR = {
   }
 };
 var ASIAN_UI_TEXT = (_ASIAN_UI_TEXT = {
+  "🚄 Trenitalia, Italo & buses · Omio →": ["🚄 Trenitalia、Italo 和巴士 · Omio →", "🚄 Trenitalia, Italo, 버스 · Omio →"],
+  "Omio and 12Go are booking agencies: they may add a service fee. Final prices are shown on the booking site.": ["Omio 和 12Go 是预订代理，可能会收取服务费。最终价格以预订网站为准。", "Omio와 12Go는 예약 대행사로 서비스 수수료가 추가될 수 있습니다. 최종 가격은 예약 사이트에 표시됩니다."],
   "🎫 Trenitalia, Italo & buses · 12Go →": ["🎫 Trenitalia、Italo 和巴士 · 12Go →", "🎫 Trenitalia, Italo, 버스 · 12Go →"],
   "🗺️ Timetables · Apple Maps →": ["🗺️ 时刻表 · Apple Maps →", "🗺️ 시간표 · Apple Maps →"],
   "🗺️ Timetables · Google Maps →": ["🗺️ 时刻表 · Google Maps →", "🗺️ 시간표 · Google Maps →"],
