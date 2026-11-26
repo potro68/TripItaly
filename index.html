@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 687 Italy V1.14.37 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.37_SORGENTE.html and rebuild. -->
+<!-- 687 Italy V1.14.38 — BUILD (precompiled, no in-browser Babel). Do not edit: edit 687_italy_V1.14.37_SORGENTE.html and rebuild. -->
 <html lang="en">
 <head>
 <script id="gate-687">
@@ -16057,21 +16057,35 @@ function italyNowVisitMinutes(type, hour) {
   return 55;
 }
 function italyNowContextTypes(weatherInfo, hour, budgetLow) {
-  if (weatherInfo !== null && weatherInfo !== void 0 && weatherInfo.severe || weatherInfo !== null && weatherInfo !== void 0 && weatherInfo.wet) return ["museum", "shopping_mall", "cafe"];
-  if (budgetLow) return ["attraction", "museum", "cafe"];
-  if (hour < 10) return ["attraction", "cafe"];
-  if (hour < 14) return ["attraction", "museum", "restaurant"];
-  if (hour < 18) return ["attraction", "museum", "cafe"];
-  if (hour < 22) return ["restaurant", "shopping_mall", "attraction"];
-  return ["restaurant", "cafe"];
+  if (weatherInfo && (weatherInfo.severe || weatherInfo.wet)) return ["museum", "shopping_mall", "tourist_attraction", "restaurant", "cafe"];
+  return ["tourist_attraction", "place_of_worship", "museum", "park", "restaurant", "cafe", "shopping_mall"];
+}
+function italyNowBalanceVariety(list, max) {
+  var fam = ["culture", "food", "nature", "shopping", "beaches", "other"];
+  var isCafe = function (p) { return String(p.matchedType || "").toLowerCase() === "cafe" || /cafe|coffee|caff|bar |starbucks/i.test(String(p.name || "")); };
+  list = list.map(function (p) { return p.category ? p : Object.assign({}, p, { category: italyNowPlaceCategory(p) }); });
+  var pend = {};
+  fam.forEach(function (c) { pend[c] = list.filter(function (p) { return (fam.indexOf(p.category) >= 0 ? p.category : "other") === c; }); });
+  var out = [], cafes = 0;
+  while (out.length < max && fam.some(function (c) { return pend[c].length; })) {
+    fam.forEach(function (c) {
+      while (pend[c].length) {
+        var p = pend[c].shift();
+        if (isCafe(p)) { if (cafes >= 2) continue; cafes++; }
+        if (out.length < max) out.push(p);
+        break;
+      }
+    });
+  }
+  return out;
 }
 function italyNowPlaceCategory(place) {
   var types = Array.isArray(place === null || place === void 0 ? void 0 : place.types) ? place.types : [];
   var t = String((place === null || place === void 0 ? void 0 : place.matchedType) || "");
   var name = String((place === null || place === void 0 ? void 0 : place.name) || "").toLowerCase();
   if (["restaurant", "cafe", "ice_cream"].includes(t) || /restaurant|cafe|coffee|food|pizza|trattoria|osteria|gelato/.test(name)) return "food";
-  if (["museum", "attraction"].includes(t) || /museum|church|basilica|cathedral|castle|palace|historic|gallery/.test(name)) return "culture";
-  if (/park|garden|nature|river|lake|view|beach|mountain/.test(name)) return "nature";
+  if (["museum", "attraction", "tourist_attraction", "place_of_worship", "church"].includes(t) || /museum|church|basilica|cathedral|castle|palace|historic|gallery/.test(name)) return "culture";
+  if (t === "park" || /park|garden|parco|giardino|nature|river|lake|view|beach|mountain/.test(name)) return "nature";
   if (["shopping_mall", "supermarket"].includes(t) || /mall|market|shop|store/.test(name)) return "shopping";
   if (["train_station", "bus_station", "hospital", "pharmacy", "atm", "parking", "gas_station"].includes(t)) return "practical";
   return "other";
@@ -16681,7 +16695,8 @@ function ItalyDashNow(_ref83) {
               if (a.alreadyPlanned) sa -= 40;
               if (b.alreadyPlanned) sb -= 40;
               return sb - sa;
-            }).slice(0, 8);
+            });
+            enriched = italyNowBalanceVariety(enriched, 8);
             setLivePlaces(enriched);
             if (!enriched.length) setLiveError("No suitable open places found nearby right now.");
             _context18.n = 13;
@@ -17064,7 +17079,7 @@ function ItalyDashNow(_ref83) {
       className: "live-suggestion-h"
     }, p.name), React.createElement("div", {
       className: "live-suggestion-d"
-    }, p.km != null ? "".concat(p.km.toFixed(1), " km") : "", p.travelMin != null ? " \xB7 about ".concat(p.travelMin, " min away") : "", commitment.time ? p.fits ? " · ✅ fits" : " · ⚠️ too tight" : ""), React.createElement("div", {
+    }, p.km != null ? "".concat(p.km.toFixed(1), " km") : "", p.travelMin != null ? " \xB7 about ".concat(p.travelMin, " min away") : "", commitment.time ? p.fits ? " · ✅ fits" : " · ⚠️ too tight" : ""), pf.text !== "Price unavailable" && React.createElement("div", {
       className: "price-intel-badge" + cls
     }, pf.exact ? "💶" : "🏷️", " ", pf.text, pf.approxText ? React.createElement("span", {
       className: "price-intel-source"
